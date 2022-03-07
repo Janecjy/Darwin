@@ -1,4 +1,5 @@
 import re
+from turtle import color
 from importlib_metadata import files
 
 from sklearn.cluster import KMeans
@@ -22,10 +23,10 @@ from collections import defaultdict
 thres = 1
 
 
-def cluster():
+def feature_cluster():
     
     # feature_set = ['sd_avg', 'iat_avg', 'size_avg', 'sizes', 'sd_1', 'iat_1', 'sd_2', 'iat_2', 'sd_3', 'iat_3', 'sd_4', 'iat_4', 'sd_5', 'iat_5', 'sd_6', 'iat_6', 'sd_7', 'iat_7']
-    feature_set = ['sd_avg', 'iat_avg', 'size_avg']
+    feature_set = ['sd_avg', 'iat_avg', 'size_avg', 'edc_avg']
     best_result = pickle.load(open("../cache/output/best_result.pkl", "rb"))
     feature_files = [path for path in os.listdir("../cache/output/features")]
     
@@ -161,6 +162,74 @@ def cluster():
 
     # return None
 
+def result_cluster():
+    best_result = pickle.load(open("../cache/output/best_result.pkl", "rb"))
+    expert_list = []
+    
+    for f in [2, 4, 5, 7]:
+        for s in [50, 100, 200, 500, 1000]:
+            expert_list.append('f'+str(f)+'s'+str(s))
+            
+    best_label = []
+    cluster_map = {}
+    for trace, expert in best_result.items():
+        expert_set = []
+        for e in expert:
+            expert_set.append(expert_list.index(e))
+        if expert_set not in best_label:
+            best_label.append(expert_set)
+        cluster_map[trace] = best_label.index(expert_set)
+        
+    cluster_count = {}
+    for v in cluster_map.values():
+        cluster_count[v] = cluster_count.get(v, 0)+1
+            
+    # print(expert_list)
+    # print(best_label)
+    # print(cluster_map)
+    # print(cluster_count)
+    
+    feature = 'size_avg'
+    feature_files = [path for path in os.listdir("../cache/output/features")]
+    cluster1 = []
+    cluster5 = []
+    cluster6 = []
+    cluster10 = []
+    for file in feature_files:
+        features = pickle.load(open("../cache/output/features/"+file, "rb"))
+        if cluster_map[file.split('.')[0]] == 1:
+            cluster1.append(features[feature])
+            # cluster1.append(features[feature].values())
+        if cluster_map[file.split('.')[0]] == 5:
+            cluster5.append(features[feature])
+            # cluster5.append(features[feature].values())
+        if cluster_map[file.split('.')[0]] == 6:
+            cluster6.append(features[feature])
+            # cluster6.append(features[feature].values())
+        if cluster_map[file.split('.')[0]] == 10:
+            cluster10.append(features[feature])
+            # cluster10.append(features[feature].values())
+    
+    cmap = matplotlib.cm.get_cmap("Set3").colors
+
+    fig = plt.figure()
+    for line in cluster1:
+        plt.scatter(1, line, color=cmap[0], marker='o')
+        # plt.plot([x+1 for x in range(len(line))], line, color=cmap[0])
+    for line in cluster5:
+        plt.scatter(2, line, color=cmap[5], marker='^')
+        # plt.plot([x+1 for x in range(len(line))], line, color=cmap[5])
+    for line in cluster6:
+        plt.scatter(3, line, color=cmap[2], marker='x')
+        # plt.plot([x+1 for x in range(len(line))], line, color=cmap[2])
+    for line in cluster10:
+        plt.scatter(4, line, color=cmap[3], marker='+')
+        # plt.plot([x+1 for x in range(len(line))], line, color=cmap[3])
+    # plt.xticks([x+1 for x in range(len(line))], ['avg_edc'+str(x+1) for x in range(len(line))])
+    plt.xticks([x+1 for x in range(4)], ['cluster'+str(x+1) for x in range(4)])
+    plt.title(feature)
+    plt.savefig('fig/avgsize.png')
+        
 def countStat(dirPath):   
     hr = {}
     disk_write = {}
@@ -223,7 +292,8 @@ def main():
     #     best_set = countStat("../cache/output/"+dir)
     #     best_result[dir] = confSort(best_set)
     # pickle.dump(best_result, open("../cache/output/best_result.pkl", "wb"))
-    cluster()
+    # result_cluster()
+    feature_cluster()
     
 
     

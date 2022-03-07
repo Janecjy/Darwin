@@ -22,6 +22,7 @@ class node:
         self.is_root = False
         self.last_access = [-1]*MAX_HIST # tm_0, ..., tm_6
         self.sd_his = [-1]*(MAX_HIST-1) # sd_1, ..., sd_6
+        self.edcs = [0]*MAX_HIST # edc_1, ..., edc_7
         node.counter += 1
 
     def addValTillRoot(self, val):
