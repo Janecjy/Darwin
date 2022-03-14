@@ -16,6 +16,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from math import dist
 import math
+from bloom_filter2 import BloomFilter
 
 
 ## objects are assumed to be in KB
@@ -194,7 +195,9 @@ def main():
 
     # input_file        = sys.argv[1]
 
-    f = open("/home/janechen/cache/traces/feb3/"+name+".txt", "r")
+    f = open("/home/janechen/cache/traces/volincrease-done/"+name+".txt", "r")
+    
+    bloom = BloomFilter(max_elements=1000000, error_rate=0.1)
 
     ## Initialize the LRU stack with objects from the trace
     i = 0
@@ -206,17 +209,20 @@ def main():
         obj = int(l[1])
         sz  = int(l[2])
         
-        obj_reqs[obj] += 1
-        obj_iats[obj].append(-1)
+        if obj in bloom:
         
-        if obj not in obj_sizes:
+            obj_reqs[obj] += 1
+            obj_iats[obj].append(-1)
+            
+            if obj not in obj_sizes:
 
-            initial_objects.append(obj)        
-            obj_sizes[obj] = sz
-            bytes_in_cache += sz
+                initial_objects.append(obj)        
+                obj_sizes[obj] = sz
+                bytes_in_cache += sz
 
-        initial_times[obj] = tm
+            initial_times[obj] = tm
 
+        bloom.add(obj)
         i += 1
         line_count += 1
         if line_count % 100000 == 0:
@@ -228,9 +234,6 @@ def main():
     i          = 0
     line_count = 0
     max_len    = 200000000
-    start_tm   = 0
-    total_bytes_req = 0
-    total_reqs      = 0
     total_misses    = 0
     bytes_miss      = 0
     line_num = []
@@ -299,53 +302,52 @@ def main():
             
         if i == 0:
             start_tm = tm 
-            
-        obj_sizes[obj] = sz
-        obj_reqs[obj] += 1
-        sz_ = float(sz)/SIZE_GRAN
-        sz_  = int(sz_) * SIZE_GRAN
-        # if sz_ > MB:
-        #     sz_ = MB
-        sizes[sz_] += 1
-        size_count += 1
-        size_avg += 1/size_count*(sz-size_avg)
+        
+        if obj in bloom:
+            obj_sizes[obj] = sz
+            obj_reqs[obj] += 1
+            sz_ = float(sz)/SIZE_GRAN
+            sz_  = int(sz_) * SIZE_GRAN
+            # if sz_ > MB:
+            #     sz_ = MB
+            sizes[sz_] += 1
+            size_count += 1
+            size_avg += 1/size_count*(sz-size_avg)
 
-        total_bytes_req += sz
-        total_reqs      += 1
+            try:
+                k = lru.insert(obj, sz, tm)
+            except:
+                break
 
-        try:
-            k = lru.insert(obj, sz, tm)
-        except:
-            break
+            # TODO: sd for more than 2 occurrences are not exact unique bytes
+            sd, iat = k    
+            if sd:
+                for num, (s, t) in enumerate(zip(sd, iat)):
 
-        # TODO: sd for more than 2 occurrences are not exact unique bytes
-        sd, iat = k    
-        if sd:
-            for num, (s, t) in enumerate(zip(sd, iat)):
+                    if s == -1:
+                        break
 
-                if s == -1:
-                    break
+                    sd_count[num] += 1
+                    sd_avg[num+1] += 1/sd_count[num]*(s-sd_avg[num+1])
+                    iat_avg[num+1] += 1/sd_count[num]*(t-iat_avg[num+1])
+                    s  = float(s)/SD_GRAN
+                    s  = int(s) * SD_GRAN
+                    # if s > 100*MB:
+                    #     s = 100*MB
+                    t = float(t)/IAT_GRAN
+                    t = int(t) * IAT_GRAN
+                    # if t > 50000:
+                    #     t = 50000
+                    iats[num+1][t] += 1
+                    sds[num+1][s] += 1    
+                    # sd_distances[iat].append(sd)
+                    # sd_byte_distances[iat][sd] += sz
+            else:
+                total_misses += 1
+                bytes_miss   += sz
 
-                sd_count[num] += 1
-                sd_avg[num+1] += 1/sd_count[num]*(s-sd_avg[num+1])
-                iat_avg[num+1] += 1/sd_count[num]*(t-iat_avg[num+1])
-                s  = float(s)/SD_GRAN
-                s  = int(s) * SD_GRAN
-                # if s > 100*MB:
-                #     s = 100*MB
-                t = float(t)/IAT_GRAN
-                t = int(t) * IAT_GRAN
-                # if t > 50000:
-                #     t = 50000
-                iats[num+1][t] += 1
-                sds[num+1][s] += 1    
-                # sd_distances[iat].append(sd)
-                # sd_byte_distances[iat][sd] += sz
-        else:
-            total_misses += 1
-            bytes_miss   += sz
-
-        obj_iats[obj].append(iat)        
+            obj_iats[obj].append(iat)        
+        bloom.add(obj)
         i += 1
         
         if line_count%100000 == 0:
@@ -435,8 +437,8 @@ def main():
                 edcs[num+1][k] /= edc_count
             else:
                 edcs[num+1][k] = 0
-    if max(sizes.keys()) > MAX_SIZE:
-            MAX_SIZE = max(sizes.keys())
+    # if max(sizes.keys()) > MAX_SIZE:
+            # MAX_SIZE = max(sizes.keys())
     for k in range(0, MAX_SIZE+1, SIZE_GRAN):
         if k in sizes.keys():
             sizes[k] /= line_count

@@ -6,7 +6,7 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
-thres = 1
+thres = 10
 
 def countStat(dirPath):   
     # print(dirPath) 
@@ -63,7 +63,8 @@ def countStat(dirPath):
         # if hr_max - hr[x][0] < thres:
         #     best_set.append(x)
 
-    return hr, disk_write, improve_minus, best_set
+    # return hr, disk_write, improve_minus, best_set
+    return best_set
 
 def confSort(keys):
     return sorted(keys, key=lambda element: list(int(x.replace('f', '')) for x in element.split('s')[:]))
@@ -122,50 +123,69 @@ def drawSeparate(name):
     # plt.savefig("fig/"+name+"-imp.png", bbox_inches='tight')
     return best_set
 
-def drawTog(best_sets, best_confs):
-    not_included = list(best_sets.keys())
+def drawTog(best_sets, best_resultset):
+    
+    expert_list = []
+    
+    for f in [2, 4, 5, 7]:
+        for s in [50, 100, 200, 500, 1000]:
+            expert_list.append('f'+str(f)+'s'+str(s))
+    
+    not_included = dict.fromkeys(expert_list, 0) # expert: not included num
+    
     X = []
     Y = []
-    for best_conf in best_confs:
+    for best_set in best_resultset:
         x = []
         y = []
         for conf in best_sets.keys():
-            if best_conf in best_sets[conf]:
-                if conf in not_included:
-                    not_included.remove(conf)
-                x.append(conf[0]/(conf[0]+conf[1]))
-                y.append(conf[1]/(conf[0]+conf[1]))
+            if best_sets[conf] == best_set:
+                # if conf in not_included:
+                #     not_included.remove(conf)
+                x.append(conf[0])
+                y.append(conf[1])
         X.append(x)
         Y.append(y)
-    print(X)
-    print(Y)
+        for e in expert_list:
+            if e not in best_set:
+                not_included[e] += len(x)
+    # print(len(X))
+    # print(len(Y))
+    # print(len(best_resultset))
+    # print(X)
+    # print(Y)
     index=0
-    markers = ["." , "," , "v" , "^" , "<", ">"]
+    # markers = ["." , "," , "v" , "^" , "<", ">"]
     plt.figure()
     for x, y in zip(X, Y):
-        plt.scatter(x, y, s=10, marker=markers[index], color=cm.Dark2(index), label=best_confs[index])
+        plt.scatter(x, y, s=1, color=cm.tab20(index), label=index)
+        # plt.scatter(x, y, s=10, marker=markers[index], color=cm.Dark2(index), label=best_resultset[index])
         index += 1
-    plt.xlabel("TC-0 Percentage")
-    plt.ylabel("TC-1 Percentage")
-    plt.title("Best Expert for Tragen TC-0 & 1 Traffic Mix")
+    plt.xlabel("TC-0 Request Rate (req/s)")
+    plt.ylabel("TC-1 Request Rate (req/s)")
+    plt.title("Best Expert Set for Tragen TC-0 & 1 Traffic Mix")
     plt.legend()
+    print(best_resultset)
+    print(not_included)
+    print(len(best_sets))
     plt.savefig("./output.png")
 
-    if not_included:
-        print(not_included)
+    # if not_included:
+    #     print(not_included)
 
 
 if __name__ == '__main__':
     path = sys.argv[1]
     best_sets = {}
-    best_confs = ['f4s50', 'f2s1000', 'f2s50']
+    best_resultset = set()
     for file in os.listdir(path):
-        print(file)
+        # print(file)
         if file.startswith("tc"):
-            best_set = drawSeparate(file)
+            best_set = countStat(os.path.join(path, file))
             mixture = file.split('-')[4].split(':')
             x = int(mixture[0])
             y = int(mixture[1])
-            best_sets[(x, y)] = confSort(best_set)
-    print(best_sets)
-    drawTog(best_sets, best_confs)
+            best_sets[(x, y)] = tuple(confSort(best_set))
+            best_resultset.add(tuple(confSort(best_set)))
+    # print(best_sets)
+    drawTog(best_sets, list(best_resultset))

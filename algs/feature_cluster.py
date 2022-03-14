@@ -18,9 +18,10 @@ import os
 import pickle
 import time
 from collections import defaultdict
+import pandas as pd
 
 
-thres = 1
+thres = 5
 
 
 def feature_cluster():
@@ -119,33 +120,51 @@ def feature_cluster():
     
     cmap = matplotlib.cm.get_cmap("Set3").colors
     cmap += matplotlib.cm.get_cmap("Set2").colors
-    plot1 = plt.figure(figsize=(20,5))
+    result = dict.fromkeys(range(len(expert_list))) # expert: [percentage in cluster n]
+    for x in result.keys():
+        result[x] = []
     
-    count = 0
+    # count = 0
     for i, k in enumerate(best_expert_dist.keys()):
         
         data = []
         for e in best_expert_dist[k]:
             best_expert_dist[k][e] /= cluster_count[i]
             best_expert_dist[k][e] *= 100
-        for e in expert_list:
+        for n, e in enumerate(expert_list):
             if e in best_expert_dist[k]:
+                result[n].append(best_expert_dist[k][e])
                 data.append(best_expert_dist[k][e])
             else:
+                result[n].append(0)
                 data.append(0)
-        print(len(range(len(data))))
-        print(len(data))
-        print("cluster"+str(k))
-        plt.plot(range(len(data)), data, label="cluster"+str(k))
-        count += 1
+        # print("cluster"+str(k))
+        # plt.plot(range(len(data)), data, label="cluster"+str(k))
+        # count += 1
+    pickle.dump(result, open("../cache/output/cluster_result.pkl", "wb"))
     
-    plt.xlabel("expert")
-    plt.xticks(range(len(expert_list)), expert_list)
-    plt.ylabel("best expert percentage")
-    plt.legend()
-    plt.title("Best expert percentage of clusters")
-    plt.savefig('fig/clusters.png', bbox_inches='tight')
-    print([value for key,value in sorted(cluster_count.items())])
+    y = np.zeros((len(list(result.values())[0]),len(result.keys())+1))
+    y[:,0]= np.arange(len(list(result.values())[0]))
+    for i, x in enumerate(result.keys()):
+        y[:,i+1] = result[x]
+    df = pd.DataFrame(y, columns=["C"]+expert_list)
+    plt = df.plot(x="C", y=expert_list, kind="bar", figsize=(20, 5))
+    plt.set_xlabel("Cluster Num")
+    plt.set_ylabel("Percentage of Segments with this best expert (%)")
+    fig = plt.get_figure()
+    # fig.set_xticks(positions)
+    # fig.set_xticklabels(labels)
+    fig.savefig("./output.png")
+    
+    # df.plot(x="X", y=expert_list, kind="bar")
+    
+    # plt.xlabel("expert")
+    # plt.xticks(range(len(expert_list)), expert_list)
+    # plt.ylabel("best expert percentage")
+    # plt.legend()
+    # plt.title("Best expert percentage of clusters")
+    # plt.savefig('fig/clusters.png', bbox_inches='tight')
+    # print([value for key,value in sorted(cluster_count.items())])
     
     
     # for point, label in zip(X, labels):
@@ -286,12 +305,16 @@ def confSort(keys):
     return sorted(keys, key=lambda element: list(int(x.replace('f', '')) for x in element.split('s')[:]))
 
 def main():
-    # dirs = [path for path in os.listdir("../cache/output") if path.startswith('tc')]
-    # best_result = {}
-    # for dir in dirs:
-    #     best_set = countStat("../cache/output/"+dir)
-    #     best_result[dir] = confSort(best_set)
-    # pickle.dump(best_result, open("../cache/output/best_result.pkl", "wb"))
+    dirs = [path for path in os.listdir("../cache/output") if path.startswith('tc')]
+    best_result = {}
+    best_resultset = set()
+    for dir in dirs:
+        best_set = countStat("../cache/output/"+dir)
+        best_result[dir] = confSort(best_set)
+        best_resultset.add(tuple(confSort(best_set)))
+    # print(best_resultset)
+    pickle.dump(best_resultset, open("../cache/output/best_resultset.pkl", "wb"))
+    pickle.dump(best_result, open("../cache/output/best_result.pkl", "wb"))
     # result_cluster()
     feature_cluster()
     
