@@ -1,6 +1,4 @@
 import re
-from turtle import color
-from importlib_metadata import files
 
 from sklearn.cluster import KMeans
 from pyclustertend import hopkins
@@ -21,7 +19,7 @@ from collections import defaultdict
 import pandas as pd
 
 
-thres = 5
+thres = 1
 
 
 def feature_cluster():
@@ -76,7 +74,7 @@ def feature_cluster():
     #     # plt.title('Gap Values by Cluster Count')
     #     # plt.savefig(os.path.join(self.output_path, "seg_{:s}".format(str(self.seg_len))+"_gap.png"))
         
-    #     n_clusters = 24
+        # n_clusters = 24
 
     # build kmeans model
     kmeans_model = KMeans(n_clusters=n_clusters, random_state=1).fit(X)
@@ -208,46 +206,113 @@ def result_cluster():
     # print(cluster_map)
     # print(cluster_count)
     
-    feature = 'size_avg'
+    feature = 'edc_avg'
     feature_files = [path for path in os.listdir("../cache/output/features")]
+    
+    # 0 (2290:2916), 1 (217:118), 2 (63:1754), 7 (22518: 4053), 9 (229:0)
+    
+    
+    cluster0 = []
     cluster1 = []
-    cluster5 = []
-    cluster6 = []
-    cluster10 = []
+    cluster2 = []
+    cluster7 = []
+    cluster9 = []
     for file in feature_files:
         features = pickle.load(open("../cache/output/features/"+file, "rb"))
+        if cluster_map[file.split('.')[0]] == 0:
+            cluster0.append(features[feature])
         if cluster_map[file.split('.')[0]] == 1:
             cluster1.append(features[feature])
-            # cluster1.append(features[feature].values())
-        if cluster_map[file.split('.')[0]] == 5:
-            cluster5.append(features[feature])
-            # cluster5.append(features[feature].values())
-        if cluster_map[file.split('.')[0]] == 6:
-            cluster6.append(features[feature])
-            # cluster6.append(features[feature].values())
-        if cluster_map[file.split('.')[0]] == 10:
-            cluster10.append(features[feature])
-            # cluster10.append(features[feature].values())
+        if cluster_map[file.split('.')[0]] == 2:
+            cluster2.append(features[feature])
+        if cluster_map[file.split('.')[0]] == 7:
+            cluster7.append(features[feature])
+        if cluster_map[file.split('.')[0]] == 9:
+            cluster9.append(features[feature])    
     
-    cmap = matplotlib.cm.get_cmap("Set3").colors
+    cluster_features = [cluster0, cluster1, cluster2, cluster7, cluster9]
+    
+    # for i1, cluster in enumerate(cluster_features):
+    #     eval_point = cluster[0]
+    #     a = 0
+    #     for point in cluster:
+    #         a += abs(point-eval_point)
+    #     a /= (len(cluster)-1)
+    #     b = float('inf')
+    #     for i2, other_c in enumerate(cluster_features):
+    #         if i1 != i2:
+    #             b_ = 0
+    #             for point in other_c:
+    #                 b_ += abs(point-eval_point)
+    #             b_ /= len(other_c)
+    #             if b_ < b:
+    #                 b = b_
+    #     print(a, b)
+    #     s = (b-a)/max(a, b)
+    #     print(s)    
+    
+    cmap = matplotlib.cm.get_cmap("Set1").colors
 
+    # fig = plt.figure()
+    # for line in cluster0:
+    #     plt.scatter(1, line, color=cmap[0], marker='o')
+    #     # plt.plot([x+1 for x in range(len(line))], line, color=cmap[0])
+    # for line in cluster1:
+    #     plt.scatter(2, line, color=cmap[5], marker='^')
+    #     # plt.plot([x+1 for x in range(len(line))], line, color=cmap[5])
+    # for line in cluster2:
+    #     plt.scatter(3, line, color=cmap[2], marker='x')
+    #     # plt.plot([x+1 for x in range(len(line))], line, color=cmap[2])
+    # for line in cluster7:
+    #     plt.scatter(4, line, color=cmap[3], marker='+')
+    #     # plt.plot([x+1 for x in range(len(line))], line, color=cmap[3])
+    # for line in cluster9:
+    #     plt.scatter(5, line, color=cmap[3], marker='<')
+    #     # plt.plot([x+1 for x in range(len(line))], line, color=cmap[6])
+    # # plt.xticks([x+1 for x in range(len(line))], ['avg_edc'+str(x+1) for x in range(len(line))])
+    # plt.xticks([x+1 for x in range(5)], ['cluster'+str(x+1) for x in range(5)])
+    # plt.title(feature)
+    # plt.savefig('fig/avgsize.png')
+    
+    for i1, cluster in enumerate(cluster_features):
+        eval_point = cluster[0]
+        a = 0
+        for point in cluster:
+            a += math.dist(list(point.values()), list(eval_point.values()))
+        a /= (len(cluster)-1)
+        b = float('inf')
+        for i2, other_c in enumerate(cluster_features):
+            if i1 != i2:
+                b_ = 0
+                for point in other_c:
+                    b_ += math.dist(list(point.values()), list(eval_point.values()))
+                b_ /= len(other_c)
+                if b_ < b:
+                    b = b_
+        print(a, b)
+        s = (b-a)/max(a, b)
+        print(s)
+    
     fig = plt.figure()
+    for line in cluster0:
+        # plt.scatter(1, line, color=cmap[0], marker='o')
+        plt.plot([x+1 for x in range(len(line))], list(line.values()), color=cmap[0])
     for line in cluster1:
-        plt.scatter(1, line, color=cmap[0], marker='o')
-        # plt.plot([x+1 for x in range(len(line))], line, color=cmap[0])
-    for line in cluster5:
-        plt.scatter(2, line, color=cmap[5], marker='^')
-        # plt.plot([x+1 for x in range(len(line))], line, color=cmap[5])
-    for line in cluster6:
-        plt.scatter(3, line, color=cmap[2], marker='x')
-        # plt.plot([x+1 for x in range(len(line))], line, color=cmap[2])
-    for line in cluster10:
-        plt.scatter(4, line, color=cmap[3], marker='+')
-        # plt.plot([x+1 for x in range(len(line))], line, color=cmap[3])
+        # plt.scatter(2, line, color=cmap[5], marker='^')
+        plt.plot([x+1 for x in range(len(line))], list(line.values()), color=cmap[5])
+    for line in cluster2:
+        # plt.scatter(3, line, color=cmap[2], marker='x')
+        plt.plot([x+1 for x in range(len(line))], list(line.values()), color=cmap[2])
+    for line in cluster7:
+        # plt.scatter(4, line, color=cmap[3], marker='+')
+        plt.plot([x+1 for x in range(len(line))], list(line.values()), color=cmap[3])
+    for line in cluster9:
+        # plt.scatter(5, line, color=cmap[3], marker='<')
+        plt.plot([x+1 for x in range(len(line))], list(line.values()), color=cmap[6])
     # plt.xticks([x+1 for x in range(len(line))], ['avg_edc'+str(x+1) for x in range(len(line))])
-    plt.xticks([x+1 for x in range(4)], ['cluster'+str(x+1) for x in range(4)])
+    # plt.xticks([x+1 for x in range(5)], ['cluster'+str(x+1) for x in range(5)])
     plt.title(feature)
-    plt.savefig('fig/avgsize.png')
+    plt.savefig('fig/'+feature+'.png')
         
 def countStat(dirPath):   
     hr = {}
@@ -256,6 +321,9 @@ def countStat(dirPath):
     
     for root, dirs, files in os.walk(dirPath):
         for file in files:
+            
+            if file.endswith(".pkl"):
+                continue
 
             file_res = []
 
@@ -296,7 +364,7 @@ def countStat(dirPath):
     imp_max = max(list([improve_minus[x] for x in improve_minus.keys()]))
     best_set = []
     for x in hr.keys():
-        if imp_max - improve_minus[x] < thres:
+        if (imp_max - improve_minus[x])/imp_max < thres/100:
             best_set.append(x)
 
     return best_set

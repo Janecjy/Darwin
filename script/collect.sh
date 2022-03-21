@@ -1,10 +1,10 @@
 #!/bin/bash
 
 COUNT=0
-FILES="/home/janechen/cache/traces/volincrease/*"
+FILES="/home/janechen/cache/traces/feb3/*"
 for TRACE in $FILES
 do
-    ./script/collectfeaturesub.sh $TRACE &
+    ./script/collectsub.sh $TRACE &
     ((COUNT++))
     if [ $COUNT -eq 40 ]
         then
@@ -12,3 +12,4 @@ do
             COUNT=0
     fi
 done
+

@@ -1,8 +1,10 @@
+import pickle
 from bloom_filter2 import BloomFilter
 from collections import defaultdict
 import getopt
 import sys
 import time
+import os
 
 from lru import LRU
 
@@ -163,6 +165,9 @@ def run():
     firstWarmup = True
     # reqs = []
     # freqs = []
+    hits = []
+    
+    print(os.path.join("../cache/output", trace_path.split('/')[6].split('.')[0], 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"))
 
     with open(trace_path) as fp:
         for line in fp:
@@ -188,6 +193,9 @@ def run():
             #         firstWarmup = False
                 if obj_hit == 1:
                     tot_hoc_hit += 1
+                    hits.append(1)
+                else:
+                    hits.append(0)
                 tot_obj_hit += obj_hit
                 tot_byte_miss += byte_miss
                 tot_req += 1
@@ -198,6 +206,8 @@ def run():
                 print('tot hoc size: {:d}, tot dc size: {:d}, one hit obj num: {:d}'.format(hoc_uniq_size, dc_uniq_size, tot_onehit_obj))
                 print('bloom_miss: {:d}, compulsory_miss: {:d}, admission_miss: {:d}, capacity_miss: {:d}'.format(bloom_miss, compulsory_miss, admission_miss, capacity_miss))
                 sys.stdout.flush()
+                
+                pickle.dump(hits, open(os.path.join("../cache/output", trace_path.split('/')[6].split('.')[0], 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"), "wb"))
 
                 # import numpy as np
                 # import matplotlib.pyplot as plt

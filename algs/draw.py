@@ -6,7 +6,7 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
-thres = 10
+thres = 1
 
 def countStat(dirPath):   
     # print(dirPath) 
@@ -59,12 +59,13 @@ def countStat(dirPath):
     best_set = []
     for x in hr.keys():
         if imp_max - improve_minus[x] < thres:
+        # if (imp_max - improve_minus[x])/imp_max < thres/100:
             best_set.append(x)
         # if hr_max - hr[x][0] < thres:
         #     best_set.append(x)
 
     # return hr, disk_write, improve_minus, best_set
-    return best_set
+    return hr, best_set
 
 def confSort(keys):
     return sorted(keys, key=lambda element: list(int(x.replace('f', '')) for x in element.split('s')[:]))
@@ -73,7 +74,7 @@ def drawSeparate(name):
 
     dirPath = "/home/janechen/cache/output/"+name
 
-    hr, disk_write, improve_minus, best_set = countStat(dirPath)
+    hr, best_set = countStat(dirPath)
     # print(improve_minus)
 
     # # selectedConf = [ x for x in confSort(hr.keys()) if not x.startswith("f3") ]
@@ -148,6 +149,8 @@ def drawTog(best_sets, best_resultset):
         Y.append(y)
         for e in expert_list:
             if e not in best_set:
+                if e == 'f4s50':
+                    print(x, y)
                 not_included[e] += len(x)
     # print(len(X))
     # print(len(Y))
@@ -163,29 +166,44 @@ def drawTog(best_sets, best_resultset):
         index += 1
     plt.xlabel("TC-0 Request Rate (req/s)")
     plt.ylabel("TC-1 Request Rate (req/s)")
-    plt.title("Best Expert Set for Tragen TC-0 & 1 Traffic Mix")
-    plt.legend()
+    plt.title("Best Expert Set for Tragen TC-0 & 1 Traffic Mix (Worse Thres="+str(thres)+'%)')
+    # plt.legend(bbox_to_anchor=(1.05, 1.0), loc='upper left')
+    plt.tight_layout()
     print(best_resultset)
     print(not_included)
     print(len(best_sets))
     plt.savefig("./output.png")
+    
+    plt.figure(figsize=(20,5))
+    plt.bar(range(len(not_included)), list(not_included.values()), align='center')
+    plt.xticks(range(len(not_included)), list(not_included.keys()))
+    # # for python 2.x:
+    # plt.bar(range(len(D)), D.values(), align='center')  # python 2.x
+    # plt.xticks(range(len(D)), D.keys())  # in python 2.x
+    # plt.show()
+    plt.xlabel("Expert")
+    plt.ylabel("Num of Segments Perform Poorly with the Expert")
+    plt.title("Expert Not Among Best Expert Set Distribution (Worse Thres="+str(thres)+'%)')
+    plt.tight_layout()
+    plt.savefig("./output1.png")
 
     # if not_included:
     #     print(not_included)
 
 
 if __name__ == '__main__':
-    path = sys.argv[1]
-    best_sets = {}
-    best_resultset = set()
-    for file in os.listdir(path):
-        # print(file)
-        if file.startswith("tc"):
-            best_set = countStat(os.path.join(path, file))
-            mixture = file.split('-')[4].split(':')
-            x = int(mixture[0])
-            y = int(mixture[1])
-            best_sets[(x, y)] = tuple(confSort(best_set))
-            best_resultset.add(tuple(confSort(best_set)))
-    # print(best_sets)
-    drawTog(best_sets, list(best_resultset))
+    # path = sys.argv[1]
+    # best_sets = {}
+    # best_resultset = set()
+    # for file in os.listdir(path):
+    #     # print(file)
+    #     if file.startswith("tc"):
+    #         best_set = countStat(os.path.join(path, file))
+    #         mixture = file.split('-')[4].split(':')
+    #         x = int(mixture[0])
+    #         y = int(mixture[1])
+    #         best_sets[(x, y)] = tuple(confSort(best_set))
+    #         best_resultset.add(tuple(confSort(best_set)))
+    # # print(best_sets)
+    # drawTog(best_sets, list(best_resultset))
+    drawSeparate("tc-0-tc-1-2226:676")
