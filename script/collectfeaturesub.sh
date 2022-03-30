@@ -7,8 +7,4 @@ FILENAMEARR=(${FILENAME//./ })
 NAME=${FILENAMEARR[0]}
 # echo ${NAME}
 
-if [ ! -f ~/cache/output/features/${NAME}.pkl ]
-then
-    echo ${NAME}
-    python ./algs/utils/traffic_model/extract_feature.py $NAME
-fi
+python ./algs/utils/traffic_model/extract_feature.py $NAME
