@@ -12,8 +12,8 @@ import torch.nn as nn
 import numpy as np
 
 
-TRAINING_LEN = 1000000
-PREDICTION_LEN = 1000000
+TRAINING_LEN = 2000000
+PREDICTION_LEN = 2000000
 MB = 1000000
 MAX_LIST = [0] * 22
 MIN_LIST = [0] * 22
@@ -71,7 +71,7 @@ def gen_data(expert_0, expert_1):
             x = feature[:]
             x.append(e0)
             # y = [1, 0] if e1 == 1 else [0, 1]
-            y = 1 if e1 == 1 else 1
+            y = e1
             if count < TRAINING_LEN:
                 input.append(x)
                 labels.append(y)
@@ -111,17 +111,19 @@ def test(device, epoch, model, _data, _label, batch_size):
         correct = 0
         prob_correct = 0
         total = 0
+        e0_hits = 0
         true_hit = 0
         predicted_hit = 0
         prob_predicted_hit = 0
         prob_known = False
-        # import pdb; pdb.set_trace()
         for d, l in zip(data_i, label_i):
             e0_hit = int(d.tolist()[22])
+            if e0_hit == 1:
+                e0_hits += 1
             if not prob_known:    
                 if hit_prob_list[e0_hit] < 0:
                     d = d.to(device)
-                    outputs = model(d)
+                    outputs = torch.sigmoid(model(d))
                     hit_prob = outputs.item()
                     hit_prob_list[e0_hit] = hit_prob
                 if hit_prob_list[0] > 0 and hit_prob_list[1] > 0:
@@ -132,6 +134,8 @@ def test(device, epoch, model, _data, _label, batch_size):
             hit_prob = hit_prob_list[e0_hit]
             predicted = 1 if hit_prob > 0.5 else 0
             real = l.item()
+            decision = choices([1, 0], [hit_prob, 1-hit_prob])[0]
+            # import pdb; pdb.set_trace()
             
             if predicted == real:
                 correct += 1
@@ -139,7 +143,7 @@ def test(device, epoch, model, _data, _label, batch_size):
                 predicted_hit += 1
             if real == 1:
                 true_hit += 1
-            decision = choices([1, 0], [hit_prob, 1-hit_prob])
+            
             if decision == 1:
                 prob_predicted_hit += 1
             if decision == real:
@@ -147,23 +151,32 @@ def test(device, epoch, model, _data, _label, batch_size):
             # total += labels.size(0)
             # correct += (predicted == labels).sum().item()
         print("Trace {} results: ".format(i_test))
-        print('Accuracy : {} %'.format(100 * correct / total))
-        print('True Hit Rate : {} %'.format(100 * true_hit / total))
-        print('Predicted Hit Rate : {} %'.format(100 * predicted_hit / total))
-        print('Prob Accuracy : {} %'.format(100 * prob_correct / total))
-        print('Prob Hit Rate : {} %'.format(100 * prob_predicted_hit / total))
+        print('Expert 0 Hit Rate : {} %'.format(100 * e0_hits / total))
+        print('Expert 1 Hit Prediction Accuracy : {} %'.format(100 * correct / total))
+        if (e0_hits > predicted_hit and e0_hits > true_hit) or (e0_hits <= predicted_hit and e0_hits <= true_hit):
+            print('Experts Order Prediction is correct')
+        else:
+            print('Experts Order Prediction is wrong')
+        print('True Expert 1 Hit Rate : {} %'.format(100 * true_hit / total))
+        print('Predicted Expert 1 Hit Rate : {} %'.format(100 * predicted_hit / total))
+        print('Probabilistically Predicted Expert 1 Accuracy : {} %'.format(100 * prob_correct / total))
+        if (e0_hits > prob_predicted_hit and e0_hits > true_hit) or (e0_hits <= prob_predicted_hit and e0_hits <= true_hit):
+            print('Experts Probabilistically Order Prediction is correct')
+        else:
+            print('Experts Probabilistically Order Prediction is wrong')
+        print('Probabilistically Predicted Expert 1 Hit Rate : {} %'.format(100 * prob_predicted_hit / total))
         sys.stdout.flush()
         total_accuracy += 100 * correct / total
 
     print('Avg Accuracy : {} %'.format(total_accuracy / 5))
 
 def main():
-    # hidden_size = int(sys.argv[1]) # hidden layer node number (2-9)
-    # expert_0 = sys.argv[2]
-    # expert_1 = sys.argv[3]
-    hidden_size = 5
-    expert_0 = "f4s50"
-    expert_1 = "f2s50"
+    hidden_size = int(sys.argv[1]) # hidden layer node number (2-9)
+    expert_0 = sys.argv[2]
+    expert_1 = sys.argv[3]
+    # hidden_size = 5
+    # expert_0 = "f4s50"
+    # expert_1 = "f2s50"
     
     # Check Device configuration
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
@@ -171,8 +184,8 @@ def main():
     # # Define Hyper-parameters 
     input_size = 23
     output_size = 1
-    num_epochs = 100
-    batch_size = 10000
+    num_epochs = 50
+    batch_size = 1000
     learning_rate = 0.001
 
 
@@ -239,7 +252,7 @@ def main():
                 loss.backward()
                 optimizer.step()
                 
-                if (i+1) % 100000 == 0:
+                if (i+1) % 100 == 0:
                     # end_t = time.time()
                     print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}' 
                         .format(epoch+1, num_epochs, i+1, total_step, loss.item()))
