@@ -12,8 +12,8 @@ import torch.nn as nn
 import numpy as np
 
 
-TRAINING_LEN = 2000000
-PREDICTION_LEN = 2000000
+TRAINING_LEN = 1000000
+PREDICTION_LEN = 1000000
 MB = 1000000
 MAX_LIST = [0] * 22
 MIN_LIST = [0] * 22
@@ -24,13 +24,15 @@ def gen_data(expert_0, expert_1):
     prediction_input = []
     prediction_labels = []
     
-    # feature_files = [path for path in os.listdir("../cache/output/features")]
+    feature_files = [path for path in os.listdir("../cache/output/features")]
+    test_files = ["tc-0-tc-1-2290:0", "tc-0-tc-1-0:24300", "tc-0-tc-1-2290:2916", "tc-0-tc-1-22518:4053", "tc-0-tc-1-2243:488"]
     feature_set = ['sd_avg', 'iat_avg', 'size_avg', 'edc_avg']
     name_list = []
     feature_list = []
     
-    # for file in feature_files:
-    for file in ["tc-0-tc-1-2290:0.pkl", "tc-0-tc-1-0:24300.pkl", "tc-0-tc-1-2290:2916.pkl", "tc-0-tc-1-22518:4053.pkl", "tc-0-tc-1-2243:488.pkl"]:
+    for file in feature_files:
+        
+    # for file in ["tc-0-tc-1-2290:0.pkl", "tc-0-tc-1-0:24300.pkl", "tc-0-tc-1-2290:2916.pkl", "tc-0-tc-1-22518:4053.pkl", "tc-0-tc-1-2243:488.pkl"]:
     # file = "tc-0-tc-1-138:958.pkl"
         feature = []
         name = file.split('.')[0]
@@ -59,6 +61,8 @@ def gen_data(expert_0, expert_1):
         # print(feature_list)
         # print(MIN_LIST)
         # print(MAX_LIST)
+        print("Collect data from "+name)
+        sys.stdout.flush()
         feature = [ (feature_list[i][j]- MIN_LIST[j])/(MAX_LIST[j]-MIN_LIST[j]) for j in range(len(MIN_LIST))]
         
         e0_hits = pickle.load(open("../cache/output/"+name+'/'+expert_0+'-hits.pkl', "rb"))
@@ -76,6 +80,8 @@ def gen_data(expert_0, expert_1):
                 input.append(x)
                 labels.append(y)
             else:
+                if name not in test_files:
+                    break
                 if count >= TRAINING_LEN + PREDICTION_LEN:
                     break
                 prediction_input.append(x)
@@ -184,7 +190,7 @@ def main():
     # # Define Hyper-parameters 
     input_size = 23
     output_size = 1
-    num_epochs = 50
+    num_epochs = 20
     batch_size = 1000
     learning_rate = 0.001
 
@@ -261,14 +267,14 @@ def main():
                     sys.stdout.flush()
             
             # Save the model checkpoint
-            torch.save(model.state_dict(), os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "model-"+str(epoch)+".ckpt"))
+            torch.save(model.state_dict(), os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "model-h"+str(hidden_size)+"-"+str(epoch)+".ckpt"))
             test(device, epoch, model, _data, _label, batch_size)
                     
         # print(model.state_dict())
     
     else:
         model = NeuralNet(input_size, hidden_size, output_size).to(device)
-        model.load_state_dict(torch.load('../cache/output/models/'+expert_0+'-'+expert_1+'-model-norm.ckpt'))
+        model.load_state_dict(torch.load('../cache/output/models/'+expert_0+'-'+expert_1+'-model.ckpt'))
         test(device, 0, model, _data, _label, batch_size)
     
 
