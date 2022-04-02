@@ -1,7 +1,7 @@
 #!/bin/bash
 
 COUNT=0
-FILES="/home/janechen/cache/traces/volincrease/*"
+FILES="/home/janechen/cache/traces/feb3/*"
 for TRACE in $FILES
 do
     ./script/collectfeaturesub.sh $TRACE &

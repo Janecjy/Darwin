@@ -1,7 +1,7 @@
 #!/bin/bash
 
 COUNT=0
-FILES="/home/janechen/cache/traces/feb3-new/*"
+FILES="/home/janechen/volincrease/*"
 for TRACE in $FILES
 do
     ./script/batchsub.sh $TRACE &

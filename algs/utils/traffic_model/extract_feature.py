@@ -250,40 +250,40 @@ def main():
     # sd_goals = dict.fromkeys([x+1 for x in range(7)])
     # iat_goals = dict.fromkeys([x+1 for x in range(7)])
     # edc_goals = dict.fromkeys([x+1 for x in range(7)])
-    loaded = pickle.load(open("/home/janechen/cache/output/features/"+name+".pkl", "rb"))
-    # size_g = loaded["sizes"]
-    # size_goals = [value for key,value in sorted(size_g.items())]
-    # for num in range(7):
-    #     sd_g = loaded["sd_"+str(num+1)]
-    #     sd_goals[num+1] = [value for key,value in sorted(sd_g.items())]
-    #     iat_g = loaded["iat_"+str(num+1)]
-    #     iat_goals[num+1] = [value for key,value in sorted(iat_g.items())]
-    #     edc_g = loaded["edc_"+str(num+1)]
-    #     edc_goals[num+1] = [value for key,value in sorted(edc_g.items())]
-    # sd_dis = dict.fromkeys([x+1 for x in range(7)])
-    # for x in sd_dis.keys():
-    #     sd_dis[x] = []
-    # iat_dis = dict.fromkeys([x+1 for x in range(7)])
-    # for x in iat_dis.keys():
-    #     iat_dis[x] = []
-    # edc_dis = dict.fromkeys([x+1 for x in range(7)])
-    # for x in edc_dis.keys():
-    #     edc_dis[x] = []
-    # size_dis = []
-    sd_avg_goals = loaded["sd_avg"]
-    iat_avg_goals = loaded["iat_avg"]
-    edc_avg_goals = loaded["edc_avg"]
-    size_avg_goal = loaded["size_avg"]
-    sd_avg_dis = dict.fromkeys([x+1 for x in range(7)])
-    for x in sd_avg_dis.keys():
-        sd_avg_dis[x] = []
-    iat_avg_dis = dict.fromkeys([x+1 for x in range(7)])
-    for x in iat_avg_dis.keys():
-        iat_avg_dis[x] = []
-    edc_avg_dis = dict.fromkeys([x+1 for x in range(7)])
-    for x in edc_avg_dis.keys():
-        edc_avg_dis[x] = []
-    size_avg_dis = []
+    # loaded = pickle.load(open("/home/janechen/cache/output/features/"+name+".pkl", "rb"))
+    # # size_g = loaded["sizes"]
+    # # size_goals = [value for key,value in sorted(size_g.items())]
+    # # for num in range(7):
+    # #     sd_g = loaded["sd_"+str(num+1)]
+    # #     sd_goals[num+1] = [value for key,value in sorted(sd_g.items())]
+    # #     iat_g = loaded["iat_"+str(num+1)]
+    # #     iat_goals[num+1] = [value for key,value in sorted(iat_g.items())]
+    # #     edc_g = loaded["edc_"+str(num+1)]
+    # #     edc_goals[num+1] = [value for key,value in sorted(edc_g.items())]
+    # # sd_dis = dict.fromkeys([x+1 for x in range(7)])
+    # # for x in sd_dis.keys():
+    # #     sd_dis[x] = []
+    # # iat_dis = dict.fromkeys([x+1 for x in range(7)])
+    # # for x in iat_dis.keys():
+    # #     iat_dis[x] = []
+    # # edc_dis = dict.fromkeys([x+1 for x in range(7)])
+    # # for x in edc_dis.keys():
+    # #     edc_dis[x] = []
+    # # size_dis = []
+    # sd_avg_goals = loaded["sd_avg"]
+    # iat_avg_goals = loaded["iat_avg"]
+    # edc_avg_goals = loaded["edc_avg"]
+    # size_avg_goal = loaded["size_avg"]
+    # sd_avg_dis = dict.fromkeys([x+1 for x in range(7)])
+    # for x in sd_avg_dis.keys():
+    #     sd_avg_dis[x] = []
+    # iat_avg_dis = dict.fromkeys([x+1 for x in range(7)])
+    # for x in iat_avg_dis.keys():
+    #     iat_avg_dis[x] = []
+    # edc_avg_dis = dict.fromkeys([x+1 for x in range(7)])
+    # for x in edc_avg_dis.keys():
+    #     edc_avg_dis[x] = []
+    # size_avg_dis = []
     
 
     ## Stack distance is grouped in multiples of 200 MB and inter-arrival time in 200 seconds
@@ -371,11 +371,11 @@ def main():
                     edc_avg_[i+1] += 1/edc_count*(edc-edc_avg_[i+1])
             
             line_num.append(line_count)
-            for x in iat_avg_converge.keys():
-                iat_avg_converge[x].append(iat_avg[x])
-                sd_avg_converge[x].append(sd_avg[x])
-                edc_avg_converge[x].append(edc_avg_[x])
-            sizes_avg_converge.append(size_avg)
+            # for x in iat_avg_converge.keys():
+            #     iat_avg_converge[x].append(iat_avg[x])
+            #     sd_avg_converge[x].append(sd_avg[x])
+            #     edc_avg_converge[x].append(edc_avg_[x])
+            # sizes_avg_converge.append(size_avg)
             
             
         #     size_val = []
@@ -403,11 +403,11 @@ def main():
         #             size_val.append(0)
         #     size_dis.append(dist(size_val, size_goals[:len(size_val)]))
             
-            for num in range(7):
-                iat_avg_dis[num+1].append(abs(iat_avg_goals[num+1]-iat_avg[num+1])/iat_avg_goals[num+1]*100)
-                sd_avg_dis[num+1].append(abs(sd_avg_goals[num+1]-sd_avg[num+1])/sd_avg_goals[num+1]*100)
-                edc_avg_dis[num+1].append(abs(edc_avg_goals[num+1]-edc_avg[num+1])/edc_avg_goals[num+1]*100)
-            size_avg_dis.append(abs(size_avg_goal-size_avg)/size_avg_goal*100)
+            # for num in range(7):
+            #     iat_avg_dis[num+1].append(abs(iat_avg_goals[num+1]-iat_avg[num+1])/iat_avg_goals[num+1]*100)
+            #     sd_avg_dis[num+1].append(abs(sd_avg_goals[num+1]-sd_avg[num+1])/sd_avg_goals[num+1]*100)
+            #     edc_avg_dis[num+1].append(abs(edc_avg_goals[num+1]-edc_avg[num+1])/edc_avg_goals[num+1]*100)
+            # size_avg_dis.append(abs(size_avg_goal-size_avg)/size_avg_goal*100)
             
             
         line_count += 1
@@ -483,168 +483,168 @@ def main():
     pickle.dump(features, open(os.path.join("/home/janechen/cache/output/features/"+name+".pkl"), "wb"))
     
     # create figure and axis objects with subplots()
-    cmap = matplotlib.cm.get_cmap("Set3").colors
-    plot1 = plt.figure(figsize=(20,5))
-    # make a plot
-    count = 0
-    for x in iat_avg_converge.keys():
-        plt.plot(line_num, iat_avg_converge[x], color =cmap[count], label="iat_"+str(x))
-        count += 1
-    # set x-axis label
-    plt.xlabel("line count")
-    ticks = range(1000000, 10000000, 1000000)
-    plt.xticks(ticks, ticks)
+    # cmap = matplotlib.cm.get_cmap("Set3").colors
+    # plot1 = plt.figure(figsize=(20,5))
+    # # make a plot
+    # count = 0
+    # for x in iat_avg_converge.keys():
+    #     plt.plot(line_num, iat_avg_converge[x], color =cmap[count], label="iat_"+str(x))
+    #     count += 1
+    # # set x-axis label
+    # plt.xlabel("line count")
+    # ticks = range(1000000, 10000000, 1000000)
+    # plt.xticks(ticks, ticks)
 
-    # set y-axis label
-    plt.ylabel("Average iat")
-    plt.legend()
-    plt.title(name+" average iat timeline")
-    plt.savefig('fig/iat.png', bbox_inches='tight')
+    # # set y-axis label
+    # plt.ylabel("Average iat")
+    # plt.legend()
+    # plt.title(name+" average iat timeline")
+    # plt.savefig('fig/iat.png', bbox_inches='tight')
     
-    plot2 = plt.figure(figsize=(20,5))
-    # make a plot
-    count = 0
-    for x in iat_avg_converge.keys():
-        plt.plot(line_num, sd_avg_converge[x], color =cmap[count], label="sd_"+str(x))
-        count += 1
-    # set x-axis label
-    plt.xlabel("line count")
-    plt.xticks(ticks, ticks)
-    # set y-axis labelå
-    plt.ylabel("Average sd")
-    plt.legend()
-    plt.title(name+" average sd timeline")
-    plt.savefig('fig/sd.png', bbox_inches='tight')
+    # plot2 = plt.figure(figsize=(20,5))
+    # # make a plot
+    # count = 0
+    # for x in iat_avg_converge.keys():
+    #     plt.plot(line_num, sd_avg_converge[x], color =cmap[count], label="sd_"+str(x))
+    #     count += 1
+    # # set x-axis label
+    # plt.xlabel("line count")
+    # plt.xticks(ticks, ticks)
+    # # set y-axis labelå
+    # plt.ylabel("Average sd")
+    # plt.legend()
+    # plt.title(name+" average sd timeline")
+    # plt.savefig('fig/sd.png', bbox_inches='tight')
     
-    plot3 = plt.figure(figsize=(20,5))
-    # make a plot
-    count = 0
-    plt.plot(line_num, sizes_avg_converge, color =cmap[count], label="size-avg")
-    # set x-axis label
-    plt.xlabel("line count")
-    plt.xticks(ticks, ticks)
-    # set y-axis labelå
-    plt.ylabel("Average size")
-    plt.legend()
-    plt.title(name+" average size timeline")
-    plt.savefig('fig/size.png', bbox_inches='tight')
-    
-    plot4 = plt.figure(figsize=(20,5))
-    # make a plot
-    count = 0
-    for x in edc_avg_converge.keys():
-        plt.plot(line_num, edc_avg_converge[x], color =cmap[count], label="edc_"+str(x))
-        count += 1
-    # set x-axis label
-    plt.xlabel("line count")
-    plt.xticks(ticks, ticks)
-    # set y-axis labelå
-    plt.ylabel("Average edc")
-    plt.legend()
-    plt.title(name+" average edc timeline")
-    plt.savefig('fig/edc.png', bbox_inches='tight')
+    # plot3 = plt.figure(figsize=(20,5))
+    # # make a plot
+    # count = 0
+    # plt.plot(line_num, sizes_avg_converge, color =cmap[count], label="size-avg")
+    # # set x-axis label
+    # plt.xlabel("line count")
+    # plt.xticks(ticks, ticks)
+    # # set y-axis labelå
+    # plt.ylabel("Average size")
+    # plt.legend()
+    # plt.title(name+" average size timeline")
+    # plt.savefig('fig/size.png', bbox_inches='tight')
     
     # plot4 = plt.figure(figsize=(20,5))
     # # make a plot
     # count = 0
-    # for x in iat_dis.keys():
-    #     plt.plot(line_num, iat_dis[x], color =cmap[count], label="iat_"+str(x))
+    # for x in edc_avg_converge.keys():
+    #     plt.plot(line_num, edc_avg_converge[x], color =cmap[count], label="edc_"+str(x))
     #     count += 1
     # # set x-axis label
     # plt.xlabel("line count")
     # plt.xticks(ticks, ticks)
+    # # set y-axis labelå
+    # plt.ylabel("Average edc")
+    # plt.legend()
+    # plt.title(name+" average edc timeline")
+    # plt.savefig('fig/edc.png', bbox_inches='tight')
+    
+    # # plot4 = plt.figure(figsize=(20,5))
+    # # # make a plot
+    # # count = 0
+    # # for x in iat_dis.keys():
+    # #     plt.plot(line_num, iat_dis[x], color =cmap[count], label="iat_"+str(x))
+    # #     count += 1
+    # # # set x-axis label
+    # # plt.xlabel("line count")
+    # # plt.xticks(ticks, ticks)
 
-    # # set y-axis label
-    # plt.ylabel("Distance between current iat distribution and final iat distribution")
-    # plt.legend()
-    # plt.title(name+" iat distribution distance")
-    # plt.savefig('fig/iat-dis.png', bbox_inches='tight')
+    # # # set y-axis label
+    # # plt.ylabel("Distance between current iat distribution and final iat distribution")
+    # # plt.legend()
+    # # plt.title(name+" iat distribution distance")
+    # # plt.savefig('fig/iat-dis.png', bbox_inches='tight')
     
-    # plot5 = plt.figure(figsize=(20,5))
+    # # plot5 = plt.figure(figsize=(20,5))
+    # # # make a plot
+    # # count = 0
+    # # for x in sd_dis.keys():
+    # #     plt.plot(line_num, sd_dis[x], color =cmap[count], label="sd_"+str(x))
+    # #     count += 1
+    # # # set x-axis label
+    # # plt.xlabel("line count")
+    # # plt.xticks(ticks, ticks)
+    # # # set y-axis labelå
+    # # plt.ylabel("Distance between current sd distribution and final sd distribution")
+    # # plt.legend()
+    # # plt.title(name+" sd distribution distance")
+    # # plt.savefig('fig/sd-dis.png', bbox_inches='tight')
+    
+    # # plot6 = plt.figure(figsize=(20,5))
+    # # # make a plot
+    # # count = 0
+    # # plt.plot(line_num, size_dis, color =cmap[count], label="size-avg")
+    # # # set x-axis label
+    # # plt.xlabel("line count")
+    # # plt.xticks(ticks, ticks)
+    # # # set y-axis labelå
+    # # plt.ylabel("Distance between current size distribution and final size distribution")
+    # # plt.legend()
+    # # plt.title(name+" size distribution distance")
+    # # plt.savefig('fig/size-dis.png', bbox_inches='tight')
+    
+    # plot7 = plt.figure(figsize=(20,5))
     # # make a plot
     # count = 0
-    # for x in sd_dis.keys():
-    #     plt.plot(line_num, sd_dis[x], color =cmap[count], label="sd_"+str(x))
+    # for x in iat_avg_dis.keys():
+    #     plt.plot(line_num, iat_avg_dis[x], color =cmap[count], label="iat_"+str(x))
+    #     count += 1
+    # # set x-axis label
+    # plt.xlabel("line count")
+    # plt.xticks(ticks, ticks)
+    # # set y-axis label
+    # plt.ylabel("Distance between current iat average and final iat average")
+    # plt.legend()
+    # plt.title(name+" iat average distance")
+    # plt.savefig('fig/iat-avg-dis.png', bbox_inches='tight')
+    
+    # plot8 = plt.figure(figsize=(20,5))
+    # # make a plot
+    # count = 0
+    # for x in sd_avg_dis.keys():
+    #     plt.plot(line_num, sd_avg_dis[x], color =cmap[count], label="sd_"+str(x))
     #     count += 1
     # # set x-axis label
     # plt.xlabel("line count")
     # plt.xticks(ticks, ticks)
     # # set y-axis labelå
-    # plt.ylabel("Distance between current sd distribution and final sd distribution")
+    # plt.ylabel("Distance between current sd average and final sd average")
     # plt.legend()
-    # plt.title(name+" sd distribution distance")
-    # plt.savefig('fig/sd-dis.png', bbox_inches='tight')
+    # plt.title(name+" sd average distance")
+    # plt.savefig('fig/sd-avg-dis.png', bbox_inches='tight')
     
-    # plot6 = plt.figure(figsize=(20,5))
+    # plot9 = plt.figure(figsize=(20,5))
     # # make a plot
     # count = 0
-    # plt.plot(line_num, size_dis, color =cmap[count], label="size-avg")
+    # plt.plot(line_num, size_avg_dis, color =cmap[count], label="size-avg-dis")
     # # set x-axis label
     # plt.xlabel("line count")
     # plt.xticks(ticks, ticks)
     # # set y-axis labelå
-    # plt.ylabel("Distance between current size distribution and final size distribution")
+    # plt.ylabel("Distance between current size average and final size average")
     # plt.legend()
-    # plt.title(name+" size distribution distance")
-    # plt.savefig('fig/size-dis.png', bbox_inches='tight')
+    # plt.title(name+" size average distance")
+    # plt.savefig('fig/size-avg-dis.png', bbox_inches='tight')
     
-    plot7 = plt.figure(figsize=(20,5))
-    # make a plot
-    count = 0
-    for x in iat_avg_dis.keys():
-        plt.plot(line_num, iat_avg_dis[x], color =cmap[count], label="iat_"+str(x))
-        count += 1
-    # set x-axis label
-    plt.xlabel("line count")
-    plt.xticks(ticks, ticks)
-    # set y-axis label
-    plt.ylabel("Distance between current iat average and final iat average")
-    plt.legend()
-    plt.title(name+" iat average distance")
-    plt.savefig('fig/iat-avg-dis.png', bbox_inches='tight')
-    
-    plot8 = plt.figure(figsize=(20,5))
-    # make a plot
-    count = 0
-    for x in sd_avg_dis.keys():
-        plt.plot(line_num, sd_avg_dis[x], color =cmap[count], label="sd_"+str(x))
-        count += 1
-    # set x-axis label
-    plt.xlabel("line count")
-    plt.xticks(ticks, ticks)
-    # set y-axis labelå
-    plt.ylabel("Distance between current sd average and final sd average")
-    plt.legend()
-    plt.title(name+" sd average distance")
-    plt.savefig('fig/sd-avg-dis.png', bbox_inches='tight')
-    
-    plot9 = plt.figure(figsize=(20,5))
-    # make a plot
-    count = 0
-    plt.plot(line_num, size_avg_dis, color =cmap[count], label="size-avg-dis")
-    # set x-axis label
-    plt.xlabel("line count")
-    plt.xticks(ticks, ticks)
-    # set y-axis labelå
-    plt.ylabel("Distance between current size average and final size average")
-    plt.legend()
-    plt.title(name+" size average distance")
-    plt.savefig('fig/size-avg-dis.png', bbox_inches='tight')
-    
-    plot10 = plt.figure(figsize=(20,5))
-    # make a plot
-    count = 0
-    for x in edc_avg_dis.keys():
-        plt.plot(line_num, edc_avg_dis[x], color =cmap[count], label="edc_"+str(x))
-        count += 1
-    # set x-axis label
-    plt.xlabel("line count")
-    plt.xticks(ticks, ticks)
-    # set y-axis labelå
-    plt.ylabel("Distance between current edc average and final sd average")
-    plt.legend()
-    plt.title(name+" edc average distance")
-    plt.savefig('fig/edc-avg-dis.png', bbox_inches='tight')
+    # plot10 = plt.figure(figsize=(20,5))
+    # # make a plot
+    # count = 0
+    # for x in edc_avg_dis.keys():
+    #     plt.plot(line_num, edc_avg_dis[x], color =cmap[count], label="edc_"+str(x))
+    #     count += 1
+    # # set x-axis label
+    # plt.xlabel("line count")
+    # plt.xticks(ticks, ticks)
+    # # set y-axis labelå
+    # plt.ylabel("Distance between current edc average and final sd average")
+    # plt.legend()
+    # plt.title(name+" edc average distance")
+    # plt.savefig('fig/edc-avg-dis.png', bbox_inches='tight')
     
 
 if __name__ == '__main__':
