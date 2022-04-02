@@ -10,4 +10,6 @@ do
     
     [ ! -d "/home/janechen/cache/output/"$NAME ] && echo "Directory "$NAME" DOES NOT exists."
 
+    [ ! -f "/home/janechen/cache/output/"$NAME"/f5s500-hits.pkl" ] && echo $NAME" hits data DOES NOT exists."
+
 done
