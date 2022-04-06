@@ -3,6 +3,7 @@ import os
 import pickle
 import math
 import time
+import random
 from random import choices
 from collections import defaultdict
 from sympy import total_degree
@@ -12,8 +13,8 @@ import torch.nn as nn
 import numpy as np
 
 
-TRAINING_LEN = 1000000
-PREDICTION_LEN = 1000000
+TRAINING_LEN = 2000000
+PREDICTION_LEN = 2000000
 MB = 1000000
 MAX_LIST = [0] * 22
 MIN_LIST = [0] * 22
@@ -25,7 +26,9 @@ def gen_data(expert_0, expert_1):
     prediction_labels = []
     
     feature_files = [path for path in os.listdir("../cache/output/features")]
-    test_files = ["tc-0-tc-1-2290:0", "tc-0-tc-1-0:24300", "tc-0-tc-1-2290:2916", "tc-0-tc-1-22518:4053", "tc-0-tc-1-2243:488"]
+    num_file = len(feature_files)
+    test_index = random.sample(range(num_file), num_file % 100)
+    # test_files = ["tc-0-tc-1-2290:0", "tc-0-tc-1-0:24300", "tc-0-tc-1-2290:2916", "tc-0-tc-1-22518:4053", "tc-0-tc-1-2243:488"]
     feature_set = ['sd_avg', 'iat_avg', 'size_avg', 'edc_avg']
     name_list = []
     feature_list = []
@@ -62,31 +65,62 @@ def gen_data(expert_0, expert_1):
         # print(MIN_LIST)
         # print(MAX_LIST)
         print("Collect data from "+name)
+        if i in test_index:
+            print("Test trace {} is {}".format(test_index.index(i), name))
         sys.stdout.flush()
         feature = [ (feature_list[i][j]- MIN_LIST[j])/(MAX_LIST[j]-MIN_LIST[j]) for j in range(len(MIN_LIST))]
         
         e0_hits = pickle.load(open("../cache/output/"+name+'/'+expert_0+'-hits.pkl', "rb"))
         e1_hits = pickle.load(open("../cache/output/"+name+'/'+expert_1+'-hits.pkl', "rb"))
+        hit_hit_prob = 0 # pi(e1_hit | e0_hit)
+        e0_hit_count = 0
+        e0_miss_count = 0
+        hit_miss_prob = 0 # pi(e1_hit | e0_miss)
         
         assert (len(e0_hits) == len(e1_hits))
         
         count = 0
+        # import pdb; pdb.set_trace()
         for e0, e1 in zip(e0_hits, e1_hits):
-            x = feature[:]
-            x.append(e0)
-            # y = [1, 0] if e1 == 1 else [0, 1]
-            y = e1
             if count < TRAINING_LEN:
-                input.append(x)
-                labels.append(y)
+                if e0 == 1:
+                    e0_hit_count += 1
+                    if e1 == 1:
+                        hit_hit_prob += 1
+                else:
+                    e0_miss_count += 1
+                    if e1 == 1:
+                        hit_miss_prob += 1
             else:
-                if name not in test_files:
-                    break
-                if count >= TRAINING_LEN + PREDICTION_LEN:
-                    break
-                prediction_input.append(x)
-                prediction_labels.append(y)
+                # if count == TRAINING_LEN:
+                hit_hit_prob = hit_hit_prob/e0_hit_count
+                hit_miss_prob = hit_miss_prob/e0_miss_count
+                if i in test_index:
+                    prediction_input.append([feature, e0_hit_count, e0_miss_count])
+                    prediction_labels.append([hit_hit_prob, hit_miss_prob])
+                else:
+                    input.append(feature)
+                    labels.append([hit_hit_prob, hit_miss_prob])
+                break
+                    # hit_hit_prob = e0_hit_count = e0_miss_count = hit_miss_prob = 0
+                # if name not in test_files:
+                #     break
+                # if count >= TRAINING_LEN + PREDICTION_LEN:
+                #     prediction_input.append([feature, e0_hit_count, e0_miss_count])
+                #     hit_hit_prob = hit_hit_prob/e0_hit_count
+                #     hit_miss_prob = hit_miss_prob/e0_miss_count
+                #     prediction_labels.append([hit_hit_prob, hit_miss_prob])
+                #     break
+                # if e0 == 1:
+                #     e0_hit_count += 1
+                #     if e1 == 1:
+                #         hit_hit_prob += 1
+                # else:
+                #     e0_miss_count += 1
+                #     if e1 == 1:
+                #         hit_miss_prob += 1
             count += 1
+        
     
     pickle.dump(input, open(os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "traininput.pkl"), "wb"))
     pickle.dump(labels, open(os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "trainlabels.pkl"), "wb"))
@@ -96,102 +130,69 @@ def gen_data(expert_0, expert_1):
 
 
 def test(device, epoch, model, _data, _label, batch_size):
+    # import pdb; pdb.set_trace()
     # Test the model
     # In the test phase, don't need to compute gradients (for memory efficiency)
     print("=====Epoch {}=====".format(epoch))
     total_accuracy = 0
     
-    _data = torch.tensor(_data)
-    _label = torch.tensor(_label)
-    num_data, data_dim = _data.shape
-    # _, label_dim = label.shape
+    # _data = torch.tensor(_data)
+    # _label = torch.tensor(_label)
+    # num_data, data_dim = _data.shape
+    # # _, label_dim = label.shape
     
-    data_batched = _data.reshape(5, int(num_data / 5), data_dim)
-    label_batched = _label.reshape(5, int(num_data / 5))
+    # data_batched = _data.reshape(5, int(num_data / 5), data_dim)
+    # label_batched = _label.reshape(5, int(num_data / 5))
     
     model.eval()
-    for i_test in range(5): 
-        hit_prob_list = [-1, -1]
-        data_i = data_batched[i_test]
-        label_i = label_batched[i_test]
-        correct = 0
-        prob_correct = 0
-        total = 0
-        e0_hits = 0
-        true_hit = 0
-        predicted_hit = 0
-        prob_predicted_hit = 0
-        prob_known = False
-        for d, l in zip(data_i, label_i):
-            e0_hit = int(d.tolist()[22])
-            if e0_hit == 1:
-                e0_hits += 1
-            if not prob_known:    
-                if hit_prob_list[e0_hit] < 0:
-                    d = d.to(device)
-                    outputs = torch.sigmoid(model(d))
-                    hit_prob = outputs.item()
-                    hit_prob_list[e0_hit] = hit_prob
-                if hit_prob_list[0] > 0 and hit_prob_list[1] > 0:
-                    prob_known = True
-            total += 1
-            # if total == 10:
-            #     break
-            hit_prob = hit_prob_list[e0_hit]
-            predicted = 1 if hit_prob > 0.5 else 0
-            real = l.item()
-            decision = choices([1, 0], [hit_prob, 1-hit_prob])[0]
-            # import pdb; pdb.set_trace()
-            
-            if predicted == real:
-                correct += 1
-            if predicted == 1:
-                predicted_hit += 1
-            if real == 1:
-                true_hit += 1
-            
-            if decision == 1:
-                prob_predicted_hit += 1
-            if decision == real:
-                prob_correct += 1
-            # total += labels.size(0)
-            # correct += (predicted == labels).sum().item()
+    for i_test in range(len(_data)): 
+        data_i = _data[i_test]
+        label_i = _label[i_test]
+        # for d, l in zip(data_i, label_i):
+        e0_hit_count = int(data_i[1])
+        e0_miss_count = int(data_i[2])
+        data_i = data_i[0]
+        d = torch.tensor(data_i).to(device)
+        l = torch.tensor(label_i).to(device)
+        outputs = torch.sigmoid(model(d))
+        hit_hit_prob = l.tolist()[0]
+        hit_miss_prob = l.tolist()[1]
+        pred_hit_hit_prob = outputs.tolist()[0]
+        pred_hit_miss_prob = outputs.tolist()[1]
+        e0_hitrate = e0_hit_count/(e0_hit_count + e0_miss_count) * 100
+        real_e1_hitrate = (e0_hit_count * hit_hit_prob + e0_miss_count * hit_miss_prob) / (e0_hit_count + e0_miss_count) * 100
+        pred_e1_hitrate = (e0_hit_count * pred_hit_hit_prob + e0_miss_count * pred_hit_miss_prob) / (e0_hit_count + e0_miss_count) * 100
         print("Trace {} results: ".format(i_test))
-        print('Expert 0 Hit Rate : {} %'.format(100 * e0_hits / total))
-        print('Expert 1 Hit Prediction Accuracy : {} %'.format(100 * correct / total))
-        if (e0_hits > predicted_hit and e0_hits > true_hit) or (e0_hits <= predicted_hit and e0_hits <= true_hit):
-            print('Experts Order Prediction is correct')
-        else:
-            print('Experts Order Prediction is wrong')
-        print('True Expert 1 Hit Rate : {} %'.format(100 * true_hit / total))
-        print('Predicted Expert 1 Hit Rate : {} %'.format(100 * predicted_hit / total))
-        print('Probabilistically Predicted Expert 1 Accuracy : {} %'.format(100 * prob_correct / total))
-        if (e0_hits > prob_predicted_hit and e0_hits > true_hit) or (e0_hits <= prob_predicted_hit and e0_hits <= true_hit):
-            print('Experts Probabilistically Order Prediction is correct')
-        else:
-            print('Experts Probabilistically Order Prediction is wrong')
-        print('Probabilistically Predicted Expert 1 Hit Rate : {} %'.format(100 * prob_predicted_hit / total))
+        print("e0 hit rate: {}".format(e0_hitrate))
+        print("Real pi(e1_hit | e0_hit): {}".format(hit_hit_prob))
+        print("Predicted pi(e1_hit | e0_hit): {}".format(pred_hit_hit_prob))
+        print("Real pi(e1_hit | e0_miss): {}".format(hit_miss_prob))
+        print("Predicted pi(e1_hit | e0_miss): {}".format(pred_hit_miss_prob))
+        print("e1 real hit rate: {}".format(real_e1_hitrate))
+        print("e1 predicted hit rate: {}".format(pred_e1_hitrate))
         sys.stdout.flush()
-        total_accuracy += 100 * correct / total
-
-    print('Avg Accuracy : {} %'.format(total_accuracy / 5))
 
 def main():
     hidden_size = int(sys.argv[1]) # hidden layer node number (2-9)
     expert_0 = sys.argv[2]
     expert_1 = sys.argv[3]
+    device = sys.argv[4]
     # hidden_size = 5
     # expert_0 = "f4s50"
     # expert_1 = "f2s50"
     
     # Check Device configuration
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
+    if torch.cuda.device_count() < 3:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    else:
+        device =  torch.device(device)
     
     # # Define Hyper-parameters 
-    input_size = 23
-    output_size = 1
-    num_epochs = 20
-    batch_size = 1000
+    input_size = 22
+    output_size = 2
+    num_epochs = 1000
+    # batch_size = 1000
+    batch_size = 1
     learning_rate = 0.001
 
 
@@ -220,7 +221,8 @@ def main():
     label = torch.tensor(label)
     # _data, _label = gen_predictdata(expert_0, expert_1, "tc-0-tc-1-2290:0")
     # Check if model exists
-    if not os.path.exists(os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "model.ckpt")):
+    if not os.path.exists(os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "model-h"+str(hidden_size)+".ckpt")):
+        # import pdb; pdb.set_trace()
         
         # data, label = gen_data(expert_0, expert_1)
         num_data, data_dim = data.shape
@@ -228,7 +230,7 @@ def main():
         
         num_batch = int(num_data / batch_size)
         data_batched = data.reshape(num_batch, batch_size, data_dim)
-        label_batched = label.reshape(num_batch, batch_size)
+        label_batched = label.reshape(num_batch, batch_size, output_size)
         
         model = NeuralNet(input_size, hidden_size, output_size).to(device)
 
@@ -251,7 +253,8 @@ def main():
                 # Forward pass
                 outputs = model(d)
                 # import pdb; pdb.set_trace()
-                loss = criterion(outputs.squeeze(), l)
+                # loss = criterion(outputs.squeeze(), l)
+                loss = criterion(outputs, l)
                 
                 # Backprpagation and optimization
                 optimizer.zero_grad()
@@ -267,15 +270,16 @@ def main():
                     sys.stdout.flush()
             
             # Save the model checkpoint
-            torch.save(model.state_dict(), os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "model-h"+str(hidden_size)+"-"+str(epoch)+".ckpt"))
+            # torch.save(model.state_dict(), os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "model-h"+str(hidden_size)+"-"+str(epoch)+".ckpt"))
             test(device, epoch, model, _data, _label, batch_size)
-                    
+        
+        torch.save(model.state_dict(), os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "model-h"+str(hidden_size)+".ckpt"))
         # print(model.state_dict())
     
     else:
         model = NeuralNet(input_size, hidden_size, output_size).to(device)
-        model.load_state_dict(torch.load('../cache/output/models/'+expert_0+'-'+expert_1+'-model.ckpt'))
-        test(device, 0, model, _data, _label, batch_size)
+        model.load_state_dict(torch.load(os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "model-h"+str(hidden_size)+".ckpt")))
+        test(device, 999, model, _data, _label, batch_size)
     
 
 if __name__ == '__main__':

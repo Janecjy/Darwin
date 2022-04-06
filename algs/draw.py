@@ -11,58 +11,59 @@ thres = 1
 def countStat(dirPath):   
     # print(dirPath) 
     hr = {}
-    disk_write = {}
-    baseline = []
+    # disk_write = {}
+    # baseline = []
     
     for root, dirs, files in os.walk(dirPath):
         for file in files:
+            if file.endswith(".txt"):
 
             # print(file)
 
-            file_res = []
+                file_res = []
 
-            for line in open(os.path.join(root, file), "r"):
-                val1 = re.findall('freq: [\d]*, size: [\d]*',line)
+                for line in open(os.path.join(root, file), "r"):
+                    val1 = re.findall('freq: [\d]*, size: [\d]*',line)
 
-                for sentence in val1:
-                    sentence = sentence.split(',')
-                    f = (sentence[0].split(':')[1].replace(" ", ""))
-                    s = (sentence[1].split(':')[1].replace(" ", ""))
-                
-                val2 = re.findall('hr: [\d]+[.]?[\d]*%, bmr: [\d]+[.]?[\d]*%, disk read: [\d]+[.]?[\d]*, disk write: [\d]+[.]?[\d]*',line)
-                
-                for sentence in val2:
-                    exp = sentence.split(',')
-                    exp = [float(x.replace(" ", "").replace("%", "").split(':')[1]) for x in exp]
-                    file_res.append(exp)
+                    for sentence in val1:
+                        sentence = sentence.split(',')
+                        f = (sentence[0].split(':')[1].replace(" ", ""))
+                        s = (sentence[1].split(':')[1].replace(" ", ""))
+                    
+                    val2 = re.findall('hr: [\d]+[.]?[\d]*%, bmr: [\d]+[.]?[\d]*%, disk read: [\d]+[.]?[\d]*, disk write: [\d]+[.]?[\d]*',line)
+                    
+                    for sentence in val2:
+                        exp = sentence.split(',')
+                        exp = [float(x.replace(" ", "").replace("%", "").split(':')[1]) for x in exp]
+                        file_res.append(exp)
 
 
-            if file.endswith("s0.txt"):
-                # print(file_res)
-                for x in file_res:
-                    baseline.append(((x[0], x[3])))
-                continue
+                # if file.endswith("s0.txt"):
+                #     # print(file_res)
+                #     for x in file_res:
+                #         baseline.append(((x[0], x[3])))
+                #     continue
 
-            if file_res:
-                hr['f'+f+'s'+s] = [x[0] for x in file_res]
-                disk_write['f'+f+'s'+s] = [x[3] for x in file_res]
+                if file_res:
+                    hr['f'+f+'s'+s] = [x[0] for x in file_res]
+                    # disk_write['f'+f+'s'+s] = [x[3] for x in file_res]
 
     # improvement = {}
-    improve_minus = {}
-    for x in hr.keys():
-        # improvement[x] = 2*(hr[x][0] - baseline[0][0]) / (disk_write[x][0] - baseline[0][0])
-        improve_minus[x] = (hr[x][0] - baseline[0][0]) - (disk_write[x][0] - baseline[0][1]) * 1e-7
+    # improve_minus = {}
+    # for x in hr.keys():
+    #     # improvement[x] = 2*(hr[x][0] - baseline[0][0]) / (disk_write[x][0] - baseline[0][0])
+    #     improve_minus[x] = (hr[x][0] - baseline[0][0]) - (disk_write[x][0] - baseline[0][1]) * 1e-7
         # improve_minus[x] = hr[x][0] - disk_write[x][0] * 1e-7
 
-    # hr_max = max(list([hr[x][0] for x in hr.keys()]))
-    imp_max = max(list([improve_minus[x] for x in improve_minus.keys()]))
+    hr_max = max(list([hr[x][0] for x in hr.keys()]))
+    # imp_max = max(list([improve_minus[x] for x in improve_minus.keys()]))
     best_set = []
     for x in hr.keys():
-        if imp_max - improve_minus[x] < thres:
+        # if imp_max - improve_minus[x] < thres:
         # if (imp_max - improve_minus[x])/imp_max < thres/100:
+            # best_set.append(x)
+        if (hr_max - hr[x][0])/hr_max < thres/100:
             best_set.append(x)
-        # if hr_max - hr[x][0] < thres:
-        #     best_set.append(x)
 
     # return hr, disk_write, improve_minus, best_set
     return hr, best_set
@@ -191,19 +192,30 @@ def drawTog(best_sets, best_resultset):
     #     print(not_included)
 
 
+def drawSyntheticTraces():
+    PATH = "../cache/output/features"
+    for file in os.listdir(PATH):
+        mixture = file.split('.')[0].split('-')[4].split(':')
+        x = int(mixture[0])
+        y = int(mixture[1])
+        plt.scatter(x, y, s=1)
+        plt.savefig("./output.png")
+
 if __name__ == '__main__':
-    # path = sys.argv[1]
-    # best_sets = {}
-    # best_resultset = set()
-    # for file in os.listdir(path):
-    #     # print(file)
-    #     if file.startswith("tc"):
-    #         best_set = countStat(os.path.join(path, file))
-    #         mixture = file.split('-')[4].split(':')
-    #         x = int(mixture[0])
-    #         y = int(mixture[1])
-    #         best_sets[(x, y)] = tuple(confSort(best_set))
-    #         best_resultset.add(tuple(confSort(best_set)))
-    # # print(best_sets)
-    # drawTog(best_sets, list(best_resultset))
-    drawSeparate("tc-0-tc-1-2226:676")
+    path = sys.argv[1]
+    best_sets = {}
+    best_resultset = set()
+    for file in os.listdir(path):
+        # print(file)
+        if file.startswith("tc"):
+            _, best_set = countStat(os.path.join(path, file))
+            # print(best_set)
+            mixture = file.split('-')[4].split(':')
+            x = int(mixture[0])
+            y = int(mixture[1])
+            best_sets[(x, y)] = tuple(confSort(best_set))
+            best_resultset.add(tuple(confSort(best_set)))
+    # print(best_sets)
+    drawTog(best_sets, list(best_resultset))
+    # drawSeparate("tc-0-tc-1-2226:676")
+    # drawSyntheticTraces()
