@@ -30,7 +30,7 @@ def feature_cluster():
     # feature_set = ['sd_avg', 'iat_avg', 'size_avg', 'sizes', 'sd_1', 'iat_1', 'sd_2', 'iat_2', 'sd_3', 'iat_3', 'sd_4', 'iat_4', 'sd_5', 'iat_5', 'sd_6', 'iat_6', 'sd_7', 'iat_7']
     feature_set = ['sd_avg', 'iat_avg', 'size_avg', 'edc_avg']
     best_result = pickle.load(open("../cache/output/best_result.pkl", "rb"))
-    feature_files = [path for path in os.listdir("../cache/output/features")]
+    feature_files = [path for path in os.listdir("../cache/output/features/train-set")]
     
     expert_list = []
     for s in [50, 100, 200, 500, 1000]:
@@ -41,7 +41,7 @@ def feature_cluster():
     for file in feature_files:
         feature = []
         name_list.append(file.split('.')[0])
-        features = pickle.load(open("../cache/output/features/"+file, "rb"))
+        features = pickle.load(open("../cache/output/features/train-set/"+file, "rb"))
         for k, v in features.items():
             if k in feature_set:
                 if type(v) is dict or type(v) is defaultdict:
@@ -95,8 +95,8 @@ def feature_cluster():
     kmeans_model = KMeans(n_clusters=n_clusters, random_state=1).fit(X)
     labels = kmeans_model.labels_
         
-    pickle.dump(X, open("x.pkl", "wb"))
-    pickle.dump(kmeans_model, open("kmeans.pkl", "wb"))
+    pickle.dump(X, open("../cache/output/x.pkl", "wb"))
+    pickle.dump(kmeans_model, open("../cache/output/kmeans.pkl", "wb"))
 
     #     # centroids = kmeans_model.cluster_centers_
 
@@ -377,16 +377,16 @@ def confSort(keys):
     return sorted(keys, key=lambda element: list(int(x.replace('f', '')) for x in element.split('s')[:]))
 
 def main():
-    # dirs = [path for path in os.listdir("../cache/output") if path.startswith('tc')]
-    # best_result = {}
-    # best_resultset = set()
-    # for dir in dirs:
-    #     best_set = countStat("../cache/output/"+dir)
-    #     best_result[dir] = confSort(best_set)
-    #     best_resultset.add(tuple(confSort(best_set)))
-    # # print(best_resultset)
-    # pickle.dump(best_resultset, open("../cache/output/best_resultset.pkl", "wb"))
-    # pickle.dump(best_result, open("../cache/output/best_result.pkl", "wb"))
+    dirs = [path for path in os.listdir("../cache/output/train-set") if path.startswith('tc')]
+    best_result = {}
+    best_resultset = set()
+    for dir in dirs:
+        best_set = countStat("../cache/output/train-set/"+dir)
+        best_result[dir] = confSort(best_set)
+        best_resultset.add(tuple(confSort(best_set)))
+    # print(best_resultset)
+    pickle.dump(best_resultset, open("../cache/output/best_resultset.pkl", "wb"))
+    pickle.dump(best_result, open("../cache/output/best_result.pkl", "wb"))
     # result_cluster()
     feature_cluster()
     

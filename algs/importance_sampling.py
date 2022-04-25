@@ -6,7 +6,7 @@ import time
 import random
 from random import choices
 from collections import defaultdict
-from sympy import total_degree
+
 
 import torch
 import torch.nn as nn
@@ -25,22 +25,31 @@ def gen_data(expert_0, expert_1):
     prediction_input = []
     prediction_labels = []
     
-    feature_files = [path for path in os.listdir("../cache/output/features")]
-    num_file = len(feature_files)
-    test_index = random.sample(range(num_file), num_file % 100)
+    train_files = [path for path in os.listdir("../cache/output/features/train-set")]
+    # num_file = len(feature_files)
+    test_files = [path for path in os.listdir("../cache/output/features/test-set-real")]
+    # test_index = random.sample(range(num_file), num_file % 100)
     # test_files = ["tc-0-tc-1-2290:0", "tc-0-tc-1-0:24300", "tc-0-tc-1-2290:2916", "tc-0-tc-1-22518:4053", "tc-0-tc-1-2243:488"]
     feature_set = ['sd_avg', 'iat_avg', 'size_avg', 'edc_avg']
     name_list = []
     feature_list = []
+    test_set = [] 
     
-    for file in feature_files:
-        
-    # for file in ["tc-0-tc-1-2290:0.pkl", "tc-0-tc-1-0:24300.pkl", "tc-0-tc-1-2290:2916.pkl", "tc-0-tc-1-22518:4053.pkl", "tc-0-tc-1-2243:488.pkl"]:
-    # file = "tc-0-tc-1-138:958.pkl"
+    # for i, set in enumerate([train_files, test_files]):
+    for i, file in enumerate(train_files+test_files):
         feature = []
         name = file.split('.')[0]
         name_list.append(name)
-        features = pickle.load(open("../cache/output/features/"+file, "rb"))
+        if i < len(train_files):
+            dir = "train-set"
+        else:
+            dir = "test-set-real"
+            test_set.append(name)
+                
+    # for file in ["tc-0-tc-1-2290:0.pkl", "tc-0-tc-1-0:24300.pkl", "tc-0-tc-1-2290:2916.pkl", "tc-0-tc-1-22518:4053.pkl", "tc-0-tc-1-2243:488.pkl"]:
+    # file = "tc-0-tc-1-138:958.pkl"
+        
+        features = pickle.load(open(os.path.join("../cache/output/features/", dir, file), "rb"))
         for f in feature_set:
             v = features[f]
             if type(v) is dict or type(v) is defaultdict:
@@ -60,18 +69,21 @@ def gen_data(expert_0, expert_1):
                 MIN_LIST[i] = ele
     
     for i, name in enumerate(name_list):
+        
+        if name in test_set:
+            dir = "test-set-real"
+        else:
+            dir = "train-set"
         # print(i)
         # print(feature_list)
         # print(MIN_LIST)
         # print(MAX_LIST)
         print("Collect data from "+name)
-        if i in test_index:
-            print("Test trace {} is {}".format(test_index.index(i), name))
         sys.stdout.flush()
         feature = [ (feature_list[i][j]- MIN_LIST[j])/(MAX_LIST[j]-MIN_LIST[j]) for j in range(len(MIN_LIST))]
         
-        e0_hits = pickle.load(open("../cache/output/"+name+'/'+expert_0+'-hits.pkl', "rb"))
-        e1_hits = pickle.load(open("../cache/output/"+name+'/'+expert_1+'-hits.pkl', "rb"))
+        e0_hits = pickle.load(open(os.path.join("../cache/output/", dir, name, expert_0+'-hits.pkl'), "rb"))
+        e1_hits = pickle.load(open(os.path.join("../cache/output/", dir, name, expert_1+'-hits.pkl'), "rb"))
         hit_hit_prob = 0 # pi(e1_hit | e0_hit)
         e0_hit_count = 0
         e0_miss_count = 0
@@ -95,7 +107,7 @@ def gen_data(expert_0, expert_1):
                 # if count == TRAINING_LEN:
                 hit_hit_prob = hit_hit_prob/e0_hit_count
                 hit_miss_prob = hit_miss_prob/e0_miss_count
-                if i in test_index:
+                if dir == "test-set-real":
                     prediction_input.append([feature, e0_hit_count, e0_miss_count])
                     prediction_labels.append([hit_hit_prob, hit_miss_prob])
                 else:
