@@ -510,7 +510,7 @@ def main():
     # # set x-axis label
     # plt.xlabel("line count")
     # plt.xticks(ticks, ticks)
-    # # set y-axis labelå
+    # # set y-axis label
     # plt.ylabel("Average sd")
     # plt.legend()
     # plt.title(name+" average sd timeline")
@@ -523,7 +523,7 @@ def main():
     # # set x-axis label
     # plt.xlabel("line count")
     # plt.xticks(ticks, ticks)
-    # # set y-axis labelå
+    # # set y-axis label
     # plt.ylabel("Average size")
     # plt.legend()
     # plt.title(name+" average size timeline")
@@ -538,7 +538,7 @@ def main():
     # # set x-axis label
     # plt.xlabel("line count")
     # plt.xticks(ticks, ticks)
-    # # set y-axis labelå
+    # # set y-axis label
     # plt.ylabel("Average edc")
     # plt.legend()
     # plt.title(name+" average edc timeline")
@@ -569,7 +569,7 @@ def main():
     # # # set x-axis label
     # # plt.xlabel("line count")
     # # plt.xticks(ticks, ticks)
-    # # # set y-axis labelå
+    # # # set y-axis label
     # # plt.ylabel("Distance between current sd distribution and final sd distribution")
     # # plt.legend()
     # # plt.title(name+" sd distribution distance")
@@ -582,7 +582,7 @@ def main():
     # # # set x-axis label
     # # plt.xlabel("line count")
     # # plt.xticks(ticks, ticks)
-    # # # set y-axis labelå
+    # # # set y-axis label
     # # plt.ylabel("Distance between current size distribution and final size distribution")
     # # plt.legend()
     # # plt.title(name+" size distribution distance")
@@ -612,7 +612,7 @@ def main():
     # # set x-axis label
     # plt.xlabel("line count")
     # plt.xticks(ticks, ticks)
-    # # set y-axis labelå
+    # # set y-axis label
     # plt.ylabel("Distance between current sd average and final sd average")
     # plt.legend()
     # plt.title(name+" sd average distance")
@@ -625,7 +625,7 @@ def main():
     # # set x-axis label
     # plt.xlabel("line count")
     # plt.xticks(ticks, ticks)
-    # # set y-axis labelå
+    # # set y-axis label
     # plt.ylabel("Distance between current size average and final size average")
     # plt.legend()
     # plt.title(name+" size average distance")
@@ -640,7 +640,7 @@ def main():
     # # set x-axis label
     # plt.xlabel("line count")
     # plt.xticks(ticks, ticks)
-    # # set y-axis labelå
+    # # set y-axis label
     # plt.ylabel("Distance between current edc average and final sd average")
     # plt.legend()
     # plt.title(name+" edc average distance")
