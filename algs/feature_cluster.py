@@ -57,6 +57,9 @@ def feature_cluster():
             if MIN_LIST[i] == 0 or MIN_LIST[i] > ele:
                 MIN_LIST[i] = ele
     
+    pickle.dump(MAX_LIST, open("../cache/output/max_list.pkl", "wb"))
+    pickle.dump(MIN_LIST, open("../cache/output/min_list.pkl", "wb"))
+    
     feature_dict = {}
     for i, feature in enumerate(feature_list):
         feature_list[i] = [ (feature[i]- MIN_LIST[i])/(MAX_LIST[i]-MIN_LIST[i]) for i in range(len(MIN_LIST))]
@@ -134,6 +137,18 @@ def feature_cluster():
         for e in best_result[name_list[i]]:
             best_expert_dist[lab][e] += 1
     pickle.dump(cluster_result, open("../cache/output/cluster_result_names.pkl", "wb"))
+    
+    best_result = pickle.load(open("../cache/output/best_result.pkl", "rb"))
+    
+    bestSetDict = {} # cluster num: potential best expert list
+
+    for i in cluster_result.keys():
+        best_set = set()
+        for trace in cluster_result[i]:
+            for exp in best_result[trace]:
+                best_set.add(exp)
+        bestSetDict[i] = list(best_set)
+    pickle.dump(bestSetDict, open("../cache/output/cluster_experts.pkl", "wb"))
     
     cmap = matplotlib.cm.get_cmap("Set3").colors
     cmap += matplotlib.cm.get_cmap("Set2").colors
@@ -377,16 +392,16 @@ def confSort(keys):
     return sorted(keys, key=lambda element: list(int(x.replace('f', '')) for x in element.split('s')[:]))
 
 def main():
-    dirs = [path for path in os.listdir("../cache/output/train-set") if path.startswith('tc')]
-    best_result = {}
-    best_resultset = set()
-    for dir in dirs:
-        best_set = countStat("../cache/output/train-set/"+dir)
-        best_result[dir] = confSort(best_set)
-        best_resultset.add(tuple(confSort(best_set)))
-    # print(best_resultset)
-    pickle.dump(best_resultset, open("../cache/output/best_resultset.pkl", "wb"))
-    pickle.dump(best_result, open("../cache/output/best_result.pkl", "wb"))
+    # dirs = [path for path in os.listdir("../cache/output/train-set") if path.startswith('tc')]
+    # best_result = {}
+    # best_resultset = set()
+    # for dir in dirs:
+    #     best_set = countStat("../cache/output/train-set/"+dir)
+    #     best_result[dir] = confSort(best_set)
+    #     best_resultset.add(tuple(confSort(best_set)))
+    # # print(best_resultset)
+    # pickle.dump(best_resultset, open("../cache/output/best_resultset.pkl", "wb"))
+    # pickle.dump(best_result, open("../cache/output/best_result.pkl", "wb"))
     # result_cluster()
     feature_cluster()
     

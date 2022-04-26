@@ -3,14 +3,23 @@ from collections import defaultdict
 import getopt
 import sys
 import os
+import pickle
 import torch
 import torch.nn as nn
 from enum import Enum
+from sklearn.cluster import KMeans
+import math
+import numpy as np
+from pynverse import inversefunc
+import random
 
 from lru import LRU
 
 
+# path
 FEATURE_PATH = "/home/janechen/cache/output/features/test-set-real"
+CLUSTER_MODEL_PATH = "/home/janechen/cache/output/kmeans.pkl"
+CLUSTER_RESULT_PATH = "/home/janechen/cache/output/cluster_experts.pkl"
 
 # request length of each stage
 WARMUP_LENGTH = 1000000
@@ -21,17 +30,55 @@ BANDIT_ROUND_LENGTH = 1000000
 ALPHA = 0.001 # defines dc hit benefit
 FREQ_OBSERVE_WINDOW = 1000000
 
+# trained feature parameters
+FEATURE_MAX_LIST = pickle.load(open("../cache/output/max_list.pkl", "rb"))
+FEATURE_MIN_LIST = pickle.load(open("../cache/output/min_list.pkl", "rb"))
+
 # expert correlation neural network hyper parameters
 INPUT_SIZE = 22
 HIDDEN_SIZE = 15
 OUTPUT_SIZE = 2
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+# bandit constant
+DELTA = 0.5
+
+# random distribution generators
+RANDOM_GEN = [
+    [random.random],
+    [random.uniform, (0, 1)],
+    [random.triangular, (0, 1, 0)],
+    [random.triangular, (0, 1, 0.1)],
+    [random.triangular, (0, 1, 0.2)],
+    [random.triangular, (0, 1, 0.3)],
+    [random.triangular, (0, 1, 0.4)],
+    [random.triangular, (0, 1, 0.5)],
+    [random.triangular, (0, 1, 0.6)],
+    [random.triangular, (0, 1, 0.7)],
+    [random.triangular, (0, 1, 0.8)],
+    [random.triangular, (0, 1, 0.9)],
+    [random.triangular, (0, 1, 1)],
+    [random.betavariate, (5, 1)],
+    [random.betavariate, (1, 3)],
+    [random.betavariate, (2, 2)],
+    [random.betavariate, (2, 5)],
+    [random.betavariate, (0.5, 0.5)],
+    [random.expovariate, [1]],
+    [random.gammavariate, (1, 0.5)],
+    [random.gammavariate, (2, 0.5)],
+    [random.gammavariate, (9, 2)],
+    [random.gauss, (0.5, 0.2)],
+    [random.gauss, (0.5, 1)],
+    [random.gauss, (0.5, 5)]
+]
+ALPHA_GEN_TIMES = 20
 
 class OnlineStage(Enum):
     CACHE_WARMUP = 0
     FEATURE_COLLECTION = 1
     EXPERT_BANDIT = 2
+    BEST_DEPLOYED = 3
+        
 
 def parseInput():
 
@@ -64,7 +111,8 @@ def parseInput():
 
 
 class OnlineHierarchy:
-    def __init__(self, default_freq_thres, default_size_thres, hoc_s, dc_s):
+    def __init__(self, name, default_freq_thres, default_size_thres, hoc_s, dc_s):
+        self.name = name
         self.freq_thres = default_freq_thres
         self.size_thres = default_size_thres
         self.hoc_s = hoc_s
@@ -89,10 +137,21 @@ class OnlineHierarchy:
         self.sd_avg = []
         self.size_avg = 0
         self.edc_avg = []
+        self.feature = []
         
         # bandit states
         self.round = 0
         self.round_request_num = 0
+        self.round_hoc_hit_num = 0
+        self.bandit_end = False
+        self.beta = 0
+        self.selected_times = {}
+        self.observed_rewards = {}
+        self.estimated_rewards = {}
+        self.estimated_numerator = {}
+        self.estimated_denominator = {}
+        self.avg_estimated = {}
+        self.alpha_list = []
         
         # statistics
         self.tot_req_num = 0
@@ -118,13 +177,24 @@ class OnlineHierarchy:
                 out = self.fc2(out)
                 return out
         
-        self.models = {}
-        for exp0 in self.expert_list:
-            for exp1 in self.expert_list:
+        self.models = {} # (e0, e1): (pred_hit_hit_prob, pred_hit_miss_prob)
+        self.model_variance = {} # (ei, ej): sigma_ij
+        for exp0 in self.potential_experts:
+            for exp1 in self.potential_experts:
                 if exp0 != exp1:
                     model = NeuralNet(INPUT_SIZE, HIDDEN_SIZE, OUTPUT_SIZE).to(DEVICE)
                     model.load_state_dict(torch.load(os.path.join("../cache/output/models/", exp0+"-"+exp1, "model-h"+str(HIDDEN_SIZE)+".ckpt")))
-                    self.models[(exp0, exp1)] = model
+                    model.eval()
+                    d = torch.tensor(self.feature).to(DEVICE)
+                    outputs = torch.sigmoid(model(d))
+                    self.models[(exp0, exp1)] = outputs.tolist()
+                    p1 = self.models[(exp0, exp1)][0]
+                    p2 = self.models[(exp0, exp1)][1]
+                    
+                    # get model variance
+                    # self.model_variance[(exp0, exp1)] = p1*(1-p1)+p2*(1-p2)
+                self.model_variance[(exp0, exp1)] = 0.25
+                    
     
     def checkFeatureConfidence(self):
         if self.stage_parsed_requests == FEATURE_COLLECTION_MAX_LENGTH:
@@ -137,8 +207,136 @@ class OnlineHierarchy:
         size_thres = int(expert.split('s')[1])
         return freq_thres, size_thres
     
-    def bandit(self):
+    def computeFeature(self):
+        return
+    
+    def generateAlphaList(self, k):
+        for generator in RANDOM_GEN:
+            assert len(generator) == 1 or len(generator) == 2
+            for t in range(ALPHA_GEN_TIMES):
+                list = []
+                for i in range(k):
+                    if len(generator) == 1:
+                        list.append(generator[0]())
+                    if len(generator) == 2:
+                        list.append(generator[0](*generator[1]))
+                list = [i/sum(list) for i in list]
+                self.alpha_list.append(list)
+        return
+    
+    def cluster(self):
+        '''Classify trace into cluster to get potential best experts'''
         
+        cluster_model = pickle.load(CLUSTER_MODEL_PATH, "rb")
+        cluster_result = pickle.load(CLUSTER_RESULT_PATH, "rb")
+        cluster = cluster_model.predict([self.feature])[0]
+        self.potential_experts = cluster_result[cluster]
+        for e in self.potential_experts:
+            self.selected_times[e] = 0
+            self.observed_rewards[e] = []
+            self.model_variance[e] = []
+            self.estimated_rewards[e] = []
+            self.estimated_numerator[e] = 0
+            self.estimated_denominator[e] = 0
+            self.avg_estimated[e] = 0
+        self.generateAlphaList(len(self.potential_experts))
+        return
+    
+    def getLatestEstimate(self, e):
+        return self.estimated_rewards[e][-1]
+    
+    def calculateW(self, alphas, e):
+        result = 0
+        for i, ei in enumerate(self.potential_experts):
+            result += alphas[i]/(self.model_variance[(ei, e)]^2)
+        return result
+    
+    def calculateDelta(self, best_e, e):
+        return self.getLatestEstimate(best_e)-self.getLatestEstimate(e)
+    
+    def findMinConf(self, alphas):
+        best_e_index = np.argmax([self.getLatestEstimate(e) for e in self.potential_experts])
+        w_star = self.calculateW(alphas, self.potential_experts[best_e_index])
+        results = [w_star*self.calculateW(alphas, e)/(w_star+self.calculateW(alphas, e))*(self.calculateDelta(e)^2)/2 for e in self.potential_experts]
+        return min(results)
+    
+    def calculateZ(self):
+        return self.findMinConf([self.selected_times[i]/self.round for i in self.selected_times.keys()])
+    
+    def calculateBeta(self):
+        t = self.round
+        k = len(self.potential_experts)
+        f = (lambda x: math.exp(k-x)*((x/k)**k))
+        self.beta = k * math.log(t^2+t) + inversefunc(f, y_values=DELTA)
+        return
+        
+    def calculateEstimated(self):
+        for e in self.estimated_rewards.keys():
+            assert self.observed_rewards[e] == self.model_variance[e]
+            self.estimated_numerator[e] += self.observed_rewards[e][-1]/(self.model_variance[e][-1]^2)
+            self.estimated_denominator[e] += 1/(self.model_variance[e][-1]^2)
+            self.estimated_rewards[e].append(self.estimated_numerator[e]/self.estimated_denominator[e])
+            # update average value of the estimates
+            self.avg_estimated[e] = sum(self.estimated_rewards[e])/len(self.estimated_rewards[e])
+        return
+    
+    def selectAlpha(self):
+        r_list = [self.findMinConf(alphas) for alphas in self.alpha_list]
+        max_index = np.argmax(r_list)
+        return self.alpha_list[max_index]
+    
+    def selectArmWithAlpha(self, alphas):
+        # TODO: check alpha(vt), if v is the latest estimated or avg?
+        arm_index = np.argmax([self.round*alphas[i]*self.estimated_rewards[e][-1]-self.selected_times[e] for i, e in enumerate(self.potential_experts)])
+        return self.potential_experts[arm_index]
+    
+    def selectArm(self):
+        
+        k = len(self.potential_experts)
+        if self.round < k:
+            # Choose each arm once
+            arm = self.potential_experts[self.round]
+        else:
+            if min(list(self.selected_times.values())) <= math.sqrt(self.round):
+                # select the least selected arm
+                arm_index = np.argmin(list(self.selected_times.values()))
+                arm = list(self.selected_times.keys())[arm_index]
+            else:
+                # select the arm with highest estimated reward with confidence
+                alphas = self.selectAlpha()
+                arm = self.selectArmWithAlpha(alphas)
+            z = self.calculateZ()
+            if z >= self.beta:
+                self.bandit_end = True
+        self.selected_times[arm] += 1
+        # set the new freq and size threshold
+        new_f, new_s = self.extractThres(arm)
+        self.freq_thres = new_f
+        self.size_thres = new_s
+        
+        return
+    
+    def updateReward(self):
+        current_exp = 'f'+str(self.freq_thres)+'s'+str(self.size_thres)
+        self.observed_rewards[current_exp].append(self.round_hoc_hit_num/self.round_request_num)
+        # self.model_variance[current_exp].append(1) 
+        for e in self.potential_experts:
+            if e != current_exp:
+                [pred_hit_hit_prob, pred_hit_miss_prob] = self.models[(current_exp, e)]
+                e0_hit_count = self.round_hoc_hit_num
+                e0_miss_count = self.round_request_num - self.round_hoc_hit_num
+                pred_e1_hitrate = (e0_hit_count * pred_hit_hit_prob + e0_miss_count * pred_hit_miss_prob) / (e0_hit_count + e0_miss_count)
+                self.observed_rewards[e].append(pred_e1_hitrate)
+                # model_var = pred_hit_miss_prob*(1-pred_hit_miss_prob)*e0_miss_count/self.round_request_num + pred_hit_hit_prob*(1-pred_hit_hit_prob)*e0_hit_count/self.round_request_num
+                # self.model_variance[e].append(model_var)
+                # TODO: can update variance on the fly/mean
+        
+        # update estimated reward
+        self.calculateEstimated()
+        # self.updateBadSet()
+        # self.calculateZ()
+        self.selectAlpha()
+        self.calculateBeta()
         return
         
     def stageTransition(self):
@@ -147,12 +345,29 @@ class OnlineHierarchy:
             self.current_stage = OnlineStage.FEATURE_COLLECTION
             self.stage_parsed_requests = 0
         if self.current_stage == OnlineStage.FEATURE_COLLECTION and self.checkFeatureConfidence():
+            
             # TODO: replace feature load with online feature collection
-            self.
+            features = pickle.load(open(os.path.join(FEATURE_PATH, self.name+".pkl"), "rb"))
+            feature_set = ['sd_avg', 'iat_avg', 'size_avg', 'edc_avg']
+
+            for k, v in features.items():
+                if k in feature_set:
+                    if type(v) is dict or type(v) is defaultdict:
+                        values = [value for key,value in sorted(v.items())]   
+                        self.feature += values
+                    else:
+                        self.feature.append(v)
+            self.feature = [ (self.feature[i]- FEATURE_MIN_LIST[i])/(FEATURE_MAX_LIST[i]-FEATURE_MIN_LIST[i]) for i in range(len(FEATURE_MIN_LIST))]
+            
+            # self.computeFeature()
+            self.cluster()
+            
             self.current_stage = OnlineStage.EXPERT_BANDIT
             self.stage_parsed_requests = 0
-        if self.current_stage == OnlineStage.EXPERT_BANDIT:
-            self.current_stage = OnlineStage.CACHE_WARMUP
+            self.loadModels()
+            self.selectArm()
+        if self.current_stage == OnlineStage.EXPERT_BANDIT and self.bandit_end:
+            self.current_stage = OnlineStage.BEST_DEPLOYED
             self.stage_parsed_requests = 0
         return
     
@@ -162,15 +377,19 @@ class OnlineHierarchy:
         self.dc.removeFromCache(id, size)
         del self.dcAccessTab[id]
 
+        disk_write = 0
+        
         # when hoc is full, demote the hoc's lru object to the dc
         while self.hoc.current_size + size > self.hoc.cache_size:
             if not self.hoc_full:
                 print("HOC full at request {:d}".format(self.tot_req_num))
                 sys.stdout.flush()
-            self.demote()
+            disk_write += self.demote()
 
         # add the object to hoc
         self.hoc.addToCache(id, size)
+        
+        return disk_write
 
     # demote the lru object from hoc to dc
     def demote(self):
@@ -181,12 +400,14 @@ class OnlineHierarchy:
 
         # add the object to dc
         evicted = self.dc.miss(id, size)
-        disk_write += size/4
+        disk_write = size/4
 
         # remove the evicted objects in access table
         for evicted_id in evicted:
             if evicted_id in self.dcAccessTab:
                 del self.dcAccessTab[evicted_id]
+        
+        return disk_write
 
     def countFreq(self, current_t, id):
         for t in self.dcAccessTab[id]:
@@ -208,7 +429,7 @@ class OnlineHierarchy:
             if size < self.size_thres:
                 self.dcAccessTab[id].append(t)
                 if self.countFreq(t, id) == self.freq_thres:
-                    self.promote(id, size)
+                    disk_write += self.promote(id, size)
 
             obj_hit = ALPHA
         else:
@@ -246,6 +467,16 @@ class OnlineHierarchy:
         if self.current_stage == OnlineStage.FEATURE_COLLECTION:
             # TODO: collect features online
             pass
+        if self.current_stage == OnlineStage.EXPERT_BANDIT:
+            self.round_request_num += 1
+            if obj_hit == 1:
+                self.round_hoc_hit_num += 1
+            if self.round_request_num == BANDIT_ROUND_LENGTH:
+                self.updateReward()
+                self.round += 1
+                self.round_request_num = self.round_hoc_hit_num = 0
+                self.selectArm()
+                
         self.stage_parsed_requests += 1
         self.stageTransition()
         return
@@ -253,7 +484,10 @@ class OnlineHierarchy:
 
 def main():
     
-    trace_path, hoc_s, dc_s = parseInput()
+    # trace_path, hoc_s, dc_s = parseInput()
+    trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-0:24300-100m.txt"
+    hoc_s = 100000
+    dc_s = 10000000
     
     if None not in (trace_path, hoc_s, dc_s):
         print('trace: {}, HOC size: {}, DC size: {}'.format(trace_path, hoc_s, dc_s))
@@ -261,7 +495,7 @@ def main():
         sys.exit(2)
     
     name = trace_path.split('/')[-1].split('.')[0]
-    cache = OnlineHierarchy(4, 50, hoc_s, dc_s)
+    cache = OnlineHierarchy(name, 4, 50, hoc_s, dc_s)
     
     for line in open(trace_path):
         line = line.split(',')
