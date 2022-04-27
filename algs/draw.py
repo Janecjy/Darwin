@@ -44,7 +44,7 @@ def countStat(dirPath):
                 #         baseline.append(((x[0], x[3])))
                 #     continue
 
-                if file_res:
+                if file_res and s != '0':
                     hr['f'+f+'s'+s] = [x[0] for x in file_res]
                     # disk_write['f'+f+'s'+s] = [x[3] for x in file_res]
 
@@ -73,7 +73,7 @@ def confSort(keys):
 
 def drawSeparate(name):
 
-    dirPath = "/home/janechen/cache/output/"+name
+    dirPath = "/home/janechen/cache/output/test-set-real/"+name
 
     hr, best_set = countStat(dirPath)
     # print(improve_minus)

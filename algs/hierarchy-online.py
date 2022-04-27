@@ -23,8 +23,8 @@ CLUSTER_RESULT_PATH = "/home/janechen/cache/output/cluster_experts.pkl"
 
 # request length of each stage
 WARMUP_LENGTH = 1000000
-FEATURE_COLLECTION_MAX_LENGTH = 1000000
-BANDIT_ROUND_LENGTH = 1000000
+FEATURE_COLLECTION_MAX_LENGTH = 0
+BANDIT_ROUND_LENGTH = 500000
 
 
 ALPHA = 0.001 # defines dc hit benefit
@@ -71,7 +71,7 @@ RANDOM_GEN = [
     [random.gauss, (0.5, 1)],
     [random.gauss, (0.5, 5)]
 ]
-ALPHA_GEN_TIMES = 20
+ALPHA_GEN_TIMES = 10
 
 class OnlineStage(Enum):
     CACHE_WARMUP = 0
@@ -144,7 +144,6 @@ class OnlineHierarchy:
         self.round_request_num = 0
         self.round_hoc_hit_num = 0
         self.bandit_end = False
-        self.beta = 0
         self.selected_times = {}
         self.observed_rewards = {}
         self.estimated_rewards = {}
@@ -161,6 +160,9 @@ class OnlineHierarchy:
         self.tot_byte_miss = 0
         self.tot_disk_read = 0
         self.tot_disk_write = 0
+        
+        # if __debug__:
+        #     self.avg
         
     
     def loadModels(self):
@@ -193,7 +195,7 @@ class OnlineHierarchy:
                     
                     # get model variance
                     # self.model_variance[(exp0, exp1)] = p1*(1-p1)+p2*(1-p2)
-                self.model_variance[(exp0, exp1)] = 0.25
+                self.model_variance[(exp0, exp1)] = 0.5
                     
     
     def checkFeatureConfidence(self):
@@ -213,7 +215,7 @@ class OnlineHierarchy:
     def generateAlphaList(self, k):
         for generator in RANDOM_GEN:
             assert len(generator) == 1 or len(generator) == 2
-            for t in range(ALPHA_GEN_TIMES):
+            for t in range(ALPHA_GEN_TIMES*k):
                 list = []
                 for i in range(k):
                     if len(generator) == 1:
@@ -227,14 +229,13 @@ class OnlineHierarchy:
     def cluster(self):
         '''Classify trace into cluster to get potential best experts'''
         
-        cluster_model = pickle.load(CLUSTER_MODEL_PATH, "rb")
-        cluster_result = pickle.load(CLUSTER_RESULT_PATH, "rb")
+        cluster_model = pickle.load(open(CLUSTER_MODEL_PATH, "rb"))
+        cluster_result = pickle.load(open(CLUSTER_RESULT_PATH, "rb"))
         cluster = cluster_model.predict([self.feature])[0]
         self.potential_experts = cluster_result[cluster]
         for e in self.potential_experts:
             self.selected_times[e] = 0
             self.observed_rewards[e] = []
-            self.model_variance[e] = []
             self.estimated_rewards[e] = []
             self.estimated_numerator[e] = 0
             self.estimated_denominator[e] = 0
@@ -243,12 +244,12 @@ class OnlineHierarchy:
         return
     
     def getLatestEstimate(self, e):
-        return self.estimated_rewards[e][-1]
+        return self.avg_estimated[e]
     
     def calculateW(self, alphas, e):
         result = 0
         for i, ei in enumerate(self.potential_experts):
-            result += alphas[i]/(self.model_variance[(ei, e)]^2)
+            result += alphas[i]/(self.model_variance[(ei, e)]**2)
         return result
     
     def calculateDelta(self, best_e, e):
@@ -256,25 +257,26 @@ class OnlineHierarchy:
     
     def findMinConf(self, alphas):
         best_e_index = np.argmax([self.getLatestEstimate(e) for e in self.potential_experts])
-        w_star = self.calculateW(alphas, self.potential_experts[best_e_index])
-        results = [w_star*self.calculateW(alphas, e)/(w_star+self.calculateW(alphas, e))*(self.calculateDelta(e)^2)/2 for e in self.potential_experts]
+        best_e = self.potential_experts[best_e_index]
+        w_star = self.calculateW(alphas, best_e)
+        # TODO: only for experts with nonoptimal results
+        results = [w_star*self.calculateW(alphas, e)/(w_star+self.calculateW(alphas, e))*(self.calculateDelta(best_e, e)**2)/2 for e in self.potential_experts if e != best_e]
         return min(results)
     
     def calculateZ(self):
-        return self.findMinConf([self.selected_times[i]/self.round for i in self.selected_times.keys()])
+        return self.findMinConf([self.selected_times[i] for i in self.selected_times.keys()])
     
     def calculateBeta(self):
         t = self.round
         k = len(self.potential_experts)
         f = (lambda x: math.exp(k-x)*((x/k)**k))
-        self.beta = k * math.log(t^2+t) + inversefunc(f, y_values=DELTA)
-        return
+        beta = k * math.log(t**2+t) + inversefunc(f, y_values=DELTA)
+        return beta
         
-    def calculateEstimated(self):
-        for e in self.estimated_rewards.keys():
-            assert self.observed_rewards[e] == self.model_variance[e]
-            self.estimated_numerator[e] += self.observed_rewards[e][-1]/(self.model_variance[e][-1]^2)
-            self.estimated_denominator[e] += 1/(self.model_variance[e][-1]^2)
+    def calculateEstimated(self, current_e):
+        for e in self.potential_experts:
+            self.estimated_numerator[e] += self.observed_rewards[e][-1]/(self.model_variance[(current_e, e)]**2)
+            self.estimated_denominator[e] += 1/(self.model_variance[(current_e, e)]**2)
             self.estimated_rewards[e].append(self.estimated_numerator[e]/self.estimated_denominator[e])
             # update average value of the estimates
             self.avg_estimated[e] = sum(self.estimated_rewards[e])/len(self.estimated_rewards[e])
@@ -286,8 +288,7 @@ class OnlineHierarchy:
         return self.alpha_list[max_index]
     
     def selectArmWithAlpha(self, alphas):
-        # TODO: check alpha(vt), if v is the latest estimated or avg?
-        arm_index = np.argmax([self.round*alphas[i]*self.estimated_rewards[e][-1]-self.selected_times[e] for i, e in enumerate(self.potential_experts)])
+        arm_index = np.argmax([self.round*alphas[i]-self.selected_times[e] for i, e in enumerate(self.potential_experts)])
         return self.potential_experts[arm_index]
     
     def selectArm(self):
@@ -305,9 +306,7 @@ class OnlineHierarchy:
                 # select the arm with highest estimated reward with confidence
                 alphas = self.selectAlpha()
                 arm = self.selectArmWithAlpha(alphas)
-            z = self.calculateZ()
-            if z >= self.beta:
-                self.bandit_end = True
+            
         self.selected_times[arm] += 1
         # set the new freq and size threshold
         new_f, new_s = self.extractThres(arm)
@@ -332,11 +331,21 @@ class OnlineHierarchy:
                 # TODO: can update variance on the fly/mean
         
         # update estimated reward
-        self.calculateEstimated()
+        self.calculateEstimated(current_exp)
         # self.updateBadSet()
         # self.calculateZ()
-        self.selectAlpha()
-        self.calculateBeta()
+        # self.selectAlpha()
+        if self.round >= len(self.potential_experts)-1:
+            beta = self.calculateBeta()
+            z = self.calculateZ()
+            if z >= beta:
+                arm = np.argmax(list(self.avg_estimated.values()))
+                new_f, new_s = self.extractThres(arm)
+                self.freq_thres = new_f
+                self.size_thres = new_s
+                self.bandit_end = True
+                if __debug__:
+                    print("Bandit finishes after {:d} requests".format(self.stage_parsed_requests))
         return
         
     def stageTransition(self):
@@ -485,7 +494,7 @@ class OnlineHierarchy:
 def main():
     
     # trace_path, hoc_s, dc_s = parseInput()
-    trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-0:24300-100m.txt"
+    trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-10612:8889.txt"
     hoc_s = 100000
     dc_s = 10000000
     
