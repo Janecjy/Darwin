@@ -41,7 +41,7 @@ OUTPUT_SIZE = 2
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # bandit constant
-DELTA = 0.5
+DELTA = 0.01
 
 # random distribution generators
 RANDOM_GEN = [
@@ -161,6 +161,10 @@ class OnlineHierarchy:
         self.tot_disk_read = 0
         self.tot_disk_write = 0
         
+        # debug statistics
+        self.betas = []
+        self.zs = []
+        
         # if __debug__:
         #     self.avg
         
@@ -195,7 +199,7 @@ class OnlineHierarchy:
                     
                     # get model variance
                     # self.model_variance[(exp0, exp1)] = p1*(1-p1)+p2*(1-p2)
-                self.model_variance[(exp0, exp1)] = 0.5
+                self.model_variance[(exp0, exp1)] = 0.25
                     
     
     def checkFeatureConfidence(self):
@@ -233,6 +237,7 @@ class OnlineHierarchy:
         cluster_result = pickle.load(open(CLUSTER_RESULT_PATH, "rb"))
         cluster = cluster_model.predict([self.feature])[0]
         self.potential_experts = cluster_result[cluster]
+        k = len(self.potential_experts)
         for e in self.potential_experts:
             self.selected_times[e] = 0
             self.observed_rewards[e] = []
@@ -240,7 +245,10 @@ class OnlineHierarchy:
             self.estimated_numerator[e] = 0
             self.estimated_denominator[e] = 0
             self.avg_estimated[e] = 0
-        self.generateAlphaList(len(self.potential_experts))
+        self.generateAlphaList(k)
+        f = (lambda x: math.exp(k-x)*((x/k)**k))
+        self.f_inverse = inversefunc(f, y_values=DELTA).item()
+        
         return
     
     def getLatestEstimate(self, e):
@@ -249,7 +257,7 @@ class OnlineHierarchy:
     def calculateW(self, alphas, e):
         result = 0
         for i, ei in enumerate(self.potential_experts):
-            result += alphas[i]/(self.model_variance[(ei, e)]**2)
+            result += alphas[i]/(self.model_variance[(ei, e)])
         return result
     
     def calculateDelta(self, best_e, e):
@@ -259,7 +267,6 @@ class OnlineHierarchy:
         best_e_index = np.argmax([self.getLatestEstimate(e) for e in self.potential_experts])
         best_e = self.potential_experts[best_e_index]
         w_star = self.calculateW(alphas, best_e)
-        # TODO: only for experts with nonoptimal results
         results = [w_star*self.calculateW(alphas, e)/(w_star+self.calculateW(alphas, e))*(self.calculateDelta(best_e, e)**2)/2 for e in self.potential_experts if e != best_e]
         return min(results)
     
@@ -269,14 +276,14 @@ class OnlineHierarchy:
     def calculateBeta(self):
         t = self.round
         k = len(self.potential_experts)
-        f = (lambda x: math.exp(k-x)*((x/k)**k))
-        beta = k * math.log(t**2+t) + inversefunc(f, y_values=DELTA)
+        # f = (lambda x: math.exp(k-x)*((x/k)**k))
+        beta = k * np.log(t**2+t) + self.f_inverse
         return beta
         
     def calculateEstimated(self, current_e):
         for e in self.potential_experts:
-            self.estimated_numerator[e] += self.observed_rewards[e][-1]/(self.model_variance[(current_e, e)]**2)
-            self.estimated_denominator[e] += 1/(self.model_variance[(current_e, e)]**2)
+            self.estimated_numerator[e] += self.observed_rewards[e][-1]/(self.model_variance[(current_e, e)])
+            self.estimated_denominator[e] += 1/(self.model_variance[(current_e, e)])
             self.estimated_rewards[e].append(self.estimated_numerator[e]/self.estimated_denominator[e])
             # update average value of the estimates
             self.avg_estimated[e] = sum(self.estimated_rewards[e])/len(self.estimated_rewards[e])
@@ -318,7 +325,6 @@ class OnlineHierarchy:
     def updateReward(self):
         current_exp = 'f'+str(self.freq_thres)+'s'+str(self.size_thres)
         self.observed_rewards[current_exp].append(self.round_hoc_hit_num/self.round_request_num)
-        # self.model_variance[current_exp].append(1) 
         for e in self.potential_experts:
             if e != current_exp:
                 [pred_hit_hit_prob, pred_hit_miss_prob] = self.models[(current_exp, e)]
@@ -326,18 +332,21 @@ class OnlineHierarchy:
                 e0_miss_count = self.round_request_num - self.round_hoc_hit_num
                 pred_e1_hitrate = (e0_hit_count * pred_hit_hit_prob + e0_miss_count * pred_hit_miss_prob) / (e0_hit_count + e0_miss_count)
                 self.observed_rewards[e].append(pred_e1_hitrate)
-                # model_var = pred_hit_miss_prob*(1-pred_hit_miss_prob)*e0_miss_count/self.round_request_num + pred_hit_hit_prob*(1-pred_hit_hit_prob)*e0_hit_count/self.round_request_num
-                # self.model_variance[e].append(model_var)
-                # TODO: can update variance on the fly/mean
+                model_var = pred_hit_miss_prob*(1-pred_hit_miss_prob)*e0_miss_count/self.round_request_num + pred_hit_hit_prob*(1-pred_hit_hit_prob)*e0_hit_count/self.round_request_num
+            else:
+                model_var = self.round_hoc_hit_num/self.round_request_num*(1-self.round_hoc_hit_num/self.round_request_num)
+            self.model_variance[(current_exp, e)] = model_var
         
         # update estimated reward
         self.calculateEstimated(current_exp)
         # self.updateBadSet()
         # self.calculateZ()
         # self.selectAlpha()
-        if self.round >= len(self.potential_experts)-1:
+        if self.round >= len(self.potential_experts):
             beta = self.calculateBeta()
             z = self.calculateZ()
+            self.betas.append(beta)
+            self.zs.append(z)
             if z >= beta:
                 arm = np.argmax(list(self.avg_estimated.values()))
                 new_f, new_s = self.extractThres(arm)
@@ -391,7 +400,7 @@ class OnlineHierarchy:
         # when hoc is full, demote the hoc's lru object to the dc
         while self.hoc.current_size + size > self.hoc.cache_size:
             if not self.hoc_full:
-                print("HOC full at request {:d}".format(self.tot_req_num))
+                print("HOC full at request {:d}".format(self.stage_parsed_requests))
                 sys.stdout.flush()
             disk_write += self.demote()
 
@@ -493,10 +502,11 @@ class OnlineHierarchy:
 
 def main():
     
-    # trace_path, hoc_s, dc_s = parseInput()
-    trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-10612:8889.txt"
-    hoc_s = 100000
-    dc_s = 10000000
+    trace_path, hoc_s, dc_s = parseInput()
+    # trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-22535:3869.txt" # 5 experts
+    # trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-10612:8889.txt"
+    # hoc_s = 100000
+    # dc_s = 10000000
     
     if None not in (trace_path, hoc_s, dc_s):
         print('trace: {}, HOC size: {}, DC size: {}'.format(trace_path, hoc_s, dc_s))
@@ -513,7 +523,21 @@ def main():
         size = int(line[2])
         cache.feedRequest(t, id, size)
     
-    print('hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:d}, disk write: {:d}'.format(cache.tot_hoc_hit/cache.tot_req_num*100, cache.tot_obj_hit/cache.tot_req_num*100, cache.tot_byte_miss/cache.tot_req_bytes*100, cache.tot_disk_read, cache.tot_disk_write))
+    print("cluster best expert:")
+    print(cache.potential_experts)
+    print("model variance:")
+    print(cache.model_variance)
+    print("selected times:")
+    print(cache.selected_times)
+    print("estimated rewards:")
+    print(cache.estimated_rewards)
+    print("avg estimated:")
+    print(cache.avg_estimated)
+    print("Betas:")
+    print(cache.betas)
+    print("Zs:")
+    print(cache.zs)
+    print('hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:f}, disk write: {:f}'.format(cache.tot_hoc_hit/cache.tot_req_num*100, cache.tot_obj_hit/cache.tot_req_num*100, cache.tot_byte_miss/cache.tot_req_bytes*100, cache.tot_disk_read, cache.tot_disk_write))
     return 0
 
 if __name__ == '__main__':
