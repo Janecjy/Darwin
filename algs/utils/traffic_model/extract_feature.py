@@ -4,9 +4,9 @@ from parser import *
 from collections import defaultdict
 
 from numpy.core import numeric
-from gen_trace import *
-from treelib import *
-from util import *
+from .gen_trace import *
+from .treelib import *
+from .util import *
 import random
 import pickle
 import numpy as np
@@ -20,7 +20,7 @@ from bloom_filter2 import BloomFilter
 
 
 ## objects are assumed to be in KB
-class cache:
+class Feature_Cache:
     
     def __init__(self, max_sz):
         self.max_sz = max_sz
@@ -157,7 +157,7 @@ def main():
     
     name = sys.argv[1]
                   
-    lru             = cache(10*TB/1000)
+    lru             = Feature_Cache(10*TB/1000)
     initial_objects = list()
     initial_times   = {}
 

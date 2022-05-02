@@ -14,6 +14,7 @@ from pynverse import inversefunc
 import random
 
 from lru import LRU
+from utils.traffic_model.extract_feature import Feature_Cache
 
 
 # path
@@ -23,12 +24,16 @@ CLUSTER_RESULT_PATH = "/home/janechen/cache/output/cluster_experts.pkl"
 
 # request length of each stage
 WARMUP_LENGTH = 1000000
-FEATURE_COLLECTION_MAX_LENGTH = 0
+FEATURE_COLLECTION_MAX_LENGTH = 1000000
 BANDIT_ROUND_LENGTH = 500000
 
 
 ALPHA = 0.001 # defines dc hit benefit
 FREQ_OBSERVE_WINDOW = 1000000
+
+# feature parameters
+FEATURE_CACHE_SIZE = 10000000
+MAX_HIST = 7
 
 # trained feature parameters
 FEATURE_MAX_LIST = pickle.load(open("../cache/output/max_list.pkl", "rb"))
@@ -133,10 +138,23 @@ class OnlineHierarchy:
         self.potential_experts = []
         
         # features
-        self.iat_avg = []
-        self.sd_avg = []
+        self.feature_cache = Feature_Cache(FEATURE_CACHE_SIZE)
+        self.initial_objects = list()
+        self.initial_times = {}
+        self.obj_sizes = defaultdict(int)
+        self.obj_reqs = defaultdict(int)
+        
+        self.obj_iats = defaultdict(list)
+        self.iat_avg = dict.fromkeys([x+1 for x in range(MAX_HIST)]) # iat average, iat[k] is the dt average between first arrival and k+1 th arrival
+        self.sd_avg = dict.fromkeys([x+1 for x in range(MAX_HIST)]) # sd average, iat[k] is the dt average between first arrival and k+1 th arrival
+        self.sd_count = [0]*MAX_HIST
         self.size_avg = 0
-        self.edc_avg = []
+        self.size_count = 0
+        self.edc_avg = dict.fromkeys([x+1 for x in range(MAX_HIST)])
+        for x in self.iat_avg.keys():
+            self.iat_avg[x] = 0
+            self.sd_avg[x] = 0
+            self.edc_avg[x] = 0
         self.feature = []
         
         # bandit states
@@ -237,6 +255,9 @@ class OnlineHierarchy:
         cluster_result = pickle.load(open(CLUSTER_RESULT_PATH, "rb"))
         cluster = cluster_model.predict([self.feature])[0]
         self.potential_experts = cluster_result[cluster]
+        print("cluster best expert:")
+        print(self.potential_experts)
+        sys.stdout.flush()
         k = len(self.potential_experts)
         for e in self.potential_experts:
             self.selected_times[e] = 0
@@ -360,30 +381,26 @@ class OnlineHierarchy:
     def stageTransition(self):
         if self.current_stage == OnlineStage.CACHE_WARMUP and self.stage_parsed_requests == WARMUP_LENGTH:
             assert self.hoc_full
+            self.feature_cache.initialize(self.initial_objects, self.obj_sizes, self.initial_times)
             self.current_stage = OnlineStage.FEATURE_COLLECTION
             self.stage_parsed_requests = 0
         if self.current_stage == OnlineStage.FEATURE_COLLECTION and self.checkFeatureConfidence():
             
-            # TODO: replace feature load with online feature collection
-            features = pickle.load(open(os.path.join(FEATURE_PATH, self.name+".pkl"), "rb"))
-            feature_set = ['sd_avg', 'iat_avg', 'size_avg', 'edc_avg']
-
-            for k, v in features.items():
-                if k in feature_set:
-                    if type(v) is dict or type(v) is defaultdict:
-                        values = [value for key,value in sorted(v.items())]   
-                        self.feature += values
-                    else:
-                        self.feature.append(v)
-            self.feature = [ (self.feature[i]- FEATURE_MIN_LIST[i])/(FEATURE_MAX_LIST[i]-FEATURE_MIN_LIST[i]) for i in range(len(FEATURE_MIN_LIST))]
-            
-            # self.computeFeature()
+            self.collectFeature()
             self.cluster()
             
-            self.current_stage = OnlineStage.EXPERT_BANDIT
+            if len(self.potential_experts) > 1:
+                self.current_stage = OnlineStage.EXPERT_BANDIT
+                self.loadModels()
+                self.selectArm()
+            else:
+                new_f, new_s = self.extractThres(self.potential_experts[0])
+                self.freq_thres = new_f
+                self.size_thres = new_s
+                self.current_stage = OnlineStage.BEST_DEPLOYED
+                
             self.stage_parsed_requests = 0
-            self.loadModels()
-            self.selectArm()
+            
         if self.current_stage == OnlineStage.EXPERT_BANDIT and self.bandit_end:
             self.current_stage = OnlineStage.BEST_DEPLOYED
             self.stage_parsed_requests = 0
@@ -472,18 +489,76 @@ class OnlineHierarchy:
             self.tot_hoc_hit += 1
         self.tot_req_num += 1
         self.tot_req_bytes += size
+        
+    def featureCacheInit(self, t, id, size):
+        self.obj_reqs[id] += 1
+        self.obj_iats[id].append(-1)
+        
+        if id not in self.obj_sizes:
+
+            self.initial_objects.append(id)        
+            self.obj_sizes[id] = size
+
+        self.initial_times[id] = t
+        return
+    
+    def feedFeature(self, t, id, size):
+        self.obj_sizes[id] = size
+        self.obj_reqs[id] += 1
+        self.size_count += 1
+        self.size_avg += 1/self.size_count*(size-self.size_avg)
+
+        try:
+            k = self.feature_cache.insert(id, size, t)
+        except:
+            print("Feature cache insertion error.")
+
+        # TODO: sd for more than 2 occurrences are not exact unique bytes
+        sd, iat = k    
+        if sd:
+            for num, (s, t) in enumerate(zip(sd, iat)):
+
+                if s == -1:
+                    break
+
+                self.sd_count[num] += 1
+                self.sd_avg[num+1] += 1/self.sd_count[num]*(s-self.sd_avg[num+1])
+                self.iat_avg[num+1] += 1/self.sd_count[num]*(t-self.iat_avg[num+1])
+
+        self.obj_iats[id].append(iat)  
+    
+    def collectFeature(self):
+        edc_count = 0
+        for id in self.feature_cache.items:
+            n = self.feature_cache.items[id]
+            edc_count += 1
+            for i, edc in enumerate(n.edcs):
+                self.edc_avg[i+1] += 1/edc_count*(edc-self.edc_avg[i+1])
+        for features in [self.sd_avg, self.iat_avg, self.size_avg, self.edc_avg]:
+            if type(features) is dict:
+                for k, v in sorted(features.items()):
+                    self.feature.append(v)
+            else:
+                self.feature.append(features)
+        self.feature = [ (self.feature[i]- FEATURE_MIN_LIST[i])/(FEATURE_MAX_LIST[i]-FEATURE_MIN_LIST[i]) for i in range(len(FEATURE_MIN_LIST))]
     
     def feedRequest(self, t, id, size):
+        firstTimeReq = True
         if id in self.bloom:
             obj_hit, byte_miss, disk_read, disk_write = self.request(t, id, size)
+            firstTimeReq = False
         else:
             obj_hit = disk_read = disk_write = 0
             byte_miss = size
         self.bloom.add(id)
-        if self.current_stage != OnlineStage.CACHE_WARMUP:
+        if self.current_stage == OnlineStage.CACHE_WARMUP:
+            if not firstTimeReq:
+                self.featureCacheInit(t, id, size)
+        else:
             self.collectStat(obj_hit, byte_miss, disk_read, disk_write, size)
         if self.current_stage == OnlineStage.FEATURE_COLLECTION:
-            # TODO: collect features online
+            if not firstTimeReq:
+                self.feedFeature(t, id, size)
             pass
         if self.current_stage == OnlineStage.EXPERT_BANDIT:
             self.round_request_num += 1
@@ -502,11 +577,11 @@ class OnlineHierarchy:
 
 def main():
     
-    trace_path, hoc_s, dc_s = parseInput()
+    # trace_path, hoc_s, dc_s = parseInput()
     # trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-22535:3869.txt" # 5 experts
-    # trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-10612:8889.txt"
-    # hoc_s = 100000
-    # dc_s = 10000000
+    trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-10612:8889.txt"
+    hoc_s = 100000
+    dc_s = 10000000
     
     if None not in (trace_path, hoc_s, dc_s):
         print('trace: {}, HOC size: {}, DC size: {}'.format(trace_path, hoc_s, dc_s))
@@ -523,8 +598,6 @@ def main():
         size = int(line[2])
         cache.feedRequest(t, id, size)
     
-    print("cluster best expert:")
-    print(cache.potential_experts)
     print("model variance:")
     print(cache.model_variance)
     print("selected times:")
