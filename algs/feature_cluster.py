@@ -1,6 +1,7 @@
 import re
 
 from sklearn.cluster import KMeans
+from sklearn.neighbors import KNeighborsClassifier
 from pyclustertend import hopkins
 from gap_statistic import OptimalK
 from sklearn import metrics
@@ -97,6 +98,8 @@ def feature_cluster():
     # build kmeans model
     kmeans_model = KMeans(n_clusters=n_clusters, random_state=1).fit(X)
     labels = kmeans_model.labels_
+    
+    # build 
         
     pickle.dump(X, open("../cache/output/x.pkl", "wb"))
     pickle.dump(kmeans_model, open("../cache/output/kmeans.pkl", "wb"))
@@ -392,16 +395,16 @@ def confSort(keys):
     return sorted(keys, key=lambda element: list(int(x.replace('f', '')) for x in element.split('s')[:]))
 
 def main():
-    # dirs = [path for path in os.listdir("../cache/output/train-set") if path.startswith('tc')]
-    # best_result = {}
-    # best_resultset = set()
-    # for dir in dirs:
-    #     best_set = countStat("../cache/output/train-set/"+dir)
-    #     best_result[dir] = confSort(best_set)
-    #     best_resultset.add(tuple(confSort(best_set)))
-    # # print(best_resultset)
-    # pickle.dump(best_resultset, open("../cache/output/best_resultset.pkl", "wb"))
-    # pickle.dump(best_result, open("../cache/output/best_result.pkl", "wb"))
+    dirs = [path for path in os.listdir("../cache/output/train-set") if path.startswith('tc')]
+    best_result = {}
+    best_resultset = set()
+    for dir in dirs:
+        best_set = countStat("../cache/output/train-set/"+dir)
+        best_result[dir] = confSort(best_set)
+        best_resultset.add(tuple(confSort(best_set)))
+    # print(best_resultset)
+    pickle.dump(best_resultset, open("../cache/output/best_resultset.pkl", "wb"))
+    pickle.dump(best_result, open("../cache/output/best_result.pkl", "wb"))
     # result_cluster()
     feature_cluster()
     

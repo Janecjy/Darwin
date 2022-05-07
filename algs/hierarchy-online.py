@@ -21,10 +21,11 @@ from utils.traffic_model.extract_feature import Feature_Cache
 FEATURE_PATH = "/home/janechen/cache/output/features/test-set-real"
 CLUSTER_MODEL_PATH = "/home/janechen/cache/output/kmeans.pkl"
 CLUSTER_RESULT_PATH = "/home/janechen/cache/output/cluster_experts.pkl"
+REAL_BEST_PATH = "/home/janechen/cache/output/test_best_result.pkl"
 
 # request length of each stage
 WARMUP_LENGTH = 1000000
-FEATURE_COLLECTION_MAX_LENGTH = 1000000
+FEATURE_COLLECTION_MAX_LENGTH = 2000000
 BANDIT_ROUND_LENGTH = 500000
 
 
@@ -34,6 +35,7 @@ FREQ_OBSERVE_WINDOW = 1000000
 # feature parameters
 FEATURE_CACHE_SIZE = 10000000
 MAX_HIST = 7
+BEST_CLUSTER_NUM = 3
 
 # trained feature parameters
 FEATURE_MAX_LIST = pickle.load(open("../cache/output/max_list.pkl", "rb"))
@@ -182,6 +184,7 @@ class OnlineHierarchy:
         # debug statistics
         self.betas = []
         self.zs = []
+        self.real_best = pickle.load(open(REAL_BEST_PATH, "rb"))[name]
         
         # if __debug__:
         #     self.avg
@@ -248,16 +251,29 @@ class OnlineHierarchy:
                 self.alpha_list.append(list)
         return
     
+    def confSort(self, keys):
+        return sorted(keys, key=lambda element: list(int(x.replace('f', '')) for x in element.split('s')[:]))
+    
     def cluster(self):
         '''Classify trace into cluster to get potential best experts'''
         
         cluster_model = pickle.load(open(CLUSTER_MODEL_PATH, "rb"))
         cluster_result = pickle.load(open(CLUSTER_RESULT_PATH, "rb"))
-        cluster = cluster_model.predict([self.feature])[0]
-        self.potential_experts = cluster_result[cluster]
-        print("cluster best expert:")
+        
+        X_dist = cluster_model.transform([self.feature])[0]
+        cluster_index = np.argsort(X_dist)[:BEST_CLUSTER_NUM]
+        potential_expert_set = set()
+        for cluster in cluster_index:
+            potential_expert_set.update(cluster_result[cluster])
+        self.potential_experts = self.confSort(list(potential_expert_set))
+        # cluster = cluster_model.predict([self.feature])[0]
+        # self.potential_experts = cluster_result[cluster]
+        print("cluster predicted best expert:")
         print(self.potential_experts)
+        print("trace real best expert:")
+        print(self.real_best)
         sys.stdout.flush()
+        # sys.exit(0)
         k = len(self.potential_experts)
         for e in self.potential_experts:
             self.selected_times[e] = 0
@@ -292,7 +308,9 @@ class OnlineHierarchy:
         return min(results)
     
     def calculateZ(self):
-        return self.findMinConf([self.selected_times[i] for i in self.selected_times.keys()])
+        selected_times_sum = self.round
+        normalized_selected_times = [self.selected_times[i]/selected_times_sum for i in self.selected_times.keys()]
+        return self.findMinConf(normalized_selected_times)*selected_times_sum
     
     def calculateBeta(self):
         t = self.round
@@ -351,7 +369,9 @@ class OnlineHierarchy:
                 [pred_hit_hit_prob, pred_hit_miss_prob] = self.models[(current_exp, e)]
                 e0_hit_count = self.round_hoc_hit_num
                 e0_miss_count = self.round_request_num - self.round_hoc_hit_num
-                pred_e1_hitrate = (e0_hit_count * pred_hit_hit_prob + e0_miss_count * pred_hit_miss_prob) / (e0_hit_count + e0_miss_count)
+                # change to sampling
+                pred_e1_hitrate = (np.random.binomial(e0_hit_count, pred_hit_hit_prob) + np.random.binomial(e0_miss_count, pred_hit_miss_prob)) / (e0_hit_count + e0_miss_count)
+                # pred_e1_hitrate = (e0_hit_count * pred_hit_hit_prob + e0_miss_count * pred_hit_miss_prob) / (e0_hit_count + e0_miss_count)
                 self.observed_rewards[e].append(pred_e1_hitrate)
                 model_var = pred_hit_miss_prob*(1-pred_hit_miss_prob)*e0_miss_count/self.round_request_num + pred_hit_hit_prob*(1-pred_hit_hit_prob)*e0_hit_count/self.round_request_num
             else:
@@ -364,6 +384,10 @@ class OnlineHierarchy:
         # self.calculateZ()
         # self.selectAlpha()
         if self.round >= len(self.potential_experts):
+            current_best_exp_index = np.argmax(list(self.avg_estimated.values()))
+            current_best_exp = self.potential_experts[current_best_exp_index]
+            print("Round {:d}: best expert is {}".format(self.round, current_best_exp))
+            sys.stdout.flush()
             beta = self.calculateBeta()
             z = self.calculateZ()
             self.betas.append(beta)
@@ -387,6 +411,17 @@ class OnlineHierarchy:
         if self.current_stage == OnlineStage.FEATURE_COLLECTION and self.checkFeatureConfidence():
             
             self.collectFeature()
+            # features = pickle.load(open(os.path.join(FEATURE_PATH, self.name+".pkl"), "rb"))
+            # feature_set = ['sd_avg', 'iat_avg', 'size_avg', 'edc_avg']
+
+            # for k, v in features.items():
+            #     if k in feature_set:
+            #         if type(v) is dict or type(v) is defaultdict:
+            #             values = [value for key,value in sorted(v.items())]   
+            #             self.feature += values
+            #         else:
+            #             self.feature.append(v)
+            # self.feature = [ (self.feature[i]- FEATURE_MIN_LIST[i])/(FEATURE_MAX_LIST[i]-FEATURE_MIN_LIST[i]) for i in range(len(FEATURE_MIN_LIST))]
             self.cluster()
             
             if len(self.potential_experts) > 1:
@@ -418,7 +453,7 @@ class OnlineHierarchy:
         while self.hoc.current_size + size > self.hoc.cache_size:
             if not self.hoc_full:
                 print("HOC full at request {:d}".format(self.stage_parsed_requests))
-                sys.stdout.flush()
+                # sys.stdout.flush()
             disk_write += self.demote()
 
         # add the object to hoc
@@ -579,7 +614,8 @@ def main():
     
     # trace_path, hoc_s, dc_s = parseInput()
     # trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-22535:3869.txt" # 5 experts
-    trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-10612:8889.txt"
+    # trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-10612:8889.txt"
+    trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-160:486.txt"
     hoc_s = 100000
     dc_s = 10000000
     
