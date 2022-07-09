@@ -7,4 +7,4 @@ FILENAMEARR=(${FILENAME//./ })
 NAME=${FILENAMEARR[0]}
 echo ${NAME}
 
-python ./algs/hierarchy-online.py -t /home/janechen/cache/traces/test-set/$NAME.txt -h 100000 -d 10000000 > /home/janechen/MultiExpertHOCAdmission/$NAME.out
+python ./algs/hierarchy-online.py -t /home/janechen/cache/traces/test-set/$NAME.txt -h 100000 -d 10000000 > /home/janechen/MultiExpertHOCAdmission/t1.5-cluster/$NAME.out

@@ -35,7 +35,7 @@ FREQ_OBSERVE_WINDOW = 1000000
 # feature parameters
 FEATURE_CACHE_SIZE = 10000000
 MAX_HIST = 7
-BEST_CLUSTER_NUM = 3
+BEST_CLUSTER_NUM = 1
 
 # trained feature parameters
 FEATURE_MAX_LIST = pickle.load(open("../cache/output/max_list.pkl", "rb"))
@@ -612,12 +612,12 @@ class OnlineHierarchy:
 
 def main():
     
-    # trace_path, hoc_s, dc_s = parseInput()
+    trace_path, hoc_s, dc_s = parseInput()
     # trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-22535:3869.txt" # 5 experts
     # trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-10612:8889.txt"
-    trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-160:486.txt"
-    hoc_s = 100000
-    dc_s = 10000000
+    # trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-160:486.txt"
+    # hoc_s = 100000
+    # dc_s = 10000000
     
     if None not in (trace_path, hoc_s, dc_s):
         print('trace: {}, HOC size: {}, DC size: {}'.format(trace_path, hoc_s, dc_s))
@@ -646,6 +646,7 @@ def main():
     print(cache.betas)
     print("Zs:")
     print(cache.zs)
+    print('hoc hit num: {}, request num: {}'.format(cache.tot_hoc_hit, cache.tot_req_num))
     print('hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:f}, disk write: {:f}'.format(cache.tot_hoc_hit/cache.tot_req_num*100, cache.tot_obj_hit/cache.tot_req_num*100, cache.tot_byte_miss/cache.tot_req_bytes*100, cache.tot_disk_read, cache.tot_disk_write))
     return 0
 
