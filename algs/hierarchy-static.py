@@ -10,29 +10,31 @@ from lru import LRU
 
 WARMUP_LENGTH = 1000000
 
-trace_path = freq_thres = size_thres = hoc_s = dc_s = None
+trace_path = output_dir = freq_thres = size_thres = hoc_s = dc_s = None
 alpha = 0.001 # defines dc hit benefit
 t_inter = 1000000
 bloom_miss = compulsory_miss = capacity_miss = admission_miss = 0
 
 def parseInput():
 
-    global trace_path, freq_thres, size_thres, hoc_s, dc_s
+    global trace_path, output_dir, freq_thres, size_thres, hoc_s, dc_s
 
     # Get the arguments from the command-line except the filename
     argv = sys.argv[1:]
     
     try:
         # Define the getopt parameters
-        opts, args = getopt.getopt(argv, 't:f:s:h:d:', ['trace_path', 'freq_thres', 'size_thres', 'hoc_size', 'dc_size'])
+        opts, args = getopt.getopt(argv, 't:o:f:s:h:d:', ['trace_path', 'output_dir', 'freq_thres', 'size_thres', 'hoc_size', 'dc_size'])
         # Check if the options' length is 3
-        if len(opts) != 5:
-            print('usage: hierarchy.py -t <trace_path> -f <frequency_threshold> -s <size_threshold> -h <HOC_size> -d <DC_size>')
+        if len(opts) != 6:
+            print('usage: hierarchy.py -t <trace_path> -o <output_dir> -f <frequency_threshold> -s <size_threshold> -h <HOC_size> -d <DC_size>')
         else:
             # Iterate the options and get the corresponding values
             for opt, arg in opts:
                 if opt == '-t':
                     trace_path = arg
+                if opt == '-o':
+                    output_dir = arg
                 if opt == '-f':
                     freq_thres = int(arg)
                 if opt == '-s':
@@ -169,7 +171,7 @@ def run():
     # freqs = []
     hits = []
     
-    print(os.path.join("../cache/output", trace_path.split('/')[6].split('.')[0], 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"))
+    print(os.path.join(output_dir, 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"))
 
     with open(trace_path) as fp:
         for line in fp:
@@ -231,7 +233,7 @@ def run():
         print('bloom_miss: {:d}, compulsory_miss: {:d}, admission_miss: {:d}, capacity_miss: {:d}'.format(bloom_miss, compulsory_miss, admission_miss, capacity_miss))
         sys.stdout.flush()
         
-        pickle.dump(hits, open(os.path.join("../cache/output", trace_path.split('/')[6].split('.')[0], 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"), "wb"))
+        pickle.dump(hits, open(os.path.join(output_dir, 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"), "wb"))
 
 
 def main():
