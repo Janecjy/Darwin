@@ -26,4 +26,4 @@ hosts: [
 'clnode024.clemson.cloudlab.us'
 ]
 username: 'janechen'
-trace_path: '/mydata/traces/'
+trace_parent_dir: '/mydata/'
