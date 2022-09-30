@@ -25,8 +25,17 @@ def setup(host_id):
     rssh_object = ssh_hosts[host_id]
 
     # setup node
-    clone_cmd = "pip3 install bloom-filter2; rm /mydata/traces/debug.txt /mydata/traces/logfile.txt; mkdir -p "+parent_dir+"output; git clone git@github.com:Janecjy/MultiExpertHOCAdmission.git; cd ~/MultiExpertHOCAdmission; git pull; chmod +x script/collect.sh; chmod +x script/collectsub.sh;"
+    clone_cmd = "pip3 install bloom-filter2; rm /mydata/traces/debug.txt /mydata/traces/logfile.txt; rm -rf "+parent_dir+"output; mkdir -p "+parent_dir+"output; git clone git@github.com:Janecjy/MultiExpertHOCAdmission.git; cd ~/MultiExpertHOCAdmission; git pull; chmod +x script/collect.sh; chmod +x script/collectsub.sh;"
     stdin, stdout, stderr = rssh_object.exec_command(clone_cmd, get_pty=True)
+    for line in iter(stdout.readline, ""):
+        print(line)
+
+def check(host_id):
+    rssh_object = ssh_hosts[host_id]
+
+    check_cmd = "cd ~/MultiExpertHOCAdmission; chmod +x ./script/checktraces.sh; ./script/checktraces.sh"
+    print(check_cmd)
+    stdin, stdout, stderr = rssh_object.exec_command(check_cmd, get_pty=True)
     for line in iter(stdout.readline, ""):
         print(line)
     
@@ -61,4 +70,5 @@ if __name__ == "__main__":
         ssh_object = connect_rhost(host, username)
         ssh_hosts.append(ssh_object)
         setup(i)
+        check(i)
         run(i)
