@@ -6,7 +6,7 @@ for TRACE in $FILES
 do
     ./script/collectsub.sh $TRACE $2 &
     ((COUNT++))
-    if [ $COUNT -eq  ]
+    if [ $COUNT -eq 30 ]
         then
             wait
             COUNT=0
