@@ -4,9 +4,9 @@ from parser import *
 from collections import defaultdict
 
 from numpy.core import numeric
-from .gen_trace import *
-from .treelib import *
-from .util import *
+from gen_trace import *
+from treelib import *
+from util import *
 import random
 import pickle
 import numpy as np
@@ -14,7 +14,7 @@ import os
 # import matplotlib
 # matplotlib.use('Agg')
 # import matplotlib.pyplot as plt
-from math import dist
+# from math import dist
 import math
 from bloom_filter2 import BloomFilter
 
