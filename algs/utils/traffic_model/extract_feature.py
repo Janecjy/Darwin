@@ -11,9 +11,9 @@ import random
 import pickle
 import numpy as np
 import os
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+# import matplotlib
+# matplotlib.use('Agg')
+# import matplotlib.pyplot as plt
 from math import dist
 import math
 from bloom_filter2 import BloomFilter
@@ -155,7 +155,9 @@ def main():
     
     print("start")  
     
-    name = sys.argv[1]
+    trace = sys.argv[1]
+    output = sys.argv[2]
+    print(output+".pkl")
                   
     lru             = Feature_Cache(10*TB/1000)
     initial_objects = list()
@@ -195,7 +197,7 @@ def main():
 
     # input_file        = sys.argv[1]
 
-    f = open("/home/janechen/cache/traces/feb3/"+name+".txt", "r")
+    f = open(trace, "r")
     
     bloom = BloomFilter(max_elements=1000000, error_rate=0.1)
 
@@ -480,7 +482,7 @@ def main():
         features["iat_"+str(num+1)] = iats[num+1]
         features["edc_"+str(num+1)] = edcs[num+1]
     
-    pickle.dump(features, open(os.path.join("/home/janechen/cache/output/features/"+name+".pkl"), "wb"))
+    pickle.dump(features, open(output+".pkl"), "wb")
     
     # create figure and axis objects with subplots()
     # cmap = matplotlib.cm.get_cmap("Set3").colors
