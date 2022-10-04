@@ -38,7 +38,18 @@ def check(host_id):
     stdin, stdout, stderr = rssh_object.exec_command(check_cmd, get_pty=True)
     for line in iter(stdout.readline, ""):
         print(line)
-    
+        
+def check_results(host_id):
+    rssh_object = ssh_hosts[host_id]
+
+    check_cmd = "cd ~/MultiExpertHOCAdmission; python3 checkresults.py > results."+host_id
+    print(check_cmd)
+    stdin, stdout, stderr = rssh_object.exec_command(check_cmd, get_pty=True)
+    for line in iter(stdout.readline, ""):
+        print(line)
+    scp_cmd = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "+username+'@'+hosts[host_id]+":~/MultiExpertHOCAdmission/results."+host_id+" ~/Downloads/offline-results/"
+    print(scp_cmd)
+    os.system(scp_cmd)
 
 def run(host_id):
     rssh_object = ssh_hosts[host_id]
