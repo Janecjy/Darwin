@@ -25,7 +25,7 @@ def setup(host_id):
     rssh_object = ssh_hosts[host_id]
 
     # setup node
-    clone_cmd = "pip3 install numpy; mkdir -p "+parent_dir+"features; cd ~/MultiExpertHOCAdmission; git pull; chmod +x script/collectfeature.sh; chmod +x script/collectfeaturesub.sh;"
+    clone_cmd = "sudo apt-get install -y python3-venv; rm -rf "+parent_dir+"features; mkdir -p "+parent_dir+"features; cd ~/MultiExpertHOCAdmission; git pull; chmod +x script/collectfeature.sh; chmod +x script/collectfeaturesub.sh; python3 -m venv venv; source venv/bin/activate; pip install numpy matplotlib bloom-filter2;"
     stdin, stdout, stderr = rssh_object.exec_command(clone_cmd, get_pty=True)
     for line in iter(stdout.readline, ""):
         print(line)
