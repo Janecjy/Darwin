@@ -1,14 +1,15 @@
 #!/bin/bash
 
 COUNT=0
-FILES="/home/janechen/cache/traces/test-set/*"
+FILES=$1'*'
 for TRACE in $FILES
 do
-    ./script/onlinesub.sh $TRACE &
+    ./script/onlinesub.sh $TRACE $2 &
     ((COUNT++))
-    if [ $COUNT -eq 5 ]
+    if [ $COUNT -eq 30 ]
         then
             wait
             COUNT=0
     fi
 done
+wait
