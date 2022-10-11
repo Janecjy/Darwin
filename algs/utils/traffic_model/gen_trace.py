@@ -1,5 +1,5 @@
 import sys
-from .treelib import *
+from treelib import *
 from collections import defaultdict
 
 
