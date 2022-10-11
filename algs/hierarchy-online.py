@@ -47,7 +47,7 @@ BEST_CLUSTER_NUM = 1
 INPUT_SIZE = 22
 HIDDEN_SIZE = 15
 OUTPUT_SIZE = 2
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+DEVICE = torch.device('cpu')
 
 # bandit constant
 DELTA = 0.01
