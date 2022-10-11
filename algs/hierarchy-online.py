@@ -129,7 +129,7 @@ class OnlineHierarchy:
         self.size_thres = default_size_thres
         self.hoc_s = hoc_s
         self.dc_s = dc_s
-        self.expert_list = ["f2s100", "f2s50", "f3s100", "f4s50"]
+        self.expert_list = ["f2s50", "f3s100", "f4s50"]
         # for f in [2]:
         #     for s in [50]:
         #         self.expert_list.append('f'+str(f)+'s'+str(s))
