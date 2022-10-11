@@ -47,7 +47,7 @@ BEST_CLUSTER_NUM = 1
 INPUT_SIZE = 22
 HIDDEN_SIZE = 15
 OUTPUT_SIZE = 2
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+DEVICE = torch.device('cpu')
 
 # bandit constant
 DELTA = 0.01
@@ -216,7 +216,7 @@ class OnlineHierarchy:
             for exp1 in self.potential_experts:
                 if exp0 != exp1:
                     model = NeuralNet(INPUT_SIZE, HIDDEN_SIZE, OUTPUT_SIZE).to(DEVICE)
-                    model.load_state_dict(torch.load(os.path.join(model_path+"nn-models/", exp0+"-"+exp1, "model-h"+str(HIDDEN_SIZE)+".ckpt")))
+                    model.load_state_dict(torch.load(os.path.join(model_path+"nn-models/", exp0+"-"+exp1, "model-h"+str(HIDDEN_SIZE)+".ckpt"), map_location=torch.device('cpu')))
                     model.eval()
                     d = torch.tensor(self.feature).to(DEVICE)
                     outputs = torch.sigmoid(model(d))
