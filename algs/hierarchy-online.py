@@ -361,6 +361,9 @@ class OnlineHierarchy:
         if self.round < 3*k:
             # Choose each arm once
             arm = self.potential_experts[self.round%k]
+        if self.round > 5*k:
+            arm_index = np.argmax([self.estimated_rewards[e] for e in self.potential_experts])
+            arm = self.potential_experts[arm_index]
         else:
             # if min(list(self.selected_times.values())) <= math.sqrt(self.round):
             #     # select the least selected arm
