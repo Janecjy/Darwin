@@ -129,10 +129,11 @@ class OnlineHierarchy:
         self.size_thres = default_size_thres
         self.hoc_s = hoc_s
         self.dc_s = dc_s
-        self.expert_list = ["f2s50", "f3s100", "f4s50"]
-        # for f in [2]:
-        #     for s in [50]:
-        #         self.expert_list.append('f'+str(f)+'s'+str(s))
+        # self.expert_list = ["f2s50", "f2s100", "f4s50"]
+        self.expert_list = []
+        for f in [2, 3, 4]:
+            for s in [50, 100]:
+                self.expert_list.append('f'+str(f)+'s'+str(s))
                 
         self.dc = LRU(dc_s, {})
         self.hoc = LRU(hoc_s, {})
@@ -211,6 +212,7 @@ class OnlineHierarchy:
                 return out
         
         self.models = {} # (e0, e1): (pred_hit_hit_prob, pred_hit_miss_prob)
+        self.model_variance_list = {} # (ei, ej): [sigma_ij]
         self.model_variance = {} # (ei, ej): sigma_ij
         for exp0 in self.potential_experts:
             for exp1 in self.potential_experts:
@@ -227,8 +229,13 @@ class OnlineHierarchy:
                     sys.stdout.flush()
                     
                     # get model variance
-                    # self.model_variance[(exp0, exp1)] = p1*(1-p1)+p2*(1-p2)
-                self.model_variance[(exp0, exp1)] = 0.25
+                    self.model_variance_list[(exp0, exp1)] = [p1*(1-p1)+p2*(1-p2)]
+                else:
+                    self.model_variance_list[(exp0, exp1)] = [0.25]
+                self.model_variance[(exp0, exp1)] = sum(self.model_variance_list[(exp0, exp1)])/len(self.model_variance_list[(exp0, exp1)])
+                
+                
+                # self.model_variance[(exp0, exp1)] = 0.25
                     
                     
     
@@ -351,18 +358,18 @@ class OnlineHierarchy:
     def selectArm(self):
         
         k = len(self.potential_experts)
-        if self.round < k:
+        if self.round < 3*k:
             # Choose each arm once
-            arm = self.potential_experts[self.round]
+            arm = self.potential_experts[self.round%k]
         else:
-            if min(list(self.selected_times.values())) <= math.sqrt(self.round):
-                # select the least selected arm
-                arm_index = np.argmin(list(self.selected_times.values()))
-                arm = list(self.selected_times.keys())[arm_index]
-            else:
-                # select the arm with highest estimated reward with confidence
-                alphas = self.selectAlpha()
-                arm = self.selectArmWithAlpha(alphas)
+            # if min(list(self.selected_times.values())) <= math.sqrt(self.round):
+            #     # select the least selected arm
+            #     arm_index = np.argmin(list(self.selected_times.values()))
+            #     arm = list(self.selected_times.keys())[arm_index]
+            # else:
+            # select the arm with highest estimated reward with confidence
+            alphas = self.selectAlpha()
+            arm = self.selectArmWithAlpha(alphas)
             # arm = "f2s50"
             
         self.selected_times[arm] += 1
@@ -388,7 +395,10 @@ class OnlineHierarchy:
                 model_var = pred_hit_miss_prob*(1-pred_hit_miss_prob)*e0_miss_count/(self.round_request_num/2) + pred_hit_hit_prob*(1-pred_hit_hit_prob)*e0_hit_count/(self.round_request_num/2)
             else:
                 model_var = self.round_hoc_hit_num/(self.round_request_num/2)*(1-self.round_hoc_hit_num/(self.round_request_num/2))
-            self.model_variance[(current_exp, e)] = model_var
+            # self.model_variance[(current_exp, e)] = model_var
+            self.model_variance_list[(current_exp, e)].append(model_var)
+            self.model_variance[(current_exp, e)] = sum(self.model_variance_list[(current_exp, e)])/len(self.model_variance_list[(current_exp, e)])
+            print("model variance for ({}, {}): {:.4f}".format(current_exp, e, self.model_variance[(current_exp, e)]))
         
         # update estimated reward
         self.calculateEstimated(current_exp)
@@ -396,6 +406,8 @@ class OnlineHierarchy:
         # self.calculateZ()
         # self.selectAlpha()
         print("Round {:d}: selected expert is {}, round hoc hit: {:.4f}%, hoc hit: {:.4f}%".format(self.round, current_exp, self.round_hoc_hit_num_all/self.round_request_num*100, self.tot_hoc_hit/self.tot_req_num*100))
+        for e in self.observed_rewards.keys():
+            print("Observed reward for {} is {}".format(e, self.observed_rewards[e][-1]))
         print(self.avg_estimated)
         if self.round >= len(self.potential_experts):
             # current_best_exp_index = np.argmax(list(self.avg_estimated.values()))
