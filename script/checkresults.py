@@ -18,7 +18,7 @@ def countStat(dirPath):
             
             if file.endswith("-6exp.out"):
                 # online 6 expert output files
-                trace = file.split('-')[0]
+                trace = '-'.join(file.split('-')[:-1])
             else:
                 trace = root.split('/')[-1]
 
