@@ -12,6 +12,9 @@ def countStat(dirPath):
     for root, dirs, files in os.walk(dirPath):
         
         for file in files:
+
+            if not file.endswith("-6exp.out") and not file.endswith(".txt"):
+                continue
             
             if file.endswith("-6exp.out"):
                 # online 6 expert output files
