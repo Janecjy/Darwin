@@ -1,33 +1,26 @@
 import re
 import os
+import pickle
 
 def confSort(keys):
     return sorted(keys, key=lambda element: list(int(x.replace('f', '')) for x in element.split('s')[:]))
 
 def countStat(dirPath):
-    hr = {}
+    trace_stats = {}
     current_root = None
     
     for root, dirs, files in os.walk(dirPath):
         
         for file in files:
             
-            if not file.endswith(".txt"):
-                continue
-            
-            if current_root == None:
-                current_root = root
-            if current_root != root:
-                hr_max = max(list([hr[x][0] for x in hr.keys()]))
-                
-                best_set = []
-                for x in hr.keys():
-                    if hr_max - hr[x][0] < 1:
-                        best_set.append(x)
-                        
-                print(current_root.split('/')[-1]+' '+' '.join(confSort(best_set)))
-                hr = {}
-                current_root = root
+            if file.endswith("-6exp.out"):
+                # online 6 expert output files
+                trace = file.split('-')[0]
+            else:
+                trace = root.split('/')[-1]
+
+            if trace not in trace_stats.keys():
+                trace_stats[trace] = {}
                 
             file_res = []
 
@@ -39,7 +32,7 @@ def countStat(dirPath):
                     f = (sentence[0].split(':')[1].replace(" ", ""))
                     s = (sentence[1].split(':')[1].replace(" ", ""))
                 
-                val2 = re.findall('hr: [\d]+[.]?[\d]*%, bmr: [\d]+[.]?[\d]*%, disk read: [\d]+[.]?[\d]*, disk write: [\d]+[.]?[\d]*',line)
+                val2 = re.findall('hoc hit: [\d]+[.]?[\d]*%, hr: [\d]+[.]?[\d]*%, bmr: [\d]+[.]?[\d]*%, disk read: [\d]+[.]?[\d]*, disk write: [\d]+[.]?[\d]*',line)
                 
                 for sentence in val2:
                     exp = sentence.split(',')
@@ -47,16 +40,12 @@ def countStat(dirPath):
                     file_res.append(exp)
 
             if file_res:
-                hr['f'+f+'s'+s] = [x[0] for x in file_res]
-                
-    hr_max = max(list([hr[x][0] for x in hr.keys()]))
-        
-    best_set = []
-    for x in hr.keys():
-        if hr_max - hr[x][0] < 1:
-            best_set.append(x)
-            
-    print(root.split('/')[-1]+' '+' '.join(confSort(best_set)))
+                if file.endswith("-6exp.out"):
+                    trace_stats[trace]['6exp-online'] = [x[0] for x in file_res]
+                else:
+                    trace_stats[trace]['f'+f+'s'+s] = [x[0] for x in file_res]
+    print(trace_stats)  
+    pickle.dump(trace_stats, open("/mydata/output/results.pkl", "wb"))
     
 if __name__ == "__main__":
     countStat("/mydata/output/")
