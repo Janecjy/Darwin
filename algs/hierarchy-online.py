@@ -361,7 +361,7 @@ class OnlineHierarchy:
         if self.round < 3*k:
             # Choose each arm once
             arm = self.potential_experts[self.round%k]
-        if self.round > 5*k:
+        elif self.round > 5*k:
             arm_index = np.argmax([self.avg_estimated[e] for e in self.potential_experts])
             arm = self.potential_experts[arm_index]
         else:
