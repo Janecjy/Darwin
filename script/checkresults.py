@@ -13,14 +13,12 @@ def countStat(dirPath):
         
         for file in files:
 
-            if not file.endswith("-6exp.out") and not file.endswith("-6exp-5k.out") and not file.endswith(".txt"):
+            if not file.endswith("-9exp-5k.out") and not file.endswith(".txt"):
                 continue
             
-            if file.endswith("-6exp-5k.out"):
+            if file.endswith("-9exp-5k.out"):
                 # online 6 expert output files
                 trace = '-'.join(file.split('-')[:-2])
-            if file.endswith("-6exp.out"):
-                trace = '-'.join(file.split('-')[:-1])
             if file.endswith(".txt"):
                 trace = root.split('/')[-1]
 
@@ -45,10 +43,8 @@ def countStat(dirPath):
                     file_res.append(exp)
 
             if file_res:
-                if file.endswith("-6exp.out"):
-                    trace_stats[trace]['6exp-online'] = [x[0] for x in file_res][-1]
-                if file.endswith("-6exp-5k.out"):
-                    trace_stats[trace]['6exp-online-5k'] = [x[0] for x in file_res][-1]
+                if file.endswith("-9exp-5k.out"):
+                    trace_stats[trace]['9exp-online-5k'] = [x[0] for x in file_res][-1]
                 if file.endswith(".txt"):
                     trace_stats[trace]['f'+f+'s'+s] = [x[0] for x in file_res][-1]
     print(trace_stats)  
