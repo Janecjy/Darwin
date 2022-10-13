@@ -13,10 +13,10 @@ def countStat(dirPath):
         
         for file in files:
 
-            if not file.endswith("-6exp.out") and not file.endswith(".txt"):
+            if not file.endswith("-6exp.out") and not file.endswith("-6exp-5k.out") and not file.endswith(".txt"):
                 continue
             
-            if file.endswith("-6exp.out"):
+            if file.endswith("-6exp-5k.out") or file.endswith("-6exp.out"):
                 # online 6 expert output files
                 trace = '-'.join(file.split('-')[:-1])
             else:
@@ -45,7 +45,9 @@ def countStat(dirPath):
             if file_res:
                 if file.endswith("-6exp.out"):
                     trace_stats[trace]['6exp-online'] = [x[0] for x in file_res]
-                else:
+                if file.endswith("-6exp-5k.out"):
+                    trace_stats[trace]['6exp-online-5k'] = [x[0] for x in file_res]
+                if file.endswith(".txt"):
                     trace_stats[trace]['f'+f+'s'+s] = [x[0] for x in file_res]
     print(trace_stats)  
     pickle.dump(trace_stats, open("/mydata/output/results.pkl", "wb"))
