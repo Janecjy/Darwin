@@ -131,9 +131,10 @@ class OnlineHierarchy:
         self.dc_s = dc_s
         # self.expert_list = ["f2s50", "f2s100", "f4s50"]
         self.expert_list = []
-        for f in [2, 4]:
+        for f in [2, 4, 7]:
             for s in [50, 100]:
                 self.expert_list.append('f'+str(f)+'s'+str(s))
+        print(self.expert_list)
                 
         self.dc = LRU(dc_s, {})
         self.hoc = LRU(hoc_s, {})
