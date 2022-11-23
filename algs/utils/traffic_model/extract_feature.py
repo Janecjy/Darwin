@@ -358,7 +358,7 @@ def main():
         # if line_count%1000000 == 0 and line_count > 0:
         #     break
 
-        if line_count%100000 == 0 and line_count > 0:
+        if line_count%1000000 == 0 and line_count > 0:
             
             edc_count = 0
             edc_avg_ = dict.fromkeys([x+1 for x in range(MAX_HIST)])
@@ -373,6 +373,73 @@ def main():
                     edc_avg_[i+1] += 1/edc_count*(edc-edc_avg_[i+1])
             
             line_num.append(line_count)
+            
+            features = dict()
+    
+            for id in lru.items:
+                n = lru.items[id]
+                edc_count += 1
+                for i, edc in enumerate(n.edcs):
+                    edc  = float(edc)/EDC_GRAN
+                    edc  = int(edc) * EDC_GRAN
+                    edcs[i+1][edc] += 1
+                    edc_avg[i+1] += 1/edc_count*(edc-edc_avg[i+1])
+
+            for num in range(7):
+                count = sd_count[num]
+                # if max(iats[num+1].keys()) > MAX_IAT[num]:
+                #     MAX_IAT[num] = max(iats[num+1].keys())
+                # if max(sds[num+1].keys()) > MAX_SD[num]:
+                #     MAX_SD[num] = max(sds[num+1].keys())
+                # if max(edcs[num+1].keys()) > MAX_EDC:
+                #     MAX_EDC = max(edcs[num+1].keys())
+                    
+                for k in range(0, MAX_SD[num]+1, SD_GRAN):
+                    if k in sds[num+1].keys():
+                        sds[num+1][k] /= count
+                    else:
+                        sds[num+1][k] = 0
+                for k in range(0, MAX_IAT[num]+1, IAT_GRAN):
+                    if k in iats[num+1].keys():
+                        iats[num+1][k] /= count
+                    else:
+                        iats[num+1][k] = 0
+                for k in range(0, MAX_EDC+1, EDC_GRAN):
+                    if k in edcs[num+1].keys():
+                        edcs[num+1][k] /= edc_count
+                    else:
+                        edcs[num+1][k] = 0
+            # if max(sizes.keys()) > MAX_SIZE:
+                    # MAX_SIZE = max(sizes.keys())
+            for k in range(0, MAX_SIZE+1, SIZE_GRAN):
+                if k in sizes.keys():
+                    sizes[k] /= line_count
+                else:
+                    sizes[k] = 0
+            
+            print("MAX_IAT: ")
+            print(MAX_IAT)
+            print("MAX_SD: ")
+            print(MAX_SD)
+            print("MAX_SIZE: ")
+            print(MAX_SIZE)
+            print("MAX_EDC: ")
+            print(MAX_EDC)
+                    
+            
+            features["sd_avg"] = sd_avg
+            features["iat_avg"] = iat_avg
+            features["size_avg"] = size_avg
+            features["edc_avg"] = edc_avg
+            features["sizes"] = sizes
+            
+            for num in range(7):
+                features["sd_"+str(num+1)] = sds[num+1]
+                features["iat_"+str(num+1)] = iats[num+1]
+                features["edc_"+str(num+1)] = edcs[num+1]
+            
+            pickle.dump(features, open(output+str(line_count//1000000)+"M.pkl"), "wb")
+            
             # for x in iat_avg_converge.keys():
             #     iat_avg_converge[x].append(iat_avg[x])
             #     sd_avg_converge[x].append(sd_avg[x])
@@ -418,71 +485,7 @@ def main():
 
     end_tm = tm        
 
-    features = dict()
     
-    for id in lru.items:
-        n = lru.items[id]
-        edc_count += 1
-        for i, edc in enumerate(n.edcs):
-            edc  = float(edc)/EDC_GRAN
-            edc  = int(edc) * EDC_GRAN
-            edcs[i+1][edc] += 1
-            edc_avg[i+1] += 1/edc_count*(edc-edc_avg[i+1])
-
-    for num in range(7):
-        count = sd_count[num]
-        # if max(iats[num+1].keys()) > MAX_IAT[num]:
-        #     MAX_IAT[num] = max(iats[num+1].keys())
-        # if max(sds[num+1].keys()) > MAX_SD[num]:
-        #     MAX_SD[num] = max(sds[num+1].keys())
-        # if max(edcs[num+1].keys()) > MAX_EDC:
-        #     MAX_EDC = max(edcs[num+1].keys())
-            
-        for k in range(0, MAX_SD[num]+1, SD_GRAN):
-            if k in sds[num+1].keys():
-                sds[num+1][k] /= count
-            else:
-                sds[num+1][k] = 0
-        for k in range(0, MAX_IAT[num]+1, IAT_GRAN):
-            if k in iats[num+1].keys():
-                iats[num+1][k] /= count
-            else:
-                iats[num+1][k] = 0
-        for k in range(0, MAX_EDC+1, EDC_GRAN):
-            if k in edcs[num+1].keys():
-                edcs[num+1][k] /= edc_count
-            else:
-                edcs[num+1][k] = 0
-    # if max(sizes.keys()) > MAX_SIZE:
-            # MAX_SIZE = max(sizes.keys())
-    for k in range(0, MAX_SIZE+1, SIZE_GRAN):
-        if k in sizes.keys():
-            sizes[k] /= line_count
-        else:
-            sizes[k] = 0
-    
-    print("MAX_IAT: ")
-    print(MAX_IAT)
-    print("MAX_SD: ")
-    print(MAX_SD)
-    print("MAX_SIZE: ")
-    print(MAX_SIZE)
-    print("MAX_EDC: ")
-    print(MAX_EDC)
-            
-    
-    features["sd_avg"] = sd_avg
-    features["iat_avg"] = iat_avg
-    features["size_avg"] = size_avg
-    features["edc_avg"] = edc_avg
-    features["sizes"] = sizes
-    
-    for num in range(7):
-        features["sd_"+str(num+1)] = sds[num+1]
-        features["iat_"+str(num+1)] = iats[num+1]
-        features["edc_"+str(num+1)] = edcs[num+1]
-    
-    pickle.dump(features, open(output+".pkl"), "wb")
     
     # create figure and axis objects with subplots()
     # cmap = matplotlib.cm.get_cmap("Set3").colors
