@@ -438,7 +438,7 @@ def main():
                 features["iat_"+str(num+1)] = iats[num+1]
                 features["edc_"+str(num+1)] = edcs[num+1]
             
-            pickle.dump(features, open(output+str(line_count//1000000)+"M.pkl"), "wb")
+            pickle.dump(features, open(output+'/'+str(line_count//1000000)+"M.pkl", "wb"))
             
             # for x in iat_avg_converge.keys():
             #     iat_avg_converge[x].append(iat_avg[x])
