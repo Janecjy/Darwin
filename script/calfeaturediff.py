@@ -2,7 +2,7 @@ import pickle
 import sys
 
 def loadDataIter(dirPath, iter):
-    data = pickle.load(open(dirPath+"/"+str(iter)+"M.pkl", "rb"))
+    data = pickle.load(open(dirPath+str(iter)+"M.pkl", "rb"))
     res = {}
     for key in data.keys() & {'sd_avg', 'iat_avg', 'size_avg', 'edc_avg'}:
         # print(data[key])
@@ -32,7 +32,7 @@ def main():
     dirPath = sys.argv[1]
     res_list = loadData(dirPath)
     result = computeDiff(res_list)
-    pickle.dump(result, "/mydata/featurediff/"+dirPath.split('/')[2]+".pkl")
+    pickle.dump(result, open("/mydata/featurediff/"+dirPath.split('/')[3]+".pkl", "wb"))
 
 if __name__ == '__main__':
     main()
