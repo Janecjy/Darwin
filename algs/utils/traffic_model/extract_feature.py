@@ -433,10 +433,10 @@ def main():
             features["edc_avg"] = edc_avg
             features["sizes"] = sizes
             
-            for num in range(7):
-                features["sd_"+str(num+1)] = sds[num+1]
-                features["iat_"+str(num+1)] = iats[num+1]
-                features["edc_"+str(num+1)] = edcs[num+1]
+            # for num in range(7):
+            #     features["sd_"+str(num+1)] = sds[num+1]
+            #     features["iat_"+str(num+1)] = iats[num+1]
+            #     features["edc_"+str(num+1)] = edcs[num+1]
             
             pickle.dump(features, open(output+'/'+str(line_count//1000000)+"M.pkl", "wb"))
             
