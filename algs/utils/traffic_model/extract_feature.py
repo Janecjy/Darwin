@@ -317,7 +317,7 @@ def main():
             size_avg += 1/size_count*(sz-size_avg)
 
             try:
-                k = lru.insert(obj, sz, tm)
+                k = lru.insert(obj, sz, line_count)
             except:
                 break
 
