@@ -32,7 +32,7 @@ def main():
     dirPath = sys.argv[1]
     res_list = loadData(dirPath)
     result = computeDiff(res_list)
-    pickle.dump(result, open("/mydata/featurediff/"+dirPath.split('/')[3]+".pkl", "wb"))
+    pickle.dump(result, open("/mydata/featurediff-req/"+dirPath.split('/')[3]+".pkl", "wb"))
 
 if __name__ == '__main__':
     main()

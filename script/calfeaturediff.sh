@@ -2,7 +2,7 @@
 
 COUNT=0
 FILES=$1'*/'
-mkdir -p /mydata/featurediff
+mkdir -p /mydata/featurediff-req
 source venv/bin/activate
 for TRACE in $FILES
 do
