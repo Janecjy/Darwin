@@ -239,16 +239,16 @@ def main():
     total_misses    = 0
     bytes_miss      = 0
     line_num = []
-    iat_avg_converge = dict.fromkeys([x+1 for x in range(7)])
-    for x in iat_avg_converge.keys():
-        iat_avg_converge[x] = []
-    sd_avg_converge = dict.fromkeys([x+1 for x in range(7)])
-    for x in sd_avg_converge.keys():
-        sd_avg_converge[x] = []
-    edc_avg_converge = dict.fromkeys([x+1 for x in range(7)])
-    for x in edc_avg_converge.keys():
-        edc_avg_converge[x] = []
-    sizes_avg_converge = []
+    # iat_avg_converge = dict.fromkeys([x+1 for x in range(7)])
+    # for x in iat_avg_converge.keys():
+    #     iat_avg_converge[x] = []
+    # sd_avg_converge = dict.fromkeys([x+1 for x in range(7)])
+    # for x in sd_avg_converge.keys():
+    #     sd_avg_converge[x] = []
+    # edc_avg_converge = dict.fromkeys([x+1 for x in range(7)])
+    # for x in edc_avg_converge.keys():
+    #     edc_avg_converge[x] = []
+    # sizes_avg_converge = []
     # sd_goals = dict.fromkeys([x+1 for x in range(7)])
     # iat_goals = dict.fromkeys([x+1 for x in range(7)])
     # edc_goals = dict.fromkeys([x+1 for x in range(7)])
