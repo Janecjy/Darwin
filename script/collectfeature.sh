@@ -4,7 +4,7 @@ COUNT=0
 FILES=$1'*'
 for TRACE in $FILES
 do
-    ./script/collectfeaturesub.sh $TRACE $2 &
+    ./script/collectfeaturesub.sh $TRACE $2 100000 750000 &
     ((COUNT++))
     if [ $COUNT -eq 30 ]
         then
