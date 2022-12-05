@@ -7,6 +7,6 @@ source venv/bin/activate
 for TRACE in $FILES
 do
     if [ -f $TRACE"9M.pkl" ]; then
-        python ./script/calfeaturediff.py $TRACE
+        python ./script/outputfeature.py $TRACE
     fi
 done
