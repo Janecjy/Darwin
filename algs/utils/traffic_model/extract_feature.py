@@ -28,8 +28,8 @@ class Feature_Cache:
         self.curr_sz = 0
         self.debug = open("tmp.txt", "w")
         self.no_del = 0
-        self.iat_win = iat_win
-        self.sd_win = sd_win
+        self.iat_win = int(iat_win)
+        self.sd_win = int(sd_win)
         
     def initialize(self, initial_objects, sizes, initial_times):        
 
