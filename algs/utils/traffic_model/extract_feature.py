@@ -334,11 +334,11 @@ def main():
 
             # TODO: sd for more than 2 occurrences are not exact unique bytes
             sd, iat = k    
-            if sd:
+            if sd and line_count > lru.iat_win:
                 for num, (s, t) in enumerate(zip(sd, iat)):
 
-                    if s == -1:
-                        break
+                    # if s == -1:
+                    #     break
 
                     sd_count[num] += 1
                     sd_avg[num+1] += 1/sd_count[num]*(s-sd_avg[num+1])
