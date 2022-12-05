@@ -22,12 +22,14 @@ from bloom_filter2 import BloomFilter
 ## objects are assumed to be in KB
 class Feature_Cache:
     
-    def __init__(self, max_sz):
+    def __init__(self, max_sz, iat_win, sd_win):
         self.max_sz = max_sz
         self.items = defaultdict()
         self.curr_sz = 0
         self.debug = open("tmp.txt", "w")
         self.no_del = 0
+        self.iat_win = iat_win
+        self.sd_win = sd_win
         
     def initialize(self, initial_objects, sizes, initial_times):        
 
@@ -52,13 +54,14 @@ class Feature_Cache:
             # dt = tm - n.last_access
             delta1 = -1
             delta_found = False
-            for x in reversed(n.last_access):
-                if x > -1:
+            for i, x in enumerate(reversed(n.last_access)):
+                if x > -1 and tm-x < self.iat_win*(i+1):
                     dts.append(tm-x)
                     if not delta_found:
                         delta1 = tm-x
+                        delta_found = True
                 else:
-                    dts.append(-1)
+                    dts.append(self.iat_win*(i+1))
             for i, x in enumerate(n.edcs):
                 n.edcs[i] = 1+x*pow(2, -(delta1/pow(2, 9+i+1)))
             n.last_access.pop(0)
@@ -69,25 +72,31 @@ class Feature_Cache:
                 sd = 0
                 sds.append(sd)
                 new_sd = sd
-                for x in reversed(n.sd_his):
-                    if x > -1:
+                for i, x in enumerate(reversed(n.sd_his)):
+                    if x > -1 and new_sd+x < self.sd_win*(i+2):
                         new_sd += x
                         sds.append(new_sd)
                     else:
-                        sds.append(-1)
+                        new_sd += self.sd_win
+                        sds.append(new_sd)
                 n.sd_his.pop(0)
                 n.sd_his.append(sd)
                 return sds, dts
             
             sd = self.curr.findUniqBytes(n, self.debug) + self.curr.s + n.s
-            sds.append(sd)
-            new_sd = sd
-            for x in reversed(n.sd_his):
-                if x > -1:
+            if sd < self.sd_win:
+                sds.append(sd)
+                new_sd = sd
+            else:
+                sds.append(self.sd_win)
+                new_sd = self.sd_win
+            for i, x in enumerate(reversed(n.sd_his)):
+                if x > -1 and new_sd+x < self.sd_win*(i+2):
                     new_sd += x
                     sds.append(new_sd)
                 else:
-                    sds.append(-1)  
+                    new_sd += self.sd_win
+                    sds.append(new_sd)
             n.sd_his.pop(0)
             n.sd_his.append(sd)
             n.delete_node(self.debug)
@@ -124,8 +133,8 @@ class Feature_Cache:
             self.curr = n
             self.curr_sz += sz
                                 
-            sds = None
-            dts = None
+            sds = [self.sd_win*(i+1) for i in range(MAX_HIST)]
+            dts = [self.iat_win*(i+1) for i in range(MAX_HIST)]
             
         ## if cache not full
         while self.curr_sz > self.max_sz:
@@ -157,9 +166,11 @@ def main():
     
     trace = sys.argv[1]
     output = sys.argv[2]
+    iat_window = sys.argv[3]
+    sd_window = sys.argv[4]
     print(output+".pkl")
                   
-    lru             = Feature_Cache(10*TB/1000)
+    lru             = Feature_Cache(10*TB/1000, iat_window, sd_window)
     initial_objects = list()
     initial_times   = {}
 
@@ -332,16 +343,16 @@ def main():
                     sd_count[num] += 1
                     sd_avg[num+1] += 1/sd_count[num]*(s-sd_avg[num+1])
                     iat_avg[num+1] += 1/sd_count[num]*(t-iat_avg[num+1])
-                    s  = float(s)/SD_GRAN
-                    s  = int(s) * SD_GRAN
-                    # if s > 100*MB:
-                    #     s = 100*MB
-                    t = float(t)/IAT_GRAN
-                    t = int(t) * IAT_GRAN
-                    # if t > 50000:
-                    #     t = 50000
-                    iats[num+1][t] += 1
-                    sds[num+1][s] += 1    
+                    # s  = float(s)/SD_GRAN
+                    # s  = int(s) * SD_GRAN
+                    # # if s > 100*MB:
+                    # #     s = 100*MB
+                    # t = float(t)/IAT_GRAN
+                    # t = int(t) * IAT_GRAN
+                    # # if t > 50000:
+                    # #     t = 50000
+                    # iats[num+1][t] += 1
+                    # sds[num+1][s] += 1    
                     # sd_distances[iat].append(sd)
                     # sd_byte_distances[iat][sd] += sz
             else:
@@ -385,46 +396,46 @@ def main():
                     edcs[i+1][edc] += 1
                     edc_avg[i+1] += 1/edc_count*(edc-edc_avg[i+1])
 
-            for num in range(7):
-                count = sd_count[num]
-                # if max(iats[num+1].keys()) > MAX_IAT[num]:
-                #     MAX_IAT[num] = max(iats[num+1].keys())
-                # if max(sds[num+1].keys()) > MAX_SD[num]:
-                #     MAX_SD[num] = max(sds[num+1].keys())
-                # if max(edcs[num+1].keys()) > MAX_EDC:
-                #     MAX_EDC = max(edcs[num+1].keys())
+            # for num in range(7):
+            #     count = sd_count[num]
+            #     # if max(iats[num+1].keys()) > MAX_IAT[num]:
+            #     #     MAX_IAT[num] = max(iats[num+1].keys())
+            #     # if max(sds[num+1].keys()) > MAX_SD[num]:
+            #     #     MAX_SD[num] = max(sds[num+1].keys())
+            #     # if max(edcs[num+1].keys()) > MAX_EDC:
+            #     #     MAX_EDC = max(edcs[num+1].keys())
                     
-                for k in range(0, MAX_SD[num]+1, SD_GRAN):
-                    if k in sds[num+1].keys():
-                        sds[num+1][k] /= count
-                    else:
-                        sds[num+1][k] = 0
-                for k in range(0, MAX_IAT[num]+1, IAT_GRAN):
-                    if k in iats[num+1].keys():
-                        iats[num+1][k] /= count
-                    else:
-                        iats[num+1][k] = 0
-                for k in range(0, MAX_EDC+1, EDC_GRAN):
-                    if k in edcs[num+1].keys():
-                        edcs[num+1][k] /= edc_count
-                    else:
-                        edcs[num+1][k] = 0
+            #     for k in range(0, MAX_SD[num]+1, SD_GRAN):
+            #         if k in sds[num+1].keys():
+            #             sds[num+1][k] /= count
+            #         else:
+            #             sds[num+1][k] = 0
+            #     for k in range(0, MAX_IAT[num]+1, IAT_GRAN):
+            #         if k in iats[num+1].keys():
+            #             iats[num+1][k] /= count
+            #         else:
+            #             iats[num+1][k] = 0
+            #     for k in range(0, MAX_EDC+1, EDC_GRAN):
+            #         if k in edcs[num+1].keys():
+            #             edcs[num+1][k] /= edc_count
+            #         else:
+            #             edcs[num+1][k] = 0
             # if max(sizes.keys()) > MAX_SIZE:
                     # MAX_SIZE = max(sizes.keys())
-            for k in range(0, MAX_SIZE+1, SIZE_GRAN):
-                if k in sizes.keys():
-                    sizes[k] /= line_count
-                else:
-                    sizes[k] = 0
+            # for k in range(0, MAX_SIZE+1, SIZE_GRAN):
+            #     if k in sizes.keys():
+            #         sizes[k] /= line_count
+            #     else:
+            #         sizes[k] = 0
             
-            print("MAX_IAT: ")
-            print(MAX_IAT)
-            print("MAX_SD: ")
-            print(MAX_SD)
-            print("MAX_SIZE: ")
-            print(MAX_SIZE)
-            print("MAX_EDC: ")
-            print(MAX_EDC)
+            # print("MAX_IAT: ")
+            # print(MAX_IAT)
+            # print("MAX_SD: ")
+            # print(MAX_SD)
+            # print("MAX_SIZE: ")
+            # print(MAX_SIZE)
+            # print("MAX_EDC: ")
+            # print(MAX_EDC)
                     
             
             features["sd_avg"] = sd_avg
