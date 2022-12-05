@@ -2,7 +2,7 @@
 
 COUNT=0
 FILES=$1'*/'
-mkdir -p /mydata/features-req-window
+mkdir -p /mydata/features-req-window-output
 source venv/bin/activate
 for TRACE in $FILES
 do

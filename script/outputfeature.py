@@ -33,7 +33,7 @@ def main():
     dirPath = sys.argv[1]
     res_list = loadData(dirPath)
     result = reformat(res_list)
-    pickle.dump(result, open("/mydata/features-req-window/"+dirPath.split('/')[3]+".pkl", "wb"))
+    pickle.dump(result, open("/mydata/features-req-window-output/"+dirPath.split('/')[3]+".pkl", "wb"))
 
 if __name__ == '__main__':
     main()
