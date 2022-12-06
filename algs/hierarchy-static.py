@@ -169,7 +169,7 @@ def run():
     firstWarmup = True
     # reqs = []
     # freqs = []
-    hits = []
+    hits = [] # [(size, hit)]
     
     print(os.path.join(output_dir, 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"))
 
@@ -197,9 +197,9 @@ def run():
             #         firstWarmup = False
                 if obj_hit == 1:
                     tot_hoc_hit += 1
-                    hits.append(1)
+                    hits.append((size, 1))
                 else:
-                    hits.append(0)
+                    hits.append((size, 0))
                 tot_obj_hit += obj_hit
                 tot_byte_miss += byte_miss
                 tot_req += 1
