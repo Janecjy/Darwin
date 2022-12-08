@@ -1,0 +1,15 @@
+#!/bin/bash
+
+COUNT=0
+FILES='/mydata/features-req-window--50000-150000/*/'
+mkdir -p "/mydata/final-features/"
+source venv/bin/activate
+for TRACE in $FILES
+do
+    ARRAY=(${TRACE//'/'/ })
+    # echo "${#ARRAY[@]}"
+    FILENAME=${ARRAY[${#ARRAY[@]}-1]}
+    FILENAMEARR=(${FILENAME//./ })
+    NAME=${FILENAMEARR[0]}
+    mv $TRACE"3M.pkl" /mydata/final-features/$NAME.pkl
+done
