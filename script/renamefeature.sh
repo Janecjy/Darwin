@@ -1,7 +1,7 @@
 #!/bin/bash
 
 COUNT=0
-FILES='/mydata/-50000-150000/*/'
+FILES='/mydata/features/-50000-150000/*/'
 rm -rf "/mydata/final-features/"
 mkdir -p "/mydata/final-features/"
 for TRACE in $FILES
