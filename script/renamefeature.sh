@@ -1,9 +1,9 @@
 #!/bin/bash
 
 COUNT=0
-FILES='/mydata/features-req-window--50000-150000/*/'
+FILES='/mydata/-50000-150000/*/'
+rm -rf "/mydata/final-features/"
 mkdir -p "/mydata/final-features/"
-source venv/bin/activate
 for TRACE in $FILES
 do
     ARRAY=(${TRACE//'/'/ })
