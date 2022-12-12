@@ -4,7 +4,8 @@ COUNT=0
 FILES=$1'*'
 for TRACE in $FILES
 do
-    ./script/collectsub.sh $TRACE $2 &
+    echo $2
+    ./script/onlinesub.sh $TRACE $2 &
     ((COUNT++))
     if [ $COUNT -eq 30 ]
         then

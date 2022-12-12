@@ -1,0 +1,24 @@
+hosts: [
+'clnode094.clemson.cloudlab.us', 
+'clnode056.clemson.cloudlab.us',
+'clnode064.clemson.cloudlab.us',
+'clnode069.clemson.cloudlab.us',
+'clnode046.clemson.cloudlab.us',
+'clnode077.clemson.cloudlab.us',
+'clnode096.clemson.cloudlab.us',
+'clnode062.clemson.cloudlab.us',
+'clnode061.clemson.cloudlab.us',
+'clnode053.clemson.cloudlab.us',
+'clnode051.clemson.cloudlab.us', 
+'clnode095.clemson.cloudlab.us',
+'clnode089.clemson.cloudlab.us',
+'clnode080.clemson.cloudlab.us',
+'clnode078.clemson.cloudlab.us',
+'clnode079.clemson.cloudlab.us',
+'clnode072.clemson.cloudlab.us',
+'clnode093.clemson.cloudlab.us',
+'clnode087.clemson.cloudlab.us',
+'clnode045.clemson.cloudlab.us',
+]
+username: 'janechen'
+trace_parent_dir: '/mydata/'

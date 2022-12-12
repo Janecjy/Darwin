@@ -31,11 +31,11 @@ def gen_leaves(trace, sizes, printBox = None, items=None, initial_times=None):
         
         trace_list.append(n)
 
-        if i%100000 == 0:
-            print("Representing the cache as leaves of a tree ... ", int((float(i)*100)/trace_length), "% complete")
+        # if i%100000 == 0:
+        #     # print("Representing the cache as leaves of a tree ... ", int((float(i)*100)/trace_length), "% complete")
 
-            if printBox != None:
-                printBox.setText("Representing the cache as leaves of a tree ... " + str(int((float(i)*100)/trace_length)) + "% complete")
+        #     if printBox != None:
+        #         printBox.setText("Representing the cache as leaves of a tree ... " + str(int((float(i)*100)/trace_length)) + "% complete")
 
 
             
@@ -51,10 +51,10 @@ def generate_tree(trace_list, printBox=None):
 
     while len(st_tree[lvl]) > 1:
 
-        print("Creating tree, parsing level: ", lvl)
+        # print("Creating tree, parsing level: ", lvl)
 
-        if printBox != None:
-            printBox.setText("Creating tree, parsing level: " + str(lvl))
+        # if printBox != None:
+        #     printBox.setText("Creating tree, parsing level: " + str(lvl))
         
         for i in range(int(len(st_tree[lvl])/2)):
 

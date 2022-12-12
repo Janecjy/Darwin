@@ -8,29 +8,33 @@ import os
 
 from lru import LRU
 
-trace_path = freq_thres = size_thres = hoc_s = dc_s = None
+WARMUP_LENGTH = 1000000
+
+trace_path = output_dir = freq_thres = size_thres = hoc_s = dc_s = None
 alpha = 0.001 # defines dc hit benefit
 t_inter = 1000000
 bloom_miss = compulsory_miss = capacity_miss = admission_miss = 0
 
 def parseInput():
 
-    global trace_path, freq_thres, size_thres, hoc_s, dc_s
+    global trace_path, output_dir, freq_thres, size_thres, hoc_s, dc_s
 
     # Get the arguments from the command-line except the filename
     argv = sys.argv[1:]
     
     try:
         # Define the getopt parameters
-        opts, args = getopt.getopt(argv, 't:f:s:h:d:', ['trace_path', 'freq_thres', 'size_thres', 'hoc_size', 'dc_size'])
+        opts, args = getopt.getopt(argv, 't:o:f:s:h:d:', ['trace_path', 'output_dir', 'freq_thres', 'size_thres', 'hoc_size', 'dc_size'])
         # Check if the options' length is 3
-        if len(opts) != 5:
-            print('usage: hierarchy.py -t <trace_path> -f <frequency_threshold> -s <size_threshold> -h <HOC_size> -d <DC_size>')
+        if len(opts) != 6:
+            print('usage: hierarchy.py -t <trace_path> -o <output_dir> -f <frequency_threshold> -s <size_threshold> -h <HOC_size> -d <DC_size>')
         else:
             # Iterate the options and get the corresponding values
             for opt, arg in opts:
                 if opt == '-t':
                     trace_path = arg
+                if opt == '-o':
+                    output_dir = arg
                 if opt == '-f':
                     freq_thres = int(arg)
                 if opt == '-s':
@@ -55,14 +59,14 @@ def request(t, id, size):
         hoc.hit(id)
         obj_hit = 1
     elif id in dc:
-        if tot_num >= 5000000:
+        if tot_num >= WARMUP_LENGTH:
             if id not in hoc_set:
                 admission_miss += 1
             else:
                 capacity_miss += 1
         dc.hit(id)
         global disk_read
-        if tot_num >= 5000000:
+        if tot_num >= WARMUP_LENGTH:
             disk_read += size/4
         if size < size_thres:
             dcAccessTab[id].append(t)
@@ -72,11 +76,11 @@ def request(t, id, size):
         obj_hit = alpha
     else:
         evicted = dc.miss(id, size)
-        if tot_num >= 5000000:
+        if tot_num >= WARMUP_LENGTH:
             compulsory_miss += 1
 
         global disk_write
-        if tot_num >= 5000000:
+        if tot_num >= WARMUP_LENGTH:
             disk_write += size/4
         global dc_uniq_size
         if id not in dc_set:
@@ -122,7 +126,7 @@ def demote():
     evicted = dc.miss(id, size)
     global disk_write
     global tot_num
-    if tot_num >= 5000000:
+    if tot_num >= WARMUP_LENGTH:
         disk_write += size/4
 
     if id not in dc_set:
@@ -167,7 +171,7 @@ def run():
     # freqs = []
     hits = []
     
-    print(os.path.join("../cache/output", trace_path.split('/')[6].split('.')[0], 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"))
+    print(os.path.join(output_dir, 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"))
 
     with open(trace_path) as fp:
         for line in fp:
@@ -182,11 +186,11 @@ def run():
                 tot_onehit_obj += 1
                 obj_hit = 0
                 byte_miss = size
-                if tot_num >= 5000000:
+                if tot_num >= WARMUP_LENGTH:
                     bloom_miss += 1
             bloom.add(id)
 
-            if tot_num >= 5000000:
+            if tot_num >= WARMUP_LENGTH:
             # if not isWarmup:
             #     if firstWarmup:
             #         print("Warmup done after request {:d}".format(tot_num))
@@ -201,13 +205,13 @@ def run():
                 tot_req += 1
                 tot_bytes += size 
             tot_num += 1
-            if tot_num % 10000000 == 0:
-                print('hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, disk_read, disk_write))
-                print('tot hoc size: {:d}, tot dc size: {:d}, one hit obj num: {:d}'.format(hoc_uniq_size, dc_uniq_size, tot_onehit_obj))
-                print('bloom_miss: {:d}, compulsory_miss: {:d}, admission_miss: {:d}, capacity_miss: {:d}'.format(bloom_miss, compulsory_miss, admission_miss, capacity_miss))
-                sys.stdout.flush()
+            # if tot_num % 10000000 == 0:
+            #     print('hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, disk_read, disk_write))
+            #     print('tot hoc size: {:d}, tot dc size: {:d}, one hit obj num: {:d}'.format(hoc_uniq_size, dc_uniq_size, tot_onehit_obj))
+            #     print('bloom_miss: {:d}, compulsory_miss: {:d}, admission_miss: {:d}, capacity_miss: {:d}'.format(bloom_miss, compulsory_miss, admission_miss, capacity_miss))
+            #     sys.stdout.flush()
                 
-                pickle.dump(hits, open(os.path.join("../cache/output", trace_path.split('/')[6].split('.')[0], 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"), "wb"))
+            #     pickle.dump(hits, open(os.path.join("../cache/output", trace_path.split('/')[6].split('.')[0], 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"), "wb"))
 
                 # import numpy as np
                 # import matplotlib.pyplot as plt
@@ -223,7 +227,13 @@ def run():
                 # dcAccessTab.clear()
                 # del bloom
                 # bloom = BloomFilter(max_elements=1000000, error_rate=0.1)
-                break
+                # break
+        print('hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, disk_read, disk_write))
+        print('tot hoc size: {:d}, tot dc size: {:d}, one hit obj num: {:d}'.format(hoc_uniq_size, dc_uniq_size, tot_onehit_obj))
+        print('bloom_miss: {:d}, compulsory_miss: {:d}, admission_miss: {:d}, capacity_miss: {:d}'.format(bloom_miss, compulsory_miss, admission_miss, capacity_miss))
+        sys.stdout.flush()
+        
+        pickle.dump(hits, open(os.path.join(output_dir, 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"), "wb"))
 
 
 def main():
