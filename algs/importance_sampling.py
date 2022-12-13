@@ -38,10 +38,10 @@ def gen_data(expert_0, expert_1):
     test_set = [] 
     bucket_list = [10, 20, 50, 100, 500, 100, 5000]
     
-    # for i, set in enumerate([train_files, test_files]):
+    # for i, file in enumerate(test_files):
     for i, file in enumerate(train_files+test_files):
-        if i==2:
-            break
+        # if i==2:
+        #     break
         feature = []
         name = file.split('.')[0]
         if not os.path.exists(os.path.join("../cache/output/", expert_0, name+'.pkl')):
@@ -86,9 +86,16 @@ def gen_data(expert_0, expert_1):
         # print(MAX_LIST)
         # feature = [ (feature_list[i][j]- MIN_LIST[j])/(MAX_LIST[j]-MIN_LIST[j]) for j in range(len(MIN_LIST))]
         # feature = [ (feature_list[i][j]- MIN_LIST[j])/(MAX_LIST[j]-MIN_LIST[j]) for j in range(len(MIN_LIST))]
-        
-        e0_hits = pickle.load(open(os.path.join("../cache/output/", expert_0, name+'.pkl'), "rb"))
-        e1_hits = pickle.load(open(os.path.join("../cache/output/", expert_1, name+'.pkl'), "rb"))
+        try:
+            e0_hits = pickle.load(open(os.path.join("../cache/output/", expert_0, name+'.pkl'), "rb"))
+        except:
+            print(expert_0+'/'+name+'.pkl load fails')
+            continue
+        try:
+            e1_hits = pickle.load(open(os.path.join("../cache/output/", expert_1, name+'.pkl'), "rb"))
+        except:
+            print(expert_1+'/'+name+'.pkl load fails')
+            continue
         hit_hit_prob = 0 # pi(e1_hit | e0_hit)
         e0_hit_count = 0
         e0_miss_count = 0
@@ -165,6 +172,12 @@ def gen_data(expert_0, expert_1):
             else:
                 inputs.append(input)
                 labels.append([hit_hit_prob, hit_miss_prob])
+                
+        if i % 100 == 0:
+            pickle.dump(inputs, open(os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "traininput.pkl"), "wb"))
+            pickle.dump(labels, open(os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "trainlabels.pkl"), "wb"))
+            pickle.dump(prediction_input, open(os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "predinput.pkl"), "wb"))
+            pickle.dump(prediction_labels, open(os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "predlabels.pkl"), "wb"))
         
     
     pickle.dump(inputs, open(os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "traininput.pkl"), "wb"))
@@ -239,7 +252,7 @@ def main():
     # # Define Hyper-parameters 
     input_size = 23
     output_size = 2
-    num_epochs = 1000
+    num_epochs = 100
     # batch_size = 1000
     batch_size = 1
     learning_rate = 0.001
