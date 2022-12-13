@@ -2,21 +2,17 @@
 
 COUNT=0
 FILES=$1'*'
+i=$3
+s=$4
 for TRACE in $FILES
 do  
-    for i in 50000 # 50000 80000 90000 110000 120000 150000
-    do
-        for s in 150000 # 50000 80000 90000 100000 110000 120000 150000
-        do
-            mkdir -p $2-$i-$s/
-            ./script/collectfeaturesub.sh $TRACE $2-$i-$s/ $i $s &
-            ((COUNT++))
-            if [ $COUNT -eq 50 ]
-                then
-                    wait
-                    COUNT=0
-            fi
-        done
-    done
+    mkdir -p $2
+    ./script/collectfeaturesub.sh $TRACE $2 $i $s &
+    ((COUNT++))
+    if [ $COUNT -eq 50 ]
+        then
+            wait
+            COUNT=0
+    fi
 done
 wait
