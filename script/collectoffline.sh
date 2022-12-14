@@ -1,9 +1,11 @@
 #!/bin/bash
 
 EXPERT=$1
-mkdir -p /mydata/experts/$EXPERT
+INPUT=$2
+OUTPUT=$3
+mkdir -p $3$EXPERT
 
-for TRACE in /mydata/output/*
+for TRACE in $2*
 do
     ARRAY=(${TRACE//'/'/ })
     FILENAME=${ARRAY[${#ARRAY[@]}-1]}
@@ -11,5 +13,5 @@ do
     NAME=${FILENAMEARR[0]}
     echo $NAME
 
-    cp $TRACE/$EXPERT-hits.pkl /mydata/experts/$EXPERT/$NAME.pkl
+    cp $TRACE/$EXPERT-hits.pkl $3$EXPERT/$NAME.pkl
 done
