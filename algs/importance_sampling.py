@@ -36,7 +36,7 @@ def gen_data(expert_0, expert_1):
     name_list = []
     feature_list = []
     test_set = [] 
-    bucket_list = [10, 20, 50, 100, 500, 100, 5000]
+    bucket_list = [10, 20, 50, 100, 500, 1000, 5000]
     
     # for i, file in enumerate(test_files):
     for i, file in enumerate(train_files+test_files):
