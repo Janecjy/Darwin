@@ -187,7 +187,7 @@ def gen_data(expert_0, expert_1):
     return inputs, labels, prediction_input, prediction_labels
 
 
-def test(device, epoch, model, _data, _label, batch_size):
+def test(device, epoch, model, _data, _label, batch_size, data_u, data_sd):
     # import pdb; pdb.set_trace()
     # Test the model
     # In the test phase, don't need to compute gradients (for memory efficiency)
@@ -211,6 +211,8 @@ def test(device, epoch, model, _data, _label, batch_size):
         e0_miss_count = int(data_i[2])
         data_i = data_i[0]
         d = torch.tensor(data_i).to(device)
+        for j in range(len(d)):
+            d[j] = (d[j]-data_u[j])/data_sd[j]
         l = torch.tensor(label_i).to(device)
         outputs = torch.sigmoid(model(d))
         hit_hit_prob = l.tolist()[0]
@@ -281,6 +283,10 @@ def main():
         data, label, _data, _label = gen_data(expert_0, expert_1)
     data = torch.tensor(data)
     label = torch.tensor(label)
+    data_u = data.mean(axis=0)
+    data_sd = data.std(axis=0)
+    pickle.dump(data_u, open(os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "traininput_u.pkl"), "wb"))
+    pickle.dump(data_sd, open(os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "traininput_sd.pkl"), "wb"))
     # _data = torch.tensor(_data)
     # _label = torch.tensor(_label)
     # _data, _label = gen_predictdata(expert_0, expert_1, "tc-0-tc-1-2290:0")
@@ -310,7 +316,9 @@ def main():
         total_step = num_batch
         # start_t = time.time()
         for epoch in range(num_epochs):
-            for i, (d, l) in enumerate(zip(data_batched, label_batched)):  
+            for i, (d, l) in enumerate(zip(data_batched, label_batched)):
+                for j in range(data_dim):
+                    d[0, j] = (d[0,j]-data_u[j])/data_sd[j]
                 # Move tensors to the configured device
                 d = d.to(device)
                 l = l.float().to(device)
@@ -336,7 +344,7 @@ def main():
             
             # Save the model checkpoint
             torch.save(model.state_dict(), os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "model-h"+str(hidden_size)+"-"+str(epoch)+".ckpt"))
-            test(device, epoch, model, _data, _label, batch_size)
+            test(device, epoch, model, _data, _label, batch_size, data_u, data_sd)
         
         torch.save(model.state_dict(), os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "model-h"+str(hidden_size)+".ckpt"))
         # print(model.state_dict())
@@ -344,7 +352,9 @@ def main():
     else:
         model = NeuralNet(input_size, hidden_size, output_size).to(device)
         model.load_state_dict(torch.load(os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "model-h"+str(hidden_size)+".ckpt")))
-        test(device, 999, model, _data, _label, batch_size)
+        data_u = pickle.load(open(os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "traininput_u.pkl"), "rb"))
+        data_sd = pickle.load(open(os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "traininput_sd.pkl"), "rb"))
+        test(device, 999, model, _data, _label, batch_size, data_u, data_sd)
     
 
 if __name__ == '__main__':
