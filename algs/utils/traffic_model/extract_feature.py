@@ -4,9 +4,9 @@ from parser import *
 from collections import defaultdict
 
 from numpy.core import numeric
-from gen_trace import *
-from treelib import *
-from util import *
+from .gen_trace import *
+from .treelib import *
+from .util import *
 import random
 import pickle
 import numpy as np
