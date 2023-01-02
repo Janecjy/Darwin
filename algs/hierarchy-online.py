@@ -237,7 +237,7 @@ class OnlineHierarchy:
                     # sys.stdout.flush()
                     
                     # get model variance
-                    self.model_variance_list[(exp0, exp1)] = []
+                self.model_variance_list[(exp0, exp1)] = []
                 # else:
                 #     self.model_variance_list[(exp0, exp1)] = [0.25]
                 # self.model_variance[(exp0, exp1)] = sum(self.model_variance_list[(exp0, exp1)])/len(self.model_variance_list[(exp0, exp1)])
