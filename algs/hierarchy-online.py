@@ -31,7 +31,7 @@ model_path = ""
 
 # request length of each stage
 WARMUP_LENGTH = 1000000
-FEATURE_COLLECTION_MAX_LENGTH = 2000000
+FEATURE_COLLECTION_MAX_LENGTH = 3000000
 BANDIT_ROUND_LENGTH = 500000
 
 
@@ -41,13 +41,17 @@ FREQ_OBSERVE_WINDOW = 1000000
 # feature parameters
 FEATURE_CACHE_SIZE = 10000000
 MAX_HIST = 7
+IAT_WIN = 50000
+SD_WIN = 150000
 BEST_CLUSTER_NUM = 1
 
 # expert correlation neural network hyper parameters
-INPUT_SIZE = 22
-HIDDEN_SIZE = 15
+INPUT_SIZE = 23
+HIDDEN_SIZE = 2
 OUTPUT_SIZE = 2
 DEVICE = torch.device('cpu')
+
+BUCKET_LIST = [10, 20, 50, 100, 500, 1000, 5000]
 
 # bandit constant
 DELTA = 0.01
@@ -131,8 +135,8 @@ class OnlineHierarchy:
         self.dc_s = dc_s
         # self.expert_list = ["f2s50", "f2s100", "f4s50"]
         self.expert_list = []
-        for f in [2, 4]:
-            for s in [50, 100, 1000]:
+        for f in [2, 3, 4, 5, 6, 7]:
+            for s in [10, 20, 50, 100, 500, 1000]:
                 self.expert_list.append('f'+str(f)+'s'+str(s))
         print(self.expert_list)
                 
@@ -147,7 +151,7 @@ class OnlineHierarchy:
         self.potential_experts = []
         
         # features
-        self.feature_cache = Feature_Cache(FEATURE_CACHE_SIZE)
+        self.feature_cache = Feature_Cache(FEATURE_CACHE_SIZE, IAT_WIN, SD_WIN)
         self.initial_objects = list()
         self.initial_times = {}
         self.obj_sizes = defaultdict(int)
@@ -179,6 +183,7 @@ class OnlineHierarchy:
         self.estimated_denominator = {}
         self.avg_estimated = {}
         self.alpha_list = []
+        self.bucket_count = [0]*(len(BUCKET_LIST)+1)
         
         # statistics
         self.tot_req_num = 0
@@ -212,33 +217,58 @@ class OnlineHierarchy:
                 out = self.fc2(out)
                 return out
         
-        self.models = {} # (e0, e1): (pred_hit_hit_prob, pred_hit_miss_prob)
+        self.raw_models = {} # (e0, e1): model
+        # self.models = {} # (e0, e1): (pred_hit_hit_prob, pred_hit_miss_prob)
         self.model_variance_list = {} # (ei, ej): [sigma_ij]
-        self.model_variance = {} # (ei, ej): sigma_ij
+        # self.model_variance = {} # (ei, ej): sigma_ij
         for exp0 in self.potential_experts:
             for exp1 in self.potential_experts:
                 if exp0 != exp1:
                     model = NeuralNet(INPUT_SIZE, HIDDEN_SIZE, OUTPUT_SIZE).to(DEVICE)
-                    model.load_state_dict(torch.load(os.path.join(model_path+"nn-models/", exp0+"-"+exp1, "model-h"+str(HIDDEN_SIZE)+".ckpt"), map_location=torch.device('cpu')))
+                    model.load_state_dict(torch.load(os.path.join(model_path+"nn-models/", exp0+"-"+exp1+"-h"+str(HIDDEN_SIZE)+".ckpt"), map_location=torch.device('cpu')))
                     model.eval()
-                    d = torch.tensor(self.feature).to(DEVICE)
-                    outputs = torch.sigmoid(model(d))
+                    self.raw_models[(exp0, exp1)] = model
+                    # d = torch.tensor(self.feature).to(DEVICE)
+                    # outputs = torch.sigmoid(model(d))
+                    # self.models[(exp0, exp1)] = outputs.tolist()
+                    # p1 = self.models[(exp0, exp1)][0]
+                    # p2 = self.models[(exp0, exp1)][1]
+                    # print("exp0: {}, exp1: {}, p1: {}, p2: {}".format(exp0, exp1, p1, p2))
+                    # sys.stdout.flush()
+                    
+                    # get model variance
+                    self.model_variance_list[(exp0, exp1)] = []
+                # else:
+                #     self.model_variance_list[(exp0, exp1)] = [0.25]
+                # self.model_variance[(exp0, exp1)] = sum(self.model_variance_list[(exp0, exp1)])/len(self.model_variance_list[(exp0, exp1)])
+                
+                
+                # self.model_variance[(exp0, exp1)] = 0.25
+    
+    
+    def applyModels(self):
+        self.models = {} # (e0, e1): (pred_hit_hit_prob, pred_hit_miss_prob)
+        self.model_variance = {} # (ei, ej): sigma_ij
+        input = []
+        input.extend(self.feature)
+        input.extend(self.bucket_count)
+        d = torch.tensor(input).to(DEVICE)
+        for exp0 in self.potential_experts:
+            for exp1 in self.potential_experts:
+                if exp0 != exp1:
+                    outputs = torch.sigmoid(self.raw_models[(exp0, exp1)](d))
                     self.models[(exp0, exp1)] = outputs.tolist()
                     p1 = self.models[(exp0, exp1)][0]
                     p2 = self.models[(exp0, exp1)][1]
                     print("exp0: {}, exp1: {}, p1: {}, p2: {}".format(exp0, exp1, p1, p2))
                     sys.stdout.flush()
                     
-                    # get model variance
-                    self.model_variance_list[(exp0, exp1)] = [p1*(1-p1)+p2*(1-p2)]
+                    self.model_variance_list[(exp0, exp1)].append(p1*(1-p1)+p2*(1-p2))
                 else:
-                    self.model_variance_list[(exp0, exp1)] = [0.25]
+                    self.model_variance_list[(exp0, exp1)].append(0.25)
                 self.model_variance[(exp0, exp1)] = sum(self.model_variance_list[(exp0, exp1)])/len(self.model_variance_list[(exp0, exp1)])
-                
-                
-                # self.model_variance[(exp0, exp1)] = 0.25
-                    
-                    
+        self.bucket_count = [0]*(len(BUCKET_LIST)+1)
+    
     
     def checkFeatureConfidence(self):
         if self.stage_parsed_requests == FEATURE_COLLECTION_MAX_LENGTH:
@@ -581,13 +611,13 @@ class OnlineHierarchy:
         self.size_avg += 1/self.size_count*(size-self.size_avg)
 
         try:
-            k = self.feature_cache.insert(id, size, t)
+            k = self.feature_cache.insert(id, size, self.stage_parsed_requests)
         except:
             print("Feature cache insertion error.")
 
         # TODO: sd for more than 2 occurrences are not exact unique bytes
         sd, iat = k    
-        if sd:
+        if sd and self.stage_parsed_requests > self.feature_cache.iat_win:
             for num, (s, t) in enumerate(zip(sd, iat)):
 
                 if s == -1:
@@ -600,19 +630,19 @@ class OnlineHierarchy:
         self.obj_iats[id].append(iat)  
     
     def collectFeature(self):
-        edc_count = 0
-        for id in self.feature_cache.items:
-            n = self.feature_cache.items[id]
-            edc_count += 1
-            for i, edc in enumerate(n.edcs):
-                self.edc_avg[i+1] += 1/edc_count*(edc-self.edc_avg[i+1])
-        for features in [self.sd_avg, self.iat_avg, self.size_avg, self.edc_avg]:
+        # edc_count = 0
+        # for id in self.feature_cache.items:
+        #     n = self.feature_cache.items[id]
+        #     edc_count += 1
+        #     for i, edc in enumerate(n.edcs):
+        #         self.edc_avg[i+1] += 1/edc_count*(edc-self.edc_avg[i+1])
+        for features in [self.iat_avg, self.sd_avg, self.size_avg]:
             if type(features) is dict:
                 for k, v in sorted(features.items()):
                     self.feature.append(v)
             else:
                 self.feature.append(features)
-        self.feature = [ (self.feature[i]- FEATURE_MIN_LIST[i])/(FEATURE_MAX_LIST[i]-FEATURE_MIN_LIST[i]) for i in range(len(FEATURE_MIN_LIST))]
+        # self.feature = [ (self.feature[i]- FEATURE_MIN_LIST[i])/(FEATURE_MAX_LIST[i]-FEATURE_MIN_LIST[i]) for i in range(len(FEATURE_MIN_LIST))]
     
     def feedRequest(self, t, id, size):
         firstTimeReq = True
@@ -638,9 +668,16 @@ class OnlineHierarchy:
                 self.round_hoc_hit_num_all += 1
             if self.round_request_num >= BANDIT_ROUND_LENGTH/2 and obj_hit == 1:
                 self.round_hoc_hit_num += 1
+            for i in range(len(BUCKET_LIST)):
+                if size < BUCKET_LIST[i]:
+                    self.bucket_count[i] += 1
+                    break
+            if size >= BUCKET_LIST[-1]:
+                self.bucket_count[-1] += 1
             if self.round_request_num == BANDIT_ROUND_LENGTH:
                 # time.sleep(20)
                 # t1 = datetime.datetime.now()
+                self.applyModels()
                 self.updateReward()
                 self.round += 1
                 self.round_request_num = self.round_hoc_hit_num = self.round_hoc_hit_num_all = 0
@@ -657,11 +694,6 @@ class OnlineHierarchy:
 def main():
     global model_path
     trace_path, model_path, hoc_s, dc_s = parseInput()
-    # trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-22535:3869.txt" # 5 experts
-    # trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-10612:8889.txt"
-    # trace_path = "/home/janechen/cache/traces/test-set/tc-0-tc-1-160:486.txt"
-    # hoc_s = 100000
-    # dc_s = 10000000
     
     if None not in (trace_path, model_path, hoc_s, dc_s):
         print('trace: {}, HOC size: {}, DC size: {}'.format(trace_path, hoc_s, dc_s))
@@ -674,12 +706,12 @@ def main():
     CLUSTER_MODEL_PATH = model_path+"kmeans.pkl"
     CLUSTER_RESULT_PATH = model_path+"cluster_experts.pkl"
     # trained feature parameters
-    FEATURE_MAX_LIST = pickle.load(open(model_path+"max_list.pkl", "rb"))
+    # FEATURE_MAX_LIST = pickle.load(open(model_path+"max_list.pkl", "rb"))
     # print(FEATURE_MAX_LIST)
-    FEATURE_MIN_LIST = pickle.load(open(model_path+"min_list.pkl", "rb"))
+    # FEATURE_MIN_LIST = pickle.load(open(model_path+"min_list.pkl", "rb"))
     # print(FEATURE_MIN_LIST)
     # sys.stdout.flush()
-    cache = OnlineHierarchy(name, 4, 50, hoc_s, dc_s)
+    cache = OnlineHierarchy(name, 2, 50, hoc_s, dc_s)
     
     for line in open(trace_path):
         line = line.split(',')
