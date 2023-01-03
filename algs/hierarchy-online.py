@@ -343,7 +343,10 @@ class OnlineHierarchy:
     def calculateW(self, alphas, e):
         result = 0
         for i, ei in enumerate(self.potential_experts):
-            result += alphas[i]/(self.model_variance[(ei, e)])
+            if (self.model_variance[(ei, e)]> 0):
+                result += alphas[i]/(self.model_variance[(ei, e)])
+            else:
+                result += alphas[i]/0.00001
         return result
     
     def calculateDelta(self, best_e, e):
@@ -370,8 +373,12 @@ class OnlineHierarchy:
         
     def calculateEstimated(self, current_e):
         for e in self.potential_experts:
-            self.estimated_numerator[e] += self.observed_rewards[e][-1]/(self.model_variance[(current_e, e)])
-            self.estimated_denominator[e] += 1/(self.model_variance[(current_e, e)])
+            if (self.model_variance[(current_e, e)] > 0):
+                self.estimated_numerator[e] += self.observed_rewards[e][-1]/(self.model_variance[(current_e, e)])
+                self.estimated_denominator[e] += 1/(self.model_variance[(current_e, e)])
+            else:
+                self.estimated_numerator[e] += self.observed_rewards[e][-1]/0.00001
+                self.estimated_denominator[e] += 1/0.00001
             self.estimated_rewards[e].append(self.estimated_numerator[e]/self.estimated_denominator[e])
             # update average value of the estimates
             self.avg_estimated[e] = sum(self.estimated_rewards[e])/len(self.estimated_rewards[e])
@@ -621,8 +628,8 @@ class OnlineHierarchy:
         if sd and self.stage_parsed_requests > self.feature_cache.iat_win:
             for num, (s, t) in enumerate(zip(sd, iat)):
 
-                if s == -1:
-                    break
+                # if s == -1:
+                #     break
 
                 self.sd_count[num] += 1
                 self.sd_avg[num+1] += 1/self.sd_count[num]*(s-self.sd_avg[num+1])
@@ -643,6 +650,7 @@ class OnlineHierarchy:
                     self.feature.append(v)
             else:
                 self.feature.append(features)
+        # print(self.feature)
         # self.feature = [ (self.feature[i]- FEATURE_MIN_LIST[i])/(FEATURE_MAX_LIST[i]-FEATURE_MIN_LIST[i]) for i in range(len(FEATURE_MIN_LIST))]
     
     def feedRequest(self, t, id, size):
