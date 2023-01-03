@@ -343,7 +343,10 @@ class OnlineHierarchy:
     def calculateW(self, alphas, e):
         result = 0
         for i, ei in enumerate(self.potential_experts):
-            result += alphas[i]/(self.model_variance[(ei, e)])
+            if (self.model_variance[(ei, e)]> 0):
+                result += alphas[i]/(self.model_variance[(ei, e)])
+            else:
+                result += alphas[i]/0.00001
         return result
     
     def calculateDelta(self, best_e, e):
@@ -370,8 +373,12 @@ class OnlineHierarchy:
         
     def calculateEstimated(self, current_e):
         for e in self.potential_experts:
-            self.estimated_numerator[e] += self.observed_rewards[e][-1]/(self.model_variance[(current_e, e)])
-            self.estimated_denominator[e] += 1/(self.model_variance[(current_e, e)])
+            if (self.model_variance[(current_e, e)] > 0):
+                self.estimated_numerator[e] += self.observed_rewards[e][-1]/(self.model_variance[(current_e, e)])
+                self.estimated_denominator[e] += 1/(self.model_variance[(current_e, e)])
+            else:
+                self.estimated_numerator[e] += self.observed_rewards[e][-1]/0.00001
+                self.estimated_denominator[e] += 1/0.00001
             self.estimated_rewards[e].append(self.estimated_numerator[e]/self.estimated_denominator[e])
             # update average value of the estimates
             self.avg_estimated[e] = sum(self.estimated_rewards[e])/len(self.estimated_rewards[e])
