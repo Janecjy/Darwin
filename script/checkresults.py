@@ -13,23 +13,10 @@ def countStat(dirPath):
         
         for file in files:
 
-            if not file.endswith("4exp.out") and not file.endswith("9exp-5k.out") and not file.endswith("6exp1.out") and not file.endswith("6exp2.out") and not file.endswith(".txt"):
+            if not file.endswith("online-3.out") and not file.endswith("online.out") and not file.endswith(".txt"):
                 continue
             
-            if file.endswith("4exp.out"):
-                # online 9 expert output files
-                trace = '-'.join(file.split('-')[:-1])
-            if file.endswith("6exp1.out"):
-                # online 9 expert output files
-                trace = '-'.join(file.split('-')[:-1])
-            if file.endswith("6exp2.out"):
-                # online 9 expert output files
-                trace = '-'.join(file.split('-')[:-1])
-            if file.endswith("9exp-5k.out"):
-                # online 9 expert output files
-                trace = '-'.join(file.split('-')[:-2])
-            if file.endswith(".txt"):
-                trace = root.split('/')[-1]
+            trace = root.split('/')[-1]
 
             if trace not in trace_stats.keys():
                 trace_stats[trace] = {}
@@ -52,14 +39,10 @@ def countStat(dirPath):
                     file_res.append(exp)
 
             if file_res:
-                if file.endswith("4exp.out"):
-                    trace_stats[trace]['4exp'] = [x[0] for x in file_res][-1]
-                if file.endswith("6exp1.out"):
-                    trace_stats[trace]['6exp1'] = [x[0] for x in file_res][-1]
-                if file.endswith("6exp2.out"):
-                    trace_stats[trace]['6exp2'] = [x[0] for x in file_res][-1]
-                if file.endswith("9exp-5k.out"):
-                    trace_stats[trace]['9exp-5k'] = [x[0] for x in file_res][-1]
+                if file.endswith("online-3.out"):
+                    trace_stats[trace]['online-3'] = [x[0] for x in file_res][-1]
+                if file.endswith("online.out"):
+                    trace_stats[trace]['online'] = [x[0] for x in file_res][-1]
                 
                 if file.endswith(".txt"):
                     trace_stats[trace]['f'+f+'s'+s] = [x[0] for x in file_res][-1]
