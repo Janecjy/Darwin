@@ -11,7 +11,7 @@ mkdir -p $2$NAME
 COUNT=0
 
 # for f in 2 3 4 5 6 7
-for f in 4 5 6 7
+for f in 5 6 7
 do
     for s in 10 20 50 100 500 1000
     do
