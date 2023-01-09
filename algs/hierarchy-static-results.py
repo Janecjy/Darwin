@@ -52,12 +52,14 @@ def parseInput():
 
 def request(t, id, size):
     obj_hit = 0
+    hoc_byte_hit = 0
     byte_miss = 0
     global tot_num, compulsory_miss, admission_miss, capacity_miss
 
     if id in hoc:
         hoc.hit(id)
         obj_hit = 1
+        hoc_byte_hit = size
     elif id in dc:
         if tot_num >= WARMUP_LENGTH:
             if id not in hoc_set:
@@ -94,7 +96,7 @@ def request(t, id, size):
             dcAccessTab[id].append(t)
         byte_miss = size
 
-    return obj_hit, byte_miss
+    return obj_hit, byte_miss, hoc_byte_hit
 
 # promote an object from dc to hoc
 def promote(id, size):
@@ -162,7 +164,7 @@ def run():
     bloom = BloomFilter(max_elements=1000000, error_rate=0.1)
 
     global tot_num, bloom_miss, compulsory_miss, admission_miss, capacity_miss
-    tot_num = tot_req = tot_bytes = tot_obj_hit = tot_byte_miss = tot_hoc_hit = 0
+    tot_num = tot_req = tot_bytes = tot_obj_hit = tot_byte_miss = tot_hoc_hit = tot_hoc_byte_hit = 0
 
     global isWarmup
     isWarmup = True
@@ -181,11 +183,12 @@ def run():
             size = int(line[2])
             currentT = t
             if id in bloom:
-                obj_hit, byte_miss = request(t, id, size)
+                obj_hit, byte_miss, hoc_byte_hit = request(t, id, size)
             else:
                 tot_onehit_obj += 1
                 obj_hit = 0
                 byte_miss = size
+                hoc_byte_hit = 0
                 if tot_num >= WARMUP_LENGTH:
                     bloom_miss += 1
             bloom.add(id)
@@ -201,6 +204,7 @@ def run():
                 else:
                     hits.append(0)
                 tot_obj_hit += obj_hit
+                tot_hoc_byte_hit += hoc_byte_hit
                 tot_byte_miss += byte_miss
                 tot_req += 1
                 tot_bytes += size 
@@ -228,7 +232,7 @@ def run():
                 # del bloom
                 # bloom = BloomFilter(max_elements=1000000, error_rate=0.1)
                 # break
-        print('hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, disk_read, disk_write))
+        print('hoc hit: {:.4f}%, hoc byte hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, tot_hoc_byte_hit/tot_bytes*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, disk_read, disk_write))
         print('tot hoc size: {:d}, tot dc size: {:d}, one hit obj num: {:d}'.format(hoc_uniq_size, dc_uniq_size, tot_onehit_obj))
         print('bloom_miss: {:d}, compulsory_miss: {:d}, admission_miss: {:d}, capacity_miss: {:d}'.format(bloom_miss, compulsory_miss, admission_miss, capacity_miss))
         sys.stdout.flush()
