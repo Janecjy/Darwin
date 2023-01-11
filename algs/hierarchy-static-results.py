@@ -171,7 +171,7 @@ def run():
     firstWarmup = True
     # reqs = []
     # freqs = []
-    hits = [] # [(size, hit)]
+    # hits = [] # [(size, hit)]
     
     print(os.path.join(output_dir, 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"))
 
@@ -200,20 +200,20 @@ def run():
             #         firstWarmup = False
                 if obj_hit == 1:
                     tot_hoc_hit += 1
-                    hits.append(1)
-                else:
-                    hits.append(0)
+                    # hits.append(1)
+                # else:
+                    # hits.append(0)
                 tot_obj_hit += obj_hit
                 tot_hoc_byte_hit += hoc_byte_hit
                 tot_byte_miss += byte_miss
                 tot_req += 1
                 tot_bytes += size 
             tot_num += 1
-            # if tot_num % 10000000 == 0:
-            #     print('hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, disk_read, disk_write))
-            #     print('tot hoc size: {:d}, tot dc size: {:d}, one hit obj num: {:d}'.format(hoc_uniq_size, dc_uniq_size, tot_onehit_obj))
-            #     print('bloom_miss: {:d}, compulsory_miss: {:d}, admission_miss: {:d}, capacity_miss: {:d}'.format(bloom_miss, compulsory_miss, admission_miss, capacity_miss))
-            #     sys.stdout.flush()
+            if tot_num > WARMUP_LENGTH and tot_num % 10000000 == 0:
+                print('hoc hit: {:.4f}%,  hoc byte hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, tot_hoc_byte_hit/tot_bytes*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, disk_read, disk_write))
+                print('tot hoc size: {:d}, tot dc size: {:d}, one hit obj num: {:d}'.format(hoc_uniq_size, dc_uniq_size, tot_onehit_obj))
+                print('bloom_miss: {:d}, compulsory_miss: {:d}, admission_miss: {:d}, capacity_miss: {:d}'.format(bloom_miss, compulsory_miss, admission_miss, capacity_miss))
+                sys.stdout.flush()
                 
             #     pickle.dump(hits, open(os.path.join("../cache/output", trace_path.split('/')[6].split('.')[0], 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"), "wb"))
 
@@ -237,7 +237,7 @@ def run():
         print('bloom_miss: {:d}, compulsory_miss: {:d}, admission_miss: {:d}, capacity_miss: {:d}'.format(bloom_miss, compulsory_miss, admission_miss, capacity_miss))
         sys.stdout.flush()
         
-        pickle.dump(hits, open(os.path.join(output_dir, 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"), "wb"))
+        # pickle.dump(hits, open(os.path.join(output_dir, 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"), "wb"))
 
 
 def main():
