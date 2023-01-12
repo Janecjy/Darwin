@@ -1,6 +1,7 @@
 #!/bin/bash
 
-for TRACE in $1'*'
+FILES=$1'*'
+for TRACE in $FILES
 do
     ARRAY=(${TRACE//'/'/ })
     # echo "${#ARRAY[@]}"

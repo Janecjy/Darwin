@@ -251,7 +251,7 @@ def run():
 
 def main():
     parseInput()
-    if None not in (trace_path, freq_thres, size_thres, hoc_s, dc_s):
+    if None not in (trace_path, freq_percentile, size_percentile, hoc_s, dc_s):
         print('trace: {}, freq: {}, size: {}, HOC size: {}, DC size: {}'.format(trace_path, freq_thres, size_thres, hoc_s, dc_s))
     else:
         sys.exit(2)
