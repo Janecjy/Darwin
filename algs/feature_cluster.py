@@ -21,55 +21,55 @@ import pandas as pd
 
 
 thres = 1
-coarse_thres = 1.5
+coarse_thres = 3
 
 
 def feature_cluster():
     
-    MAX_LIST = [0] * 22
-    MIN_LIST = [0] * 22
+    # MAX_LIST = [0] * 22
+    # MIN_LIST = [0] * 22
     
     # feature_set = ['sd_avg', 'iat_avg', 'size_avg', 'sizes', 'sd_1', 'iat_1', 'sd_2', 'iat_2', 'sd_3', 'iat_3', 'sd_4', 'iat_4', 'sd_5', 'iat_5', 'sd_6', 'iat_6', 'sd_7', 'iat_7']
-    feature_set = ['sd_avg', 'iat_avg', 'size_avg', 'edc_avg']
+    feature_set = ['iat_avg', 'sd_avg', 'size_avg']
     # best_result = pickle.load(open("../cache/output/best_result.pkl", "rb"))
-    best_result = pickle.load(open("../cache/output/coarse_best_result.pkl", "rb"))
-    real_best_result = pickle.load(open("../cache/output/best_result.pkl", "rb"))
-    feature_files = [path for path in os.listdir("../cache/output/features/train-set")]
+    best_result = pickle.load(open("/mydata/results/coarse_best_result_2.pkl", "rb"))
+    real_best_result = pickle.load(open("/mydata/results/best_result.pkl", "rb"))
+    feature_files = [path for path in os.listdir("/mydata/features/train-set")]
     
     expert_list = []
-    for s in [50, 100, 200, 500, 1000]:
-        for f in [2, 4, 5, 7]:
+    for s in [10, 20, 50, 100, 500, 1000]:
+        for f in [2, 3, 4, 5, 6, 7]:
             expert_list.append('f'+str(f)+'s'+str(s))
     name_list = []
     feature_list = []
     for file in feature_files:
         feature = []
         name_list.append(file.split('.')[0])
-        features = pickle.load(open("../cache/output/features/train-set/"+file, "rb"))
-        for k, v in features.items():
-            if k in feature_set:
-                if type(v) is dict or type(v) is defaultdict:
-                    values = [value for key,value in sorted(v.items())]   
-                    feature += values
-                else:
-                    feature.append(v)
+        features = pickle.load(open("/mydata/features/train-set/"+file, "rb"))
+        for f in feature_set:
+            v = features[f]
+            if type(v) is dict or type(v) is defaultdict:
+                values = [value for key,value in sorted(v.items())]   
+                feature += values
+            else:
+                feature.append(v)
         # print(len(feature))
         feature_list.append(feature)
-        for i, ele in enumerate(feature):
-            if MAX_LIST[i] == 0 or MAX_LIST[i] < ele:
-                MAX_LIST[i] = ele
-            if MIN_LIST[i] == 0 or MIN_LIST[i] > ele:
-                MIN_LIST[i] = ele
+        # for i, ele in enumerate(feature):
+        #     if MAX_LIST[i] == 0 or MAX_LIST[i] < ele:
+        #         MAX_LIST[i] = ele
+        #     if MIN_LIST[i] == 0 or MIN_LIST[i] > ele:
+        #         MIN_LIST[i] = ele
     
-    pickle.dump(MAX_LIST, open("../cache/output/max_list.pkl", "wb"))
-    pickle.dump(MIN_LIST, open("../cache/output/min_list.pkl", "wb"))
+    # pickle.dump(MAX_LIST, open("../cache/output/max_list.pkl", "wb"))
+    # pickle.dump(MIN_LIST, open("../cache/output/min_list.pkl", "wb"))
     
     feature_dict = {}
     for i, feature in enumerate(feature_list):
-        feature_list[i] = [ (feature[i]- MIN_LIST[i])/(MAX_LIST[i]-MIN_LIST[i]) for i in range(len(MIN_LIST))]
+        # feature_list[i] = [ (feature[i]- MIN_LIST[i])/(MAX_LIST[i]-MIN_LIST[i]) for i in range(len(MIN_LIST))]
         feature_dict[name_list[i]] = feature_list[i]
     
-    pickle.dump(feature_dict, open("../cache/output/feature_dict.pkl", "wb"))
+    # pickle.dump(feature_dict, open("/mydata/results/feature_dict.pkl", "wb"))
     
     print("Clustering with {:d} data points".format(len(feature_list)))
     X = np.array(feature_list)
@@ -81,9 +81,9 @@ def feature_cluster():
 
 
     # choose optimal cluster number with gap statistic
-    # optimalK = OptimalK()
-    # n_clusters = optimalK(X, cluster_array=np.arange(1, 2*math.sqrt(X.shape[0])))
-    n_clusters = 45
+    optimalK = OptimalK()
+    n_clusters = optimalK(X, cluster_array=np.arange(1, 2*math.sqrt(X.shape[0])))
+    # n_clusters = 45
     print('Optimal clusters: ', n_clusters)
 
     #     # fig2 = plt.figure()
@@ -105,8 +105,8 @@ def feature_cluster():
     
     # build 
         
-    pickle.dump(X, open("../cache/output/x.pkl", "wb"))
-    pickle.dump(kmeans_model, open("../cache/output/kmeans.pkl", "wb"))
+    # pickle.dump(X, open("/mydata/results/x.pkl", "wb"))
+    pickle.dump(kmeans_model, open("/mydata/results/kmeans_2.pkl", "wb"))
 
     #     # centroids = kmeans_model.cluster_centers_
 
@@ -143,7 +143,7 @@ def feature_cluster():
         cluster_count[lab] += 1
         for e in best_result[name_list[i]]:
             best_expert_dist[lab][e] += 1
-    pickle.dump(cluster_result, open("../cache/output/cluster_result_names.pkl", "wb"))
+    # pickle.dump(cluster_result, open("/mydata/results/cluster_result_names.pkl", "wb"))
     
     # best_result = pickle.load(open("../cache/output/best_result.pkl", "rb"))
     
@@ -155,7 +155,7 @@ def feature_cluster():
             for exp in best_result[trace]:
                 best_set.add(exp)
         bestSetDict[i] = list(best_set)
-    pickle.dump(bestSetDict, open("../cache/output/cluster_experts.pkl", "wb"))
+    pickle.dump(bestSetDict, open("/mydata/results/cluster_experts_2.pkl", "wb"))
     
     realBestSetDict = {} # cluster num: potential best expert list
 
@@ -165,7 +165,7 @@ def feature_cluster():
             for exp in real_best_result[trace]:
                 best_set.add(exp)
         realBestSetDict[i] = list(best_set)
-    pickle.dump(realBestSetDict, open("../cache/output/cluster_real_experts.pkl", "wb"))
+    # pickle.dump(realBestSetDict, open("/mydata/results/cluster_real_experts.pkl", "wb"))
     
     cmap = matplotlib.cm.get_cmap("Set3").colors
     cmap += matplotlib.cm.get_cmap("Set2").colors
@@ -190,7 +190,7 @@ def feature_cluster():
         # print("cluster"+str(k))
         # plt.plot(range(len(data)), data, label="cluster"+str(k))
         # count += 1
-    pickle.dump(result, open("../cache/output/cluster_result.pkl", "wb"))
+    # pickle.dump(result, open("/mydata/results/cluster_result.pkl", "wb"))
     
     y = np.zeros((len(list(result.values())[0]),len(result.keys())+1))
     y[:,0]= np.arange(len(list(result.values())[0]))
@@ -364,74 +364,53 @@ def result_cluster():
     # plt.xticks([x+1 for x in range(5)], ['cluster'+str(x+1) for x in range(5)])
     plt.title(feature)
     plt.savefig('fig/'+feature+'.png')
-        
-def countStat(dirPath):   
-    hr = {}
-    
-    for root, dirs, files in os.walk(dirPath):
-        for file in files:
-            
-            if file.endswith(".pkl"):
-                continue
-
-            file_res = []
-
-            for line in open(os.path.join(root, file), "r"):
-                val1 = re.findall('freq: [\d]*, size: [\d]*',line)
-
-                for sentence in val1:
-                    sentence = sentence.split(',')
-                    f = (sentence[0].split(':')[1].replace(" ", ""))
-                    s = (sentence[1].split(':')[1].replace(" ", ""))
-                
-                val2 = re.findall('hr: [\d]+[.]?[\d]*%, bmr: [\d]+[.]?[\d]*%, disk read: [\d]+[.]?[\d]*, disk write: [\d]+[.]?[\d]*',line)
-                
-                for sentence in val2:
-                    exp = sentence.split(',')
-                    exp = [float(x.replace(" ", "").replace("%", "").split(':')[1]) for x in exp]
-                    file_res.append(exp)
-
-            if file_res:
-                hr['f'+f+'s'+s] = [x[0] for x in file_res]
-
-    hr_max = max(list([hr[x][0] for x in hr.keys()]))
-    # imp_max = max(list([improve_minus[x] for x in improve_minus.keys()]))
-    
-    coarse_best_set = []
-    # print(hr)
-    for x in hr.keys():
-        # if (imp_max - improve_minus[x])/imp_max < thres/100:
-        if hr_max - hr[x][0]< coarse_thres:
-            coarse_best_set.append(x)
-    
-    best_set = []
-    # print(hr)
-    for x in hr.keys():
-        # if (imp_max - improve_minus[x])/imp_max < thres/100:
-        if hr_max - hr[x][0] < thres:
-        # if (hr_max - hr[x][0])/hr_max < thres/100:
-            best_set.append(x)
-
-    return coarse_best_set, best_set
 
 def confSort(keys):
     return sorted(keys, key=lambda element: list(int(x.replace('f', '')) for x in element.split('s')[:]))
 
+def countStat(dict, thres):   
+    hr_max = max(list(dict.values()))
+    # imp_max = max(list([improve_minus[x] for x in improve_minus.keys()]))
+    
+    best_set = []
+    # print(hr)
+    for k in dict.keys():
+        # if (imp_max - improve_minus[x])/imp_max < thres/100:
+        if hr_max - dict[k] < thres:
+            best_set.append(k)
+
+    return confSort(best_set)
+
 def main():
-    dirs = [path for path in os.listdir("../cache/output/train-set") if path.startswith('tc')]
-    best_result = {}
-    coarse_best_result = {}
-    best_resultset = set()
-    for dir in dirs:
-        coarse, best_set = countStat("../cache/output/train-set/"+dir)
-        coarse_best_result[dir] = confSort(coarse)
-        best_result[dir] = confSort(best_set)
-        best_resultset.add(tuple(confSort(best_set)))
-    # print(best_resultset)
-    pickle.dump(coarse_best_result, open("../cache/output/coarse_best_result.pkl", "wb"))
-    pickle.dump(best_resultset, open("../cache/output/best_resultset.pkl", "wb"))
-    pickle.dump(best_result, open("../cache/output/best_result.pkl", "wb"))
-    # result_cluster()
+    # files = [path for path in os.listdir("/mydata/results") if path.startswith('results')]
+    # best_result = {}
+    # coarse_best_result_3 = {}
+    # coarse_best_result_2 = {}
+    # # best_resultset = set()
+    # train_results = {}
+    # test_results = {}
+    # for file in files:
+    #     r = pickle.load(open("/mydata/results/"+file, "rb"))
+    #     for k in r.keys():
+    #         if k.endswith("-7") or k.endswith("-8") or k.endswith("-9"):
+    #             test_results[k] = r[k]
+    #         else:
+    #             train_results[k] = r[k]
+    #         coarse_best_result_3[k] = countStat(r[k], coarse_thres)
+    #         coarse_best_result_2[k] = countStat(r[k], 2)
+    #         best_result[k] = countStat(r[k], thres)
+    # print(len(train_results.keys()))
+    # print(len(test_results.keys()))
+    # #     coarse, best_set = countStat("../cache/output/train-set/"+dir)
+    # #     coarse_best_result[dir] = confSort(coarse)
+    # #     best_result[dir] = confSort(best_set)
+    # #     best_resultset.add(tuple(confSort(best_set)))
+    # # # print(best_resultset)
+    # pickle.dump(coarse_best_result_3, open("/mydata/results/coarse_best_result_3.pkl", "wb"))
+    # pickle.dump(coarse_best_result_2, open("/mydata/results/coarse_best_result_2.pkl", "wb"))
+    # # pickle.dump(best_resultset, open("../cache/output/best_resultset.pkl", "wb"))
+    # pickle.dump(best_result, open("/mydata/results/best_result.pkl", "wb"))
+    # # result_cluster()
     feature_cluster()
     
 

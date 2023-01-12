@@ -5,29 +5,30 @@ import getopt
 import sys
 import time
 import os
+import numpy as np
 
 from lru import LRU
 
 WARMUP_LENGTH = 1000000
 
-trace_path = output_dir = freq_thres = size_thres = hoc_s = dc_s = None
+trace_path = output_dir = freq_thres = size_thres = hoc_s = dc_s = freq_percentile = size_percentile = collection_length = None
 alpha = 0.001 # defines dc hit benefit
 t_inter = 1000000
 bloom_miss = compulsory_miss = capacity_miss = admission_miss = 0
 
 def parseInput():
 
-    global trace_path, output_dir, freq_thres, size_thres, hoc_s, dc_s
+    global trace_path, output_dir, hoc_s, dc_s, freq_percentile, size_percentile, collection_length
 
     # Get the arguments from the command-line except the filename
     argv = sys.argv[1:]
     
     try:
         # Define the getopt parameters
-        opts, args = getopt.getopt(argv, 't:o:f:s:h:d:', ['trace_path', 'output_dir', 'freq_thres', 'size_thres', 'hoc_size', 'dc_size'])
+        opts, args = getopt.getopt(argv, 't:o:f:s:h:d:l:', ['trace_path', 'output_dir', 'freq_percentile', 'size_percentile', 'hoc_size', 'dc_size', 'collection_length'])
         # Check if the options' length is 3
-        if len(opts) != 6:
-            print('usage: hierarchy.py -t <trace_path> -o <output_dir> -f <frequency_threshold> -s <size_threshold> -h <HOC_size> -d <DC_size>')
+        if len(opts) != 7:
+            print('usage: percentile.py -t <trace_path> -o <output_dir> -f <freq_percentile> -s <size_percentile> -h <HOC_size> -d <DC_size> -l <collection_length>')
         else:
             # Iterate the options and get the corresponding values
             for opt, arg in opts:
@@ -36,24 +37,26 @@ def parseInput():
                 if opt == '-o':
                     output_dir = arg
                 if opt == '-f':
-                    freq_thres = int(arg)
+                    freq_percentile = int(arg)
                 if opt == '-s':
-                    size_thres = int(arg)
+                    size_percentile = int(arg)
                 if opt == '-h':
                     hoc_s = int(arg)
                 if opt == '-d':
-                    dc_s = int(arg)               
+                    dc_s = int(arg)       
+                if opt == '-l':
+                    collection_length = int(arg)        
 
     except getopt.GetoptError as err:
         # Print help message
         print(err)
-        print('usage: hierarchy.py -t <trace_path> -f <frequency_threshold> -s <size_threshold> -h <HOC_size> -d <DC_size>')
+        print('usage: percentile.py -t <trace_path> -o <output_dir> -f <freq_percentile> -s <size_percentile> -h <HOC_size> -d <DC_size> -l <collection_length>')
         sys.exit(2)
 
 def request(t, id, size):
     obj_hit = 0
     byte_miss = 0
-    global tot_num, compulsory_miss, admission_miss, capacity_miss
+    global tot_num, compulsory_miss, admission_miss, capacity_miss, disk_write
 
     if id in hoc:
         hoc.hit(id)
@@ -74,12 +77,13 @@ def request(t, id, size):
                 promote(id, size)
 
         obj_hit = alpha
+        if tot_num >= WARMUP_LENGTH:
+            disk_write += size/4
     else:
         evicted = dc.miss(id, size)
         if tot_num >= WARMUP_LENGTH:
             compulsory_miss += 1
 
-        global disk_write
         if tot_num >= WARMUP_LENGTH:
             disk_write += size/4
         global dc_uniq_size
@@ -149,8 +153,9 @@ def countFreq(id):
 
 def run():
 
-    global currentT, hoc, dc, dcAccessTab, bloom, dc_set, hoc_set, dc_uniq_size, hoc_uniq_size, disk_read, disk_write
-
+    global currentT, hoc, dc, dcAccessTab, bloom, dc_set, hoc_set, dc_uniq_size, hoc_uniq_size, disk_read, disk_write, freq_percentile, size_percentile, collection_length, freq_thres, size_thres
+    freq_thres = 2
+    size_thres = 20
     dc_uniq_size = hoc_uniq_size = tot_onehit_obj = disk_read = disk_write = 0
     
     dc_set = set()
@@ -169,9 +174,11 @@ def run():
     firstWarmup = True
     # reqs = []
     # freqs = []
-    hits = [] # [(size, hit)]
+    # hits = []
+    obj_count = {}
+    size_list = []
     
-    print(os.path.join(output_dir, 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"))
+    # print(os.path.join(output_dir, 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"))
 
     with open(trace_path) as fp:
         for line in fp:
@@ -180,6 +187,10 @@ def run():
             id = int(line[1])
             size = int(line[2])
             currentT = t
+            if id not in obj_count.keys():
+                obj_count[id] = 0
+            obj_count[id] += 1
+            size_list.append(size)
             if id in bloom:
                 obj_hit, byte_miss = request(t, id, size)
             else:
@@ -197,15 +208,17 @@ def run():
             #         firstWarmup = False
                 if obj_hit == 1:
                     tot_hoc_hit += 1
-                    hits.append((size, 1))
-                else:
-                    hits.append((size, 0))
+                    # hits.append(1)
+                # else:
+                    # hits.append(0)
                 tot_obj_hit += obj_hit
                 tot_byte_miss += byte_miss
                 tot_req += 1
                 tot_bytes += size 
             tot_num += 1
-            # if tot_num % 10000000 == 0:
+            if tot_num > WARMUP_LENGTH and tot_num % collection_length == 0:
+                freq_thres = np.percentile(list(obj_count.values()), freq_percentile)
+                size_thres = np.percentile(size_list, size_percentile)
             #     print('hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, disk_read, disk_write))
             #     print('tot hoc size: {:d}, tot dc size: {:d}, one hit obj num: {:d}'.format(hoc_uniq_size, dc_uniq_size, tot_onehit_obj))
             #     print('bloom_miss: {:d}, compulsory_miss: {:d}, admission_miss: {:d}, capacity_miss: {:d}'.format(bloom_miss, compulsory_miss, admission_miss, capacity_miss))
@@ -233,12 +246,12 @@ def run():
         print('bloom_miss: {:d}, compulsory_miss: {:d}, admission_miss: {:d}, capacity_miss: {:d}'.format(bloom_miss, compulsory_miss, admission_miss, capacity_miss))
         sys.stdout.flush()
         
-        pickle.dump(hits, open(os.path.join(output_dir, 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"), "wb"))
+        # pickle.dump(hits, open(os.path.join(output_dir, 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"), "wb"))
 
 
 def main():
     parseInput()
-    if None not in (trace_path, freq_thres, size_thres, hoc_s, dc_s):
+    if None not in (trace_path, freq_percentile, size_percentile, hoc_s, dc_s):
         print('trace: {}, freq: {}, size: {}, HOC size: {}, DC size: {}'.format(trace_path, freq_thres, size_thres, hoc_s, dc_s))
     else:
         sys.exit(2)

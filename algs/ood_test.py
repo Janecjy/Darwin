@@ -21,14 +21,10 @@ MAX_LIST = [0] * 15
 MIN_LIST = [0] * 15
 
 def gen_data(expert_0, expert_1):
-    inputs = []
-    labels = []
     prediction_input = []
     prediction_labels = []
     
-    train_files = [path for path in os.listdir("/mydata/features/train-set")]
-    # num_file = len(feature_files)
-    test_files = [path for path in os.listdir("/mydata/features/test-set-real")]
+    test_files = [path for path in os.listdir("/mydata/features-ood")]
     # test_index = random.sample(range(num_file), num_file % 100)
     # test_files = ["tc-0-tc-1-2290:0", "tc-0-tc-1-0:24300", "tc-0-tc-1-2290:2916", "tc-0-tc-1-22518:4053", "tc-0-tc-1-2243:488"]
     # feature_set = ['sd_avg', 'iat_avg', 'size_avg', 'edc_avg']
@@ -39,7 +35,7 @@ def gen_data(expert_0, expert_1):
     bucket_list = [10, 20, 50, 100, 500, 1000, 5000]
     
     # for i, file in enumerate(test_files):
-    for i, file in enumerate(train_files+test_files):
+    for i, file in enumerate(test_files):
         # if i==2:
         #     break
         feature = []
@@ -47,20 +43,14 @@ def gen_data(expert_0, expert_1):
         if not os.path.exists(os.path.join("/mydata/experts/", expert_0, name+'.pkl')):
             print(expert_0+'/'+name+'.pkl not exist')
             continue
-        # name_list.append(name)
-        if i < len(train_files):
-            dir = "train-set"
-        else:
-            dir = "test-set-real"
-            test_set.append(name)
             
-        print("Collect data from "+dir+" "+name)
+        print("Collect data from "+name)
         sys.stdout.flush()
                 
     # for file in ["tc-0-tc-1-2290:0.pkl", "tc-0-tc-1-0:24300.pkl", "tc-0-tc-1-2290:2916.pkl", "tc-0-tc-1-22518:4053.pkl", "tc-0-tc-1-2243:488.pkl"]:
     # file = "tc-0-tc-1-138:958.pkl"
         
-        features = pickle.load(open(os.path.join("/mydata/features/", dir, file), "rb"))
+        features = pickle.load(open(os.path.join("/mydata/features-ood/", file), "rb"))
         for f in feature_set:
             v = features[f]
             if type(v) is dict or type(v) is defaultdict:
@@ -114,12 +104,8 @@ def gen_data(expert_0, expert_1):
                 input = []
                 input.extend(feature)
                 input.extend(bucket_count)
-                if name in test_set:
-                    prediction_input.append([input, e0_hit_count, e0_miss_count])
-                    prediction_labels.append([hit_hit_prob, hit_miss_prob])
-                else:
-                    inputs.append(input)
-                    labels.append([hit_hit_prob, hit_miss_prob])
+                prediction_input.append([input, e0_hit_count, e0_miss_count])
+                prediction_labels.append([hit_hit_prob, hit_miss_prob])
                 e0_hit_count = e0_miss_count = hit_hit_prob = hit_miss_prob = 0
                 bucket_count = [0]*(len(bucket_list)+1)
             # else:
@@ -167,28 +153,20 @@ def gen_data(expert_0, expert_1):
             input = []
             input.extend(feature)
             input.extend(bucket_count)
-            if name in test_set:
-                prediction_input.append([input, e0_hit_count, e0_miss_count])
-                prediction_labels.append([hit_hit_prob, hit_miss_prob])
-            else:
-                inputs.append(input)
-                labels.append([hit_hit_prob, hit_miss_prob])
+            prediction_input.append([input, e0_hit_count, e0_miss_count])
+            prediction_labels.append([hit_hit_prob, hit_miss_prob])
                 
         if i % 100 == 0:
-            pickle.dump(inputs, open(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "traininput.pkl"), "wb"))
-            pickle.dump(labels, open(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "trainlabels.pkl"), "wb"))
-            pickle.dump(prediction_input, open(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "predinput.pkl"), "wb"))
-            pickle.dump(prediction_labels, open(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "predlabels.pkl"), "wb"))
+            pickle.dump(prediction_input, open(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "ood_predinput.pkl"), "wb"))
+            pickle.dump(prediction_labels, open(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "ood_predlabels.pkl"), "wb"))
         
     
-    pickle.dump(inputs, open(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "traininput.pkl"), "wb"))
-    pickle.dump(labels, open(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "trainlabels.pkl"), "wb"))
-    pickle.dump(prediction_input, open(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "predinput.pkl"), "wb"))
-    pickle.dump(prediction_labels, open(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "predlabels.pkl"), "wb"))
-    return inputs, labels, prediction_input, prediction_labels
+    pickle.dump(prediction_input, open(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "ood_predinput.pkl"), "wb"))
+    pickle.dump(prediction_labels, open(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "ood_predlabels.pkl"), "wb"))
+    return prediction_input, prediction_labels
 
 
-def test(device, epoch, model, _data, _label, batch_size, data_u, data_sd):
+def test(device, epoch, model, _data, _label, batch_size):
     # import pdb; pdb.set_trace()
     # Test the model
     # In the test phase, don't need to compute gradients (for memory efficiency)
@@ -212,8 +190,6 @@ def test(device, epoch, model, _data, _label, batch_size, data_u, data_sd):
         e0_miss_count = int(data_i[2])
         data_i = data_i[0]
         d = torch.tensor(data_i).to(device)
-        for j in range(len(d)):
-            d[j] = (d[j]-data_u[j])/data_sd[j]
         l = torch.tensor(label_i).to(device)
         outputs = torch.sigmoid(model(d))
         hit_hit_prob = l.tolist()[0]
@@ -275,80 +251,24 @@ def main():
             out = self.fc2(out)
             return out
         
-    if os.path.exists(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "model-h2.ckpt")):
+    if os.path.exists(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "traininput.pkl")):
         data = pickle.load(open(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "traininput.pkl"), "rb"))
         label = pickle.load(open(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "trainlabels.pkl"), "rb"))
-        _data = pickle.load(open(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "predinput.pkl"), "rb"))
-        _label = pickle.load(open(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "predlabels.pkl"), "rb"))
     else:
-        data, label, _data, _label = gen_data(expert_0, expert_1)
+        return
+    if os.path.exists(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "ood_predinput.pkl")):
+        _data = pickle.load(open(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "ood_predinput.pkl"), "rb"))
+        _label = pickle.load(open(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "ood_predlabels.pkl"), "rb"))
+    else:
+        _data, _label = gen_data(expert_0, expert_1)
     data = torch.tensor(data)
     label = torch.tensor(label)
-    data_u = data.mean(axis=0)
-    data_sd = data.std(axis=0)
-    pickle.dump(data_u, open(os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "traininput_u.pkl"), "wb"))
-    pickle.dump(data_sd, open(os.path.join("../cache/output/models/", expert_0+"-"+expert_1, "traininput_sd.pkl"), "wb"))
     # _data = torch.tensor(_data)
     # _label = torch.tensor(_label)
     # _data, _label = gen_predictdata(expert_0, expert_1, "tc-0-tc-1-2290:0")
     # Check if model exists
     if not os.path.exists(os.path.join("/mydata/models/", expert_0+"-"+expert_1, "model-h"+str(hidden_size)+".ckpt")):
-        # import pdb; pdb.set_trace()
-        
-        # data, label = gen_data(expert_0, expert_1)
-        print(data.shape)
-        [num_data, data_dim] = data.shape
-        # _, label_dim = label.shape
-        
-        num_batch = int(num_data / batch_size)
-        data_batched = data.reshape(num_batch, batch_size, data_dim)
-        label_batched = label.reshape(num_batch, batch_size, output_size)
-        
-        model = NeuralNet(input_size, hidden_size, output_size).to(device)
-
-        # Loss and optimizer
-        criterion = nn.BCEWithLogitsLoss()
-        # criterion = nn.MSELoss(reduction='sum')
-        # criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate) 
-
-        # Train the model
-        # total_step = len(data)
-        total_step = num_batch
-        # start_t = time.time()
-        for epoch in range(num_epochs):
-            for i, (d, l) in enumerate(zip(data_batched, label_batched)):
-                for j in range(data_dim):
-                    d[0, j] = (d[0,j]-data_u[j])/data_sd[j]
-                # Move tensors to the configured device
-                d = d.to(device)
-                l = l.float().to(device)
-                
-                # Forward pass
-                outputs = model(d)
-                # import pdb; pdb.set_trace()
-                # loss = criterion(outputs.squeeze(), l)
-                loss = criterion(outputs, l)
-                
-                # Backprpagation and optimization
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-                
-                if (i+1) % 100 == 0:
-                    # end_t = time.time()
-                    print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}' 
-                        .format(epoch+1, num_epochs, i+1, total_step, loss.item()))
-                    # print('Training time: {}'.format(end_t-start_t))
-                    # start_t = end_t
-                    sys.stdout.flush()
-            
-            # Save the model checkpoint
-            torch.save(model.state_dict(), os.path.join("/mydata/models/", expert_0+"-"+expert_1, "model-h"+str(hidden_size)+"-"+str(epoch)+".ckpt"))
-            test(device, epoch, model, _data, _label, batch_size)
-        
-        torch.save(model.state_dict(), os.path.join("/mydata/models/", expert_0+"-"+expert_1, "model-h"+str(hidden_size)+".ckpt"))
-        # print(model.state_dict())
+        return
     
     else:
         model = NeuralNet(input_size, hidden_size, output_size).to(device)

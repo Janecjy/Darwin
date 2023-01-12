@@ -8,4 +8,4 @@ NAME=${FILENAMEARR[0]}
 
 source venv/bin/activate
 mkdir -p $2$NAME
-python ./algs/utils/traffic_model/extract_feature.py $TRACE $2$NAME
+python ./algs/utils/traffic_model/extract_feature.py $TRACE $2$NAME $3 $4
