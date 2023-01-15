@@ -219,6 +219,7 @@ def run():
             if tot_num > WARMUP_LENGTH and tot_num % collection_length == 0:
                 freq_thres = np.percentile(list(obj_count.values()), freq_percentile)
                 size_thres = np.percentile(size_list, size_percentile)
+                print(freq_percentile, freq_thres, size_percentile, size_thres)
             #     print('hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, disk_read, disk_write))
             #     print('tot hoc size: {:d}, tot dc size: {:d}, one hit obj num: {:d}'.format(hoc_uniq_size, dc_uniq_size, tot_onehit_obj))
             #     print('bloom_miss: {:d}, compulsory_miss: {:d}, admission_miss: {:d}, capacity_miss: {:d}'.format(bloom_miss, compulsory_miss, admission_miss, capacity_miss))
