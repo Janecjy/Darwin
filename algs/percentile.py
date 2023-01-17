@@ -96,6 +96,8 @@ def request(t, id, size):
 
         if size < size_thres:
             dcAccessTab[id].append(t)
+            if countFreq(id) == freq_thres:
+                promote(id, size)
         byte_miss = size
 
     return obj_hit, byte_miss
@@ -176,6 +178,7 @@ def run():
     # freqs = []
     # hits = []
     obj_count = {}
+    freq_list = []
     size_list = []
     
     # print(os.path.join(output_dir, 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"))
@@ -190,6 +193,7 @@ def run():
             if id not in obj_count.keys():
                 obj_count[id] = 0
             obj_count[id] += 1
+            freq_list.append(obj_count[id])
             size_list.append(size)
             if id in bloom:
                 obj_hit, byte_miss = request(t, id, size)
@@ -216,7 +220,7 @@ def run():
                 tot_req += 1
                 tot_bytes += size 
             if tot_num > WARMUP_LENGTH and tot_num % collection_length == 0:
-                freq_thres = np.percentile(list(obj_count.values()), freq_percentile)
+                freq_thres = np.percentile(freq_list, freq_percentile)
                 size_thres = np.percentile(size_list, size_percentile)
                 print(freq_percentile, freq_thres, size_percentile, size_thres)
                 sys.stdout.flush()
