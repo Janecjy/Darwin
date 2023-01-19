@@ -507,7 +507,7 @@ class OnlineHierarchy:
                 self.freq_thres = new_f
                 self.size_thres = new_s
                 self.current_stage = OnlineStage.BEST_DEPLOYED
-                print('hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:f}, disk write: {:f}'.format(self.tot_hoc_hit/self.tot_req_num*100, self.tot_obj_hit/self.tot_req_num*100, self.tot_byte_miss/self.tot_req_bytes*100, self.tot_disk_read, self.tot_disk_write))
+                # print('hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:f}, disk write: {:f}'.format(self.tot_hoc_hit/self.tot_req_num*100, self.tot_obj_hit/self.tot_req_num*100, self.tot_byte_miss/self.tot_req_bytes*100, self.tot_disk_read, self.tot_disk_write))
                 
             self.stage_parsed_requests = 0
             
@@ -599,6 +599,9 @@ class OnlineHierarchy:
             self.tot_hoc_hit += 1
         self.tot_req_num += 1
         self.tot_req_bytes += size
+        if self.tot_req_num % 100000 == 0:
+            print('hoc hit: {:.4f}%,  hoc byte hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, tot_hoc_byte_hit/tot_bytes*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, disk_read, disk_write))
+            sys.stdout.flush()
         
     def featureCacheInit(self, t, id, size):
         self.obj_reqs[id] += 1
@@ -720,7 +723,7 @@ def main():
     # FEATURE_MIN_LIST = pickle.load(open(model_path+"min_list.pkl", "rb"))
     # print(FEATURE_MIN_LIST)
     # sys.stdout.flush()
-    cache = OnlineHierarchy(name, 2, 50, hoc_s, dc_s)
+    cache = OnlineHierarchy(name, 3, 50, hoc_s, dc_s)
     
     for line in open(trace_path):
         line = line.split(',')
