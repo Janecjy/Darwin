@@ -52,7 +52,7 @@ def countStat(dirPath):
                 if file.endswith(".txt"):
                     trace_stats[trace]['f'+str(f)+'s'+str(s)+'l'+str(l)] = [x[0] for x in file_res][-1]
     print(trace_stats)  
-    pickle.dump(trace_stats, open("/mydata/output/results.pkl", "wb"))
+    pickle.dump(trace_stats, open("/mydata/output-percentile/results.pkl", "wb"))
     
 if __name__ == "__main__":
     countStat("/mydata/output-percentile/")
