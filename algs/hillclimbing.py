@@ -197,73 +197,76 @@ def run():
 
     with open(trace_path) as fp:
         for line in fp:
-            line = line.split(',')
-            t = int(line[0])
-            id = int(line[1])
-            size = int(line[2])
-            currentT = t
-            
-            obj_hit, disk_write = real_cache.request(t, id, size)
-            f_shadow_cache.request(t, id, size)
-            s_shadow_cache.request(t, id, size)
+            try:
+                line = line.split(',')
+                t = int(line[0])
+                id = int(line[1])
+                size = int(line[2])
+                currentT = t
 
-            if tot_num >= WARMUP_LENGTH:
-                if obj_hit == 1:
-                    tot_hoc_hit += 1
-                tot_obj_hit += obj_hit
-                tot_disk_write += disk_write
-                tot_req += 1
-                tot_bytes += size 
-            tot_num += 1
-            if tot_num > WARMUP_LENGTH and tot_num % collection_length == 0:
-                print('real cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(real_cache.obj_hit/collection_length*100, real_cache.disk_write))
-                print('f shadow cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(f_shadow_cache.obj_hit/collection_length*100, f_shadow_cache.disk_write))
-                print('s shadow cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(s_shadow_cache.obj_hit/collection_length*100, s_shadow_cache.disk_write))
-                print('hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, tot_disk_write))
-                sys.stdout.flush()
-                
-                new_f_i = 0
-                new_s_i = 0
-                if real_cache.obj_hit >= f_shadow_cache.obj_hit:
-                    new_f_i = f_cache_i
-                else:
-                    new_f_i = f_shadow_i
-                if real_cache.obj_hit >= s_shadow_cache.obj_hit:
-                    new_s_i = s_cache_i
-                else:
-                    new_s_i = s_shadow_i
-                
-                if new_f_i == max(f_cache_i, f_shadow_i):
-                    if new_f_i+1 < len(frequency_list):
-                        f_shadow_i = new_f_i+1
-                    else:
-                        f_shadow_i = min(f_cache_i, f_shadow_i) # real cache already the largest value, shadow cache choose the other value
-                else:
-                    if new_f_i-1 >= 0:
-                        f_shadow_i = new_f_i-1
-                    else:
-                        f_shadow_i = max(f_cache_i, f_shadow_i)
+                obj_hit, disk_write = real_cache.request(t, id, size)
+                f_shadow_cache.request(t, id, size)
+                s_shadow_cache.request(t, id, size)
 
-                if new_s_i == max(s_cache_i, s_shadow_i):
-                    if new_s_i+1 < len(size_list):
-                        s_shadow_i = new_s_i+1
+                if tot_num >= WARMUP_LENGTH:
+                    if obj_hit == 1:
+                        tot_hoc_hit += 1
+                    tot_obj_hit += obj_hit
+                    tot_disk_write += disk_write
+                    tot_req += 1
+                    tot_bytes += size 
+                tot_num += 1
+                if tot_num > WARMUP_LENGTH and tot_num % collection_length == 0:
+                    print('real cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(real_cache.obj_hit/collection_length*100, real_cache.disk_write))
+                    print('f shadow cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(f_shadow_cache.obj_hit/collection_length*100, f_shadow_cache.disk_write))
+                    print('s shadow cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(s_shadow_cache.obj_hit/collection_length*100, s_shadow_cache.disk_write))
+                    print('hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, tot_disk_write))
+                    sys.stdout.flush()
+                    
+                    new_f_i = 0
+                    new_s_i = 0
+                    if real_cache.obj_hit >= f_shadow_cache.obj_hit:
+                        new_f_i = f_cache_i
                     else:
-                        s_shadow_i = min(s_cache_i, s_shadow_i) # real cache already the largest value, shadow cache choose the other value
-                else:
-                    if new_s_i-1 >= 0:
-                        s_shadow_i = new_s_i-1
+                        new_f_i = f_shadow_i
+                    if real_cache.obj_hit >= s_shadow_cache.obj_hit:
+                        new_s_i = s_cache_i
                     else:
-                        s_shadow_i = max(s_cache_i, s_shadow_i)
-                f_cache_i = new_f_i
-                s_cache_i = new_s_i
-                f_shadow_cache.copy_state(real_cache)
-                s_shadow_cache.copy_state(real_cache)
-                real_cache.reset(frequency_list[f_cache_i], size_list[s_cache_i])
-                f_shadow_cache.reset(frequency_list[f_shadow_i], size_list[s_cache_i])
-                s_shadow_cache.reset(frequency_list[f_cache_i], size_list[s_shadow_i])
-                
-                print('f_cache_thres: {:d}, s_cache_thres: {:d}, f_shadow_thres: {:d}, s_cache_thres: {:d}'.format(frequency_list[f_cache_i], size_list[s_cache_i], frequency_list[f_shadow_i], size_list[s_shadow_i]))
-                sys.stdout.flush()
+                        new_s_i = s_shadow_i
+                    
+                    if new_f_i == max(f_cache_i, f_shadow_i):
+                        if new_f_i+1 < len(frequency_list):
+                            f_shadow_i = new_f_i+1
+                        else:
+                            f_shadow_i = min(f_cache_i, f_shadow_i) # real cache already the largest value, shadow cache choose the other value
+                    else:
+                        if new_f_i-1 >= 0:
+                            f_shadow_i = new_f_i-1
+                        else:
+                            f_shadow_i = max(f_cache_i, f_shadow_i)
+
+                    if new_s_i == max(s_cache_i, s_shadow_i):
+                        if new_s_i+1 < len(size_list):
+                            s_shadow_i = new_s_i+1
+                        else:
+                            s_shadow_i = min(s_cache_i, s_shadow_i) # real cache already the largest value, shadow cache choose the other value
+                    else:
+                        if new_s_i-1 >= 0:
+                            s_shadow_i = new_s_i-1
+                        else:
+                            s_shadow_i = max(s_cache_i, s_shadow_i)
+                    f_cache_i = new_f_i
+                    s_cache_i = new_s_i
+                    f_shadow_cache.copy_state(real_cache)
+                    s_shadow_cache.copy_state(real_cache)
+                    real_cache.reset(frequency_list[f_cache_i], size_list[s_cache_i])
+                    f_shadow_cache.reset(frequency_list[f_shadow_i], size_list[s_cache_i])
+                    s_shadow_cache.reset(frequency_list[f_cache_i], size_list[s_shadow_i])
+                    
+                    print('f_cache_thres: {:d}, s_cache_thres: {:d}, f_shadow_thres: {:d}, s_cache_thres: {:d}'.format(frequency_list[f_cache_i], size_list[s_cache_i], frequency_list[f_shadow_i], size_list[s_shadow_i]))
+                    sys.stdout.flush()
+            except:
+                print(trace_path, line)
                 
     print('real cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(real_cache.obj_hit/collection_length*100, real_cache.disk_write))
     print('f shadow cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(f_shadow_cache.obj_hit/collection_length*100, f_shadow_cache.disk_write))

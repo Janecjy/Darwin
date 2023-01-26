@@ -76,6 +76,9 @@ class LRU:
 
         return op, evicted
 
+    def copy_state(self, cache):
+        self.lru.copy_state(cache.lru)
+
     def run(self):
         progress_bar_size = 30
         progress_bar = ProgressBar(progress_bar_size,
