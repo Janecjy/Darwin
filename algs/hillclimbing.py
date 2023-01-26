@@ -68,10 +68,10 @@ class Cache:
         self.disk_write = 0
     
     def copy_state(self, cache):
-        self.dc = copy.deepcopy(cache.dc)
-        self.hoc = copy.deepcopy(cache.hoc)
+        # fix this by using iteration to do deepcopy
+        self.dc.copy_state(cache.dc)
+        self.hoc.copy_state(cache.hoc)
         self.dcAccessTab = copy.deepcopy(cache.dcAccessTab)
-        self.bloom = copy.deepcopy(cache.bloom)
     
     def reset(self, new_freq_thres, new_size_thres):
         self.freq_thres = new_freq_thres
@@ -168,6 +168,8 @@ def run():
 
     global currentT, disk_write, collection_length, freq_thres, size_thres
 
+    # hoc_s = 100
+    # dc_s = 10000
     f_cache_i = s_cache_i = 0
     f_shadow_i = s_shadow_i = 0
     real_cache = Cache(hoc_s, dc_s, frequency_list[f_cache_i], size_list[s_cache_i])
@@ -183,6 +185,8 @@ def run():
     # f_shadow_cache.copy_state(real_cache)
     # f_shadow_cache.request(1, 1, 2)
     # f_shadow_cache.request(1, 1, 2)
+    # real_cache.request(2, 2, 3)
+    # real_cache.request(2, 2, 3)
     # print(id(real_cache.dc.lru.htbl))
     # print(real_cache.dc.lru.htbl)
     # print(id(f_shadow_cache.dc.lru.htbl))
