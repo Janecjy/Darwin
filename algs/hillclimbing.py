@@ -167,13 +167,7 @@ class Cache:
 def run():
 
     global currentT, disk_write, collection_length, freq_thres, size_thres
-    # freq_thres = 2
-    # size_thres = 20
-    # disk_write = 0
-    # dc_uniq_size = hoc_uniq_size = tot_onehit_obj = disk_read = disk_write = 0
 
-    hoc_s = 100
-    dc_s = 10000
     f_cache_i = s_cache_i = 0
     f_shadow_i = s_shadow_i = 0
     real_cache = Cache(hoc_s, dc_s, frequency_list[f_cache_i], size_list[s_cache_i])
