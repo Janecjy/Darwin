@@ -31,7 +31,7 @@ def parseInput():
         opts, args = getopt.getopt(argv, 't:o:f:s:h:d:l:', ['trace_path', 'output_dir', 'hoc_size', 'dc_size', 'collection_length'])
         # Check if the options' length is 3
         if len(opts) != 5:
-            print('usage: percentile.py -t <trace_path> -o <output_dir> -h <HOC_size> -d <DC_size> -l <collection_length>')
+            print('usage: hillclimbing.py -t <trace_path> -o <output_dir> -h <HOC_size> -d <DC_size> -l <collection_length>')
         else:
             # Iterate the options and get the corresponding values
             for opt, arg in opts:
@@ -49,7 +49,7 @@ def parseInput():
     except getopt.GetoptError as err:
         # Print help message
         print(err)
-        print('usage: percentile.py -t <trace_path> -o <output_dir> -h <HOC_size> -d <DC_size> -l <collection_length>')
+        print('usage: hillclimbing.py -t <trace_path> -o <output_dir> -h <HOC_size> -d <DC_size> -l <collection_length>')
         sys.exit(2)
 
 class Cache:
@@ -121,20 +121,15 @@ class Cache:
     # promote an object from dc to hoc
     def promote(self, id, size):
         # delete the object from dc and the dc access table
-        dc.removeFromCache(id, size)
-        del dcAccessTab[id]
+        self.dc.removeFromCache(id, size)
+        del self.dcAccessTab[id]
 
         # when hoc is full, demote the hoc's lru object to the dc
-        while hoc.current_size + size > hoc.cache_size:
+        while self.hoc.current_size + size > self.hoc.cache_size:
             self.demote()
 
         # add the object to hoc
-        hoc.addToCache(id, size)
-
-        if id not in hoc_set:
-            global hoc_uniq_size
-            hoc_set.add(id)
-            hoc_uniq_size += size
+        self.hoc.addToCache(id, size)
 
     # demote the lru object from hoc to dc
     def demote(self):
@@ -142,36 +137,36 @@ class Cache:
         isWarmup = False
 
         # evict the lru object from hoc
-        id, size = hoc.evict()
+        id, size = self.hoc.evict()
 
         # add the object to dc
-        evicted = dc.miss(id, size)
-        global disk_write
-        global tot_num
-        if tot_num >= WARMUP_LENGTH:
-            disk_write += size/4
+        evicted = self.dc.miss(id, size)
+        # global disk_write
+        # global tot_num
+        # if tot_num >= WARMUP_LENGTH:
+        #     disk_write += size/4
 
-        if id not in dc_set:
-            dc_set.add(id)
-            global dc_uniq_size
-            dc_uniq_size += size
+        # if id not in dc_set:
+        #     dc_set.add(id)
+        #     global dc_uniq_size
+        #     dc_uniq_size += size
 
         # remove the evicted objects in access table
         for evicted_id in evicted:
-            if evicted_id in dcAccessTab:
-                del dcAccessTab[evicted_id]
+            if evicted_id in self.dcAccessTab:
+                del self.dcAccessTab[evicted_id]
 
     def countFreq(self, id):
-        for t in dcAccessTab[id]:
+        for t in self.dcAccessTab[id]:
             if currentT - t > t_inter:
-                dcAccessTab[id].remove(t)
+                self.dcAccessTab[id].remove(t)
             else:
                 break
-        return len(dcAccessTab[id])
+        return len(self.dcAccessTab[id])
 
 def run():
 
-    global currentT, hoc, dc, dcAccessTab, bloom, dc_set, hoc_set, dc_uniq_size, hoc_uniq_size, disk_read, disk_write, freq_percentile, size_percentile, collection_length, freq_thres, size_thres
+    global currentT, disk_write, collection_length, freq_thres, size_thres
     # freq_thres = 2
     # size_thres = 20
     # disk_write = 0
