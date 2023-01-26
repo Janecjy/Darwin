@@ -268,11 +268,19 @@ def run():
                 real_cache.reset(frequency_list[f_cache_i], size_list[s_cache_i])
                 f_shadow_cache.reset(frequency_list[f_shadow_i], size_list[s_cache_i])
                 s_shadow_cache.reset(frequency_list[f_cache_i], size_list[s_shadow_i])
-
+                
+                print('f_cache_thres: {:d}, s_cache_thres: {:d}, f_shadow_thres: {:d}, s_cache_thres: {:d}'.format(frequency_list[f_cache_i], size_list[s_cache_i], frequency_list[f_shadow_i], size_list[s_shadow_i]))
+                sys.stdout.flush()
+                
+            print('real cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(real_cache.obj_hit/collection_length*100, real_cache.disk_write))
+            print('f shadow cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(f_shadow_cache.obj_hit/collection_length*100, f_shadow_cache.disk_write))
+            print('s shadow cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(s_shadow_cache.obj_hit/collection_length*100, s_shadow_cache.disk_write))
+            print('hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, tot_disk_write))
+            sys.stdout.flush()
 
 def main():
     parseInput()
-    if None not in (trace_path, hoc_s, dc_s):
+    if None not in (trace_path, hoc_s, dc_s, collection_length):
         print('trace: {}, HOC size: {}, DC size: {}'.format(trace_path, hoc_s, dc_s))
     else:
         sys.exit(2)
