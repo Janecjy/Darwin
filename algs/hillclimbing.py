@@ -92,9 +92,9 @@ class Cache:
                 obj_hit = 1
             elif id in self.dc:
                 self.dc.hit(id)
-                if size < size_thres:
+                if size < self.size_thres:
                     self.dcAccessTab[id].append(t)
-                    if self.countFreq(id) == freq_thres:
+                    if self.countFreq(id) == self.freq_thres:
                         self.promote(id, size)
 
                 obj_hit = alpha
@@ -109,7 +109,7 @@ class Cache:
                     if evicted_id in self.dcAccessTab:
                         del self.dcAccessTab[evicted_id]
 
-                if size < size_thres:
+                if size < self.size_thres:
                     self.dcAccessTab[id].append(t)
         
         self.bloom.add(id)
