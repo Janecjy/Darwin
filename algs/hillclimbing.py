@@ -113,8 +113,8 @@ class Cache:
                     self.dcAccessTab[id].append(t)
         
         if tot_num >= WARMUP_LENGTH:
-        self.obj_hit += obj_hit
-        self.disk_write += disk_write
+            self.obj_hit += obj_hit
+            self.disk_write += disk_write
 
         return obj_hit, disk_write
 
