@@ -171,10 +171,10 @@ def run():
     # hoc_s = 100
     # dc_s = 10000
     f_cache_i = s_cache_i = 0
-    f_shadow_i = s_shadow_i = 0
+    f_shadow_i = s_shadow_i = 1
     real_cache = Cache(hoc_s, dc_s, frequency_list[f_cache_i], size_list[s_cache_i])
     f_shadow_cache = Cache(hoc_s, dc_s, frequency_list[f_shadow_i], size_list[s_cache_i]) # shadow cache for tuning frequency threshold
-    s_shadow_cache = Cache(hoc_s, dc_s, frequency_list[f_cache_i], size_list[s_cache_i]) # shadow cache for tuning size threshold
+    s_shadow_cache = Cache(hoc_s, dc_s, frequency_list[f_cache_i], size_list[s_shadow_i]) # shadow cache for tuning size threshold
     
     global tot_num
     tot_num = tot_req = tot_bytes = tot_obj_hit = tot_byte_miss = tot_hoc_hit = tot_disk_write = 0
