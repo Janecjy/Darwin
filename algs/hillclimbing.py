@@ -112,7 +112,7 @@ class Cache:
                 if size < self.size_thres:
                     self.dcAccessTab[id].append(t)
         
-        self.bloom.add(id)
+        if tot_num >= WARMUP_LENGTH:
         self.obj_hit += obj_hit
         self.disk_write += disk_write
 
@@ -219,7 +219,6 @@ def run():
                 tot_disk_write += disk_write
                 tot_req += 1
                 tot_bytes += size 
-            tot_num += 1
             if tot_num > WARMUP_LENGTH and tot_num % collection_length == 0:
                 print('real cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(real_cache.obj_hit/collection_length*100, real_cache.disk_write))
                 print('f shadow cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(f_shadow_cache.obj_hit/collection_length*100, f_shadow_cache.disk_write))
@@ -269,6 +268,7 @@ def run():
                 
                 print('f_cache_thres: {:d}, s_cache_thres: {:d}, f_shadow_thres: {:d}, s_cache_thres: {:d}'.format(frequency_list[f_cache_i], size_list[s_cache_i], frequency_list[f_shadow_i], size_list[s_shadow_i]))
                 sys.stdout.flush()
+            tot_num += 1
                 
     print('real cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(real_cache.obj_hit/collection_length*100, real_cache.disk_write))
     print('f shadow cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(f_shadow_cache.obj_hit/collection_length*100, f_shadow_cache.disk_write))

@@ -152,6 +152,8 @@ class DequeDict:
 
     def copy_state(self, queue):
         self.htbl.clear()
+        self.head = None
+        self.tail = None
         currentEntry = queue.head
         if currentEntry:
             self.__push(currentEntry.key, currentEntry.value)

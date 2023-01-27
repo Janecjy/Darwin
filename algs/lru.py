@@ -78,6 +78,7 @@ class LRU:
 
     def copy_state(self, cache):
         self.lru.copy_state(cache.lru)
+        self.current_size = cache.current_size
 
     def run(self):
         progress_bar_size = 30
