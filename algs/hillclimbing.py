@@ -66,6 +66,7 @@ class Cache:
         self.obj_hit = 0
         # self.byte_miss = 0
         self.disk_write = 0
+        self.debug = False
     
     def copy_state(self, cache):
         # fix this by using iteration to do deepcopy
@@ -90,17 +91,22 @@ class Cache:
             if id in self.hoc:
                 self.hoc.hit(id)
                 obj_hit = 1
+                # print("Object hit: ", tot_num, id, obj_hit)
             elif id in self.dc:
                 self.dc.hit(id)
                 if size < self.size_thres:
                     self.dcAccessTab[id].append(t)
                     if self.countFreq(id) == self.freq_thres:
+                        if self.debug:
+                            print("call promote")
                         self.promote(id, size)
 
                 obj_hit = alpha
                 if tot_num >= WARMUP_LENGTH:
                     disk_write += size/4
             else:
+                if self.debug:
+                    print("call miss")
                 evicted = self.dc.miss(id, size)
 
                 if tot_num >= WARMUP_LENGTH:
@@ -111,7 +117,8 @@ class Cache:
 
                 if size < self.size_thres:
                     self.dcAccessTab[id].append(t)
-        
+        self.bloom.add(id)
+
         if tot_num >= WARMUP_LENGTH:
             self.obj_hit += obj_hit
             self.disk_write += disk_write
@@ -141,6 +148,7 @@ class Cache:
 
         # add the object to dc
         evicted = self.dc.miss(id, size)
+        # self.dcAccessTab[id] = 
         # global disk_write
         # global tot_num
         # if tot_num >= WARMUP_LENGTH:
@@ -175,7 +183,9 @@ def run():
     real_cache = Cache(hoc_s, dc_s, frequency_list[f_cache_i], size_list[s_cache_i])
     f_shadow_cache = Cache(hoc_s, dc_s, frequency_list[f_shadow_i], size_list[s_cache_i]) # shadow cache for tuning frequency threshold
     s_shadow_cache = Cache(hoc_s, dc_s, frequency_list[f_cache_i], size_list[s_shadow_i]) # shadow cache for tuning size threshold
-    
+    real_cache.debug = False
+    f_shadow_cache.debug = False
+    s_shadow_cache.debug = False
     global tot_num
     tot_num = tot_req = tot_bytes = tot_obj_hit = tot_byte_miss = tot_hoc_hit = tot_disk_write = 0
 
@@ -262,6 +272,20 @@ def run():
                 s_cache_i = new_s_i
                 f_shadow_cache.copy_state(real_cache)
                 s_shadow_cache.copy_state(real_cache)
+                print(real_cache.hoc.lru.head.key)
+                print(len(real_cache.hoc.lru.htbl.keys()))
+                real_cache_seq_count = 0
+                for e in real_cache.hoc.lru:
+                    real_cache_seq_count += 1
+                print(real_cache_seq_count)
+                print(e.id, e.size)
+                print(real_cache.hoc.lru.tail.key)
+                print(f_shadow_cache.hoc.lru.head.key)
+                print(len(f_shadow_cache.hoc.lru.htbl.keys()))
+                print(f_shadow_cache.hoc.lru.tail.key)
+                print(s_shadow_cache.hoc.lru.head.key)
+                print(len(s_shadow_cache.hoc.lru.htbl.keys()))
+                print(s_shadow_cache.hoc.lru.tail.key)
                 real_cache.reset(frequency_list[f_cache_i], size_list[s_cache_i])
                 f_shadow_cache.reset(frequency_list[f_shadow_i], size_list[s_cache_i])
                 s_shadow_cache.reset(frequency_list[f_cache_i], size_list[s_shadow_i])
