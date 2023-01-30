@@ -160,7 +160,6 @@ class DequeDict:
             while currentEntry.next:
                 currentEntry = currentEntry.next
                 self.__push(currentEntry.key, currentEntry.value)
-        self.tail = currentEntry
 
 # Some quick test code to make sure this works
 if __name__ == '__main__':
