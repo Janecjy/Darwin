@@ -23,3 +23,4 @@ do
         # fi
     done
 done
+wait
