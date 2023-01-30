@@ -16,10 +16,10 @@ do
     do
         ((COUNT++))
         python3 algs/hillclimbing.py  -t $TRACE -o $2$NAME -h 100000 -d 10000000 -l ${l} > $2$NAME/l${l}.txt &
-        if [ $COUNT -eq 30 ]
-        then
-            wait
-            COUNT=0
-        fi
+        # if [ $COUNT -eq 30 ]
+        # then
+        #     wait
+        #     COUNT=0
+        # fi
     done
 done
