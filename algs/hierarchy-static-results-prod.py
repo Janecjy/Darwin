@@ -94,6 +94,8 @@ def request(t, id, size):
 
         if size < size_thres:
             dcAccessTab[id].append(t)
+            if countFreq(id) == freq_thres:
+                promote(id, size)
         byte_miss = size
 
     return obj_hit, byte_miss, hoc_byte_hit
