@@ -184,7 +184,7 @@ def run():
             if id in size_table.keys():
                 size = size_table[id]
             else:
-                size = int(line[2])
+                size = int(line[2])/1024
                 size_table[id] = size
             currentT = t
             if id in bloom:
