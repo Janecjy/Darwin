@@ -13,8 +13,9 @@ def countStat(dirPath):
         
         for file in files:
 
-            # if not file.endswith("online-3.out") and not file.endswith("online.out") and not file.endswith(".txt"):
-            #     continue
+            if not file.endswith(".txt"):
+                continue
+            
             f = 60
             s = 90
             l = 100000
