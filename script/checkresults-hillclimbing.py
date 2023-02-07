@@ -30,7 +30,7 @@ def countStat(dirPath):
                 #     f = (sentence[0].split(':')[1].replace(" ", ""))
                 #     s = (sentence[1].split(':')[1].replace(" ", ""))
                 
-                val2 = re.findall('hoc hit: [\d]+[.]?[\d]*%, hr: [\d]+[.]?[\d]*%, bmr: [\d]+[.]?[\d]*%, disk read: [\d]+[.]?[\d]*, disk write: [\d]+[.]?[\d]*',line)
+                val2 = re.findall('hoc hit: [\d]+[.]?[\d]*%, hr: [\d]+[.]?[\d]*%, bmr: [\d]+[.]?[\d]*%, disk write: [\d]+[.]?[\d]*',line)
                 
                 for sentence in val2:
                     exp = sentence.split(',')
