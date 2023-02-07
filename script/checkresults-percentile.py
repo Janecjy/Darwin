@@ -10,17 +10,14 @@ def countStat(dirPath):
     current_root = None
     
     for root, dirs, files in os.walk(dirPath):
-
-        if "f90-s90-l3000000.txt" not in files:
-            continue
         
         for file in files:
 
             # if not file.endswith("online-3.out") and not file.endswith("online.out") and not file.endswith(".txt"):
             #     continue
-            f = int(file[1:2])
-            s = int(file[5:6])
-            l = int(file[9:15])
+            f = 60
+            s = 90
+            l = 100000
             trace = root.split('/')[-1]
 
             if trace not in trace_stats.keys():
