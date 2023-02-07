@@ -600,7 +600,7 @@ class OnlineHierarchy:
         self.tot_req_num += 1
         self.tot_req_bytes += size
         if self.tot_req_num % 100000 == 0:
-            print('hoc hit: {:.4f}%, disk write: {:.4f}'.format(self.tot_hoc_hit/self.tot_req_num*100, self.disk_write))
+            print('hoc hit: {:.4f}%, disk write: {:.4f}'.format(self.tot_hoc_hit/self.tot_req_num*100, self.tot_disk_write))
             sys.stdout.flush()
         
     def featureCacheInit(self, t, id, size):
