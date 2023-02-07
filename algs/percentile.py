@@ -223,6 +223,8 @@ def run():
                 freq_thres = np.percentile(freq_list, freq_percentile)
                 size_thres = np.percentile(size_list, size_percentile)
                 print(freq_percentile, freq_thres, size_percentile, size_thres)
+                freq_list.clear()
+                size_list.clear()
                 sys.stdout.flush()
             tot_num += 1
             

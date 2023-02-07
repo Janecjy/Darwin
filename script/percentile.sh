@@ -12,11 +12,11 @@ do
     mkdir -p $2$NAME
     COUNT=0
     COUNT=0
-    for f in 10 20 30 40 50 60 70 80 90
+    for f in 60 # 10 20 30 40 50 60 70 80 90
     do
-        for s in 10 20 30 40 50 60 70 80 90
+        for s in 90 # 10 20 30 40 50 60 70 80 90
         do
-            for l in 1000000 3000000
+            for l in 100000 # 1000000 3000000
             do
                 ((COUNT++))
                 python3 algs/percentile.py  -t $TRACE -o $2$NAME -f ${f} -s ${s} -h 100000 -d 10000000 -l ${l} > $2$NAME/f${f}-s${s}-l${l}.txt &
