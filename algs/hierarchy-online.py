@@ -447,7 +447,7 @@ class OnlineHierarchy:
         # self.updateBadSet()
         # self.calculateZ()
         # self.selectAlpha()
-        print("Round {:d}: selected expert is {}, round hoc hit: {:.4f}%, hoc hit: {:.4f}%".format(self.round, current_exp, self.round_hoc_hit_num_all/self.round_request_num*100, self.tot_hoc_hit/self.tot_req_num*100))
+        print("Round {:d}, request {:d}: selected expert is {}, round hoc hit: {:.4f}%, hoc hit: {:.4f}%".format(self.round, self.tot_req_num, current_exp, self.round_hoc_hit_num_all/self.round_request_num*100, self.tot_hoc_hit/self.tot_req_num*100))
         for e in self.observed_rewards.keys():
             print("Observed reward for {} is {}".format(e, self.observed_rewards[e][-1]))
         print(self.avg_estimated)
@@ -600,7 +600,7 @@ class OnlineHierarchy:
         self.tot_req_num += 1
         self.tot_req_bytes += size
         if self.tot_req_num % 100000 == 0:
-            print('hoc hit: {:.4f}%,  hoc byte hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, tot_hoc_byte_hit/tot_bytes*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, disk_read, disk_write))
+            print('hoc hit: {:.4f}%, disk write: {:.4f}'.format(self.tot_hoc_hit/self.tot_req_num*100, self.disk_write))
             sys.stdout.flush()
         
     def featureCacheInit(self, t, id, size):
