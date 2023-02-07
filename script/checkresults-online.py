@@ -12,6 +12,8 @@ def countStat(dirPath):
     for root, dirs, files in os.walk(dirPath):
         
         for file in files:
+            if not file.endswith(".out"):
+                continue
             trace = root.split('/')[-1]
 
             if trace not in trace_stats.keys():
