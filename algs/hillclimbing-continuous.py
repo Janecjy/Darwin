@@ -31,7 +31,7 @@ def parseInput():
         opts, args = getopt.getopt(argv, 't:o:h:d:l:s:', ['trace_path', 'output_dir', 'hoc_size', 'dc_size', 'collection_length', 'climb_step'])
         # Check if the options' length is 3
         if len(opts) != 6:
-            print('usage: hillclimbing.py -t <trace_path> -o <output_dir> -h <HOC_size> -d <DC_size> -l <collection_length> -c <climb_step>')
+            print('usage: hillclimbing.py -t <trace_path> -o <output_dir> -h <HOC_size> -d <DC_size> -l <collection_length> -c <size_climb_step>')
         else:
             # Iterate the options and get the corresponding values
             for opt, arg in opts:
@@ -182,7 +182,7 @@ def run():
     # dc_s = 10000
     f_cache_i = len(frequency_list)-1
     s_cache_i = len(size_list)-1
-    f_shadow_i = f_cache_i-climb_step
+    f_shadow_i = f_cache_i-1
     s_shadow_i = s_cache_i-climb_step
     real_cache = Cache(hoc_s, dc_s, frequency_list[f_cache_i], size_list[s_cache_i])
     f_shadow_cache = Cache(hoc_s, dc_s, frequency_list[f_shadow_i], size_list[s_cache_i]) # shadow cache for tuning frequency threshold
@@ -253,13 +253,13 @@ def run():
                     new_s_i = s_shadow_i
                 
                 if new_f_i == max(f_cache_i, f_shadow_i):
-                    if new_f_i+climb_step < len(frequency_list):
-                        f_shadow_i = new_f_i+climb_step
+                    if new_f_i+1 < len(frequency_list):
+                        f_shadow_i = new_f_i+1
                     else:
                         f_shadow_i = min(f_cache_i, f_shadow_i) # real cache already the largest value, shadow cache choose the other value
                 else:
-                    if new_f_i-climb_step >= 0:
-                        f_shadow_i = new_f_i-climb_step
+                    if new_f_i-1 >= 0:
+                        f_shadow_i = new_f_i-1
                     else:
                         f_shadow_i = max(f_cache_i, f_shadow_i)
 
