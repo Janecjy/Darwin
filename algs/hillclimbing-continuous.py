@@ -28,7 +28,7 @@ def parseInput():
     
     try:
         # Define the getopt parameters
-        opts, args = getopt.getopt(argv, 't:o:h:d:l:s:', ['trace_path', 'output_dir', 'hoc_size', 'dc_size', 'collection_length', 'climb_step'])
+        opts, args = getopt.getopt(argv, 't:o:h:d:l:c:', ['trace_path', 'output_dir', 'hoc_size', 'dc_size', 'collection_length', 'climb_step'])
         # Check if the options' length is 3
         if len(opts) != 6:
             print('usage: hillclimbing.py -t <trace_path> -o <output_dir> -h <HOC_size> -d <DC_size> -l <collection_length> -c <size_climb_step>')
