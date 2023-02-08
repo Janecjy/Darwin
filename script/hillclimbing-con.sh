@@ -16,7 +16,7 @@ do
     for c in 1 10 20 50 100 
     do
         ((COUNT++))
-        python3 algs/hillclimbing.py  -t $TRACE -o $2$NAME -h 100000 -d 10000000 -l ${l} -c ${c} > $2$NAME/l${l}-c${c}.txt &
+        python3 algs/hillclimbing-continuous.py  -t $TRACE -o $2$NAME -h 100000 -d 10000000 -l ${l} -c ${c} > $2$NAME/l${l}-c${c}.txt &
         # if [ $COUNT -eq 30 ]
         # then
         #     wait
