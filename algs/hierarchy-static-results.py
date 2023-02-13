@@ -237,7 +237,7 @@ def run():
                 # del bloom
                 # bloom = BloomFilter(max_elements=1000000, error_rate=0.1)
                 # break
-        print('final hoc hit: {:.4f}%, hoc byte hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, tot_hoc_byte_hit/tot_bytes*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, disk_read, disk_write))
+        print('final hoc hit: {:.4f}%, hoc byte miss: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, (tot_bytes-tot_hoc_byte_hit)/tot_bytes*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, disk_read, disk_write))
         # print('tot hoc size: {:d}, tot dc size: {:d}, one hit obj num: {:d}'.format(hoc_uniq_size, dc_uniq_size, tot_onehit_obj))
         # print('bloom_miss: {:d}, compulsory_miss: {:d}, admission_miss: {:d}, capacity_miss: {:d}'.format(bloom_miss, compulsory_miss, admission_miss, capacity_miss))
         sys.stdout.flush()
