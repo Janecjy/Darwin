@@ -180,7 +180,7 @@ def run():
 
     with open(trace_path) as fp:
         for line in fp:
-            line = line.split(' ')
+            line = line.split(',')
             t = int(line[0])
             id = int(line[1])
             if id in size_table.keys():
