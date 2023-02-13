@@ -32,7 +32,7 @@ def feature_cluster():
     # feature_set = ['sd_avg', 'iat_avg', 'size_avg', 'sizes', 'sd_1', 'iat_1', 'sd_2', 'iat_2', 'sd_3', 'iat_3', 'sd_4', 'iat_4', 'sd_5', 'iat_5', 'sd_6', 'iat_6', 'sd_7', 'iat_7']
     feature_set = ['iat_avg', 'sd_avg', 'size_avg']
     # best_result = pickle.load(open("../cache/output/best_result.pkl", "rb"))
-    best_result = pickle.load(open("/mydata/results/coarse_best_result_2.pkl", "rb"))
+    best_result = pickle.load(open("/mydata/results/coarse_best_result_5.pkl", "rb"))
     real_best_result = pickle.load(open("/mydata/results/best_result.pkl", "rb"))
     feature_files = [path for path in os.listdir("/mydata/features/train-set")]
     
@@ -106,7 +106,7 @@ def feature_cluster():
     # build 
         
     # pickle.dump(X, open("/mydata/results/x.pkl", "wb"))
-    pickle.dump(kmeans_model, open("/mydata/results/kmeans_2.pkl", "wb"))
+    pickle.dump(kmeans_model, open("/mydata/results/kmeans_5.pkl", "wb"))
 
     #     # centroids = kmeans_model.cluster_centers_
 
@@ -155,7 +155,7 @@ def feature_cluster():
             for exp in best_result[trace]:
                 best_set.add(exp)
         bestSetDict[i] = list(best_set)
-    pickle.dump(bestSetDict, open("/mydata/results/cluster_experts_2.pkl", "wb"))
+    pickle.dump(bestSetDict, open("/mydata/results/cluster_experts_5.pkl", "wb"))
     
     realBestSetDict = {} # cluster num: potential best expert list
 
@@ -383,32 +383,30 @@ def countStat(dict, thres):
 
 def main():
     # files = [path for path in os.listdir("/mydata/results") if path.startswith('results')]
-    # best_result = {}
-    # coarse_best_result_3 = {}
-    # coarse_best_result_2 = {}
-    # # best_resultset = set()
-    # train_results = {}
-    # test_results = {}
-    # for file in files:
-    #     r = pickle.load(open("/mydata/results/"+file, "rb"))
-    #     for k in r.keys():
-    #         if k.endswith("-7") or k.endswith("-8") or k.endswith("-9"):
-    #             test_results[k] = r[k]
-    #         else:
-    #             train_results[k] = r[k]
-    #         coarse_best_result_3[k] = countStat(r[k], coarse_thres)
-    #         coarse_best_result_2[k] = countStat(r[k], 2)
-    #         best_result[k] = countStat(r[k], thres)
-    # print(len(train_results.keys()))
-    # print(len(test_results.keys()))
-    # #     coarse, best_set = countStat("../cache/output/train-set/"+dir)
-    # #     coarse_best_result[dir] = confSort(coarse)
-    # #     best_result[dir] = confSort(best_set)
-    # #     best_resultset.add(tuple(confSort(best_set)))
-    # # # print(best_resultset)
-    # pickle.dump(coarse_best_result_3, open("/mydata/results/coarse_best_result_3.pkl", "wb"))
-    # pickle.dump(coarse_best_result_2, open("/mydata/results/coarse_best_result_2.pkl", "wb"))
-    # # pickle.dump(best_resultset, open("../cache/output/best_resultset.pkl", "wb"))
+    # for thres in [1, 2, 3, 4, 5]:
+    #     best_result = {}
+    #     coarse_best_result = {}
+    #     # best_resultset = set()
+    #     train_results = {}
+    #     test_results = {}
+    #     for file in files:
+    #         r = pickle.load(open("/mydata/results/"+file, "rb"))
+    #         for k in r.keys():
+    #             if k.endswith("-7") or k.endswith("-8") or k.endswith("-9"):
+    #                 test_results[k] = r[k]
+    #             else:
+    #                 train_results[k] = r[k]
+    #             coarse_best_result[k] = countStat(r[k], thres)
+    #     print(len(train_results.keys()))
+    #     print(len(test_results.keys()))
+    #     #     coarse, best_set = countStat("../cache/output/train-set/"+dir)
+    #     #     coarse_best_result[dir] = confSort(coarse)
+    #     #     best_result[dir] = confSort(best_set)
+    #     #     best_resultset.add(tuple(confSort(best_set)))
+    #     # # print(best_resultset)
+    #     pickle.dump(coarse_best_result, open("/mydata/results/coarse_best_result_"+str(thres)+".pkl", "wb"))
+    # # pickle.dump(coarse_best_result_2, open("/mydata/results/coarse_best_result_2.pkl", "wb"))
+    # pickle.dump(best_resultset, open("../cache/output/best_resultset.pkl", "wb"))
     # pickle.dump(best_result, open("/mydata/results/best_result.pkl", "wb"))
     # # result_cluster()
     feature_cluster()

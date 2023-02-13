@@ -3,7 +3,7 @@ import os
 
 input_dir = "/mydata/features-online/"
 features_list = ['iat_avg', 'sd_avg', 'size_avg']
-comparison_length = 10
+comparison_length = 50
 
 output = {}
 for trace in os.listdir(input_dir):
@@ -63,7 +63,9 @@ pickle.dump(diff_output, open("/mydata/features-online/feature_diff.pkl", "wb"))
 
 
 import matplotlib.pyplot as plt
-# import seaborn as sns
+import seaborn as sns
+
+sns.set(font_scale=1.5, style='white')
 
 fig = plt.figure()
 markers = ["d", "v", "s", "*", "^", "d", "v", "s", "*", "^"]
