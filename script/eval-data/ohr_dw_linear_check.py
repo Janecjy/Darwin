@@ -70,19 +70,34 @@ ohr = pickle.load(open(input_dir+"ohr.pkl", "rb"))
 # pickle.dump(dw, open(input_dir+"dw.pkl", "wb"))
 # pickle.dump(ohr, open(input_dir+"ohr.pkl", "wb"))
 
-best_count = {} # expert: best count
+# best_count = {} # expert: best count
 
-for trace, dw_results in dw.items():
-    assert dw_results, f"({trace}, {dw_results})"
-    ohr_results = ohr[trace]
-    results = {}
-    for exp in dw_results.keys():
-        assert exp in ohr_results
-        results[exp] = ohr_results[exp] - dw_results[exp]*1e-7
-    best_expert = max(results, key=results.get)
-    if best_expert not in best_count.keys():
-        best_count[best_expert] = 0
-    best_count[best_expert] += 1
+# for trace, dw_results in dw.items():
+#     assert dw_results, f"({trace}, {dw_results})"
+#     ohr_results = ohr[trace]
+#     results = {}
+#     for exp in dw_results.keys():
+#         assert exp in ohr_results
+#         results[exp] = ohr_results[exp] - dw_results[exp]*1e-7
+#     best_expert = max(results, key=results.get)
+#     if best_expert not in best_count.keys():
+#         best_count[best_expert] = 0
+#     best_count[best_expert] += 1
 
-print(best_count)
+# print(best_count)
 
+for thres in [1, 2, 3, 4, 5]:
+    coarse_best_result = {}
+    for trace, dw_results in dw.items():
+        assert dw_results, f"({trace}, {dw_results})"
+        coarse_best_result[trace] = []
+        ohr_results = ohr[trace]
+        results = {}
+        for exp in dw_results.keys():
+            assert exp in ohr_results
+            results[exp] = ohr_results[exp] - dw_results[exp]*1e-7
+        max_result = max(results.values())
+        for exp in results.keys():
+            if max_result - results[exp] < thres:
+                coarse_best_result[trace].append(exp)
+    pickle.dump(coarse_best_result, open("/mydata/results/oh_dw_coarse_best_result_"+str(thres)+".pkl", "wb"))
