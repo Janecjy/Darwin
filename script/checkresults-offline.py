@@ -44,9 +44,9 @@ def countStat(dirPath):
                 bmr[trace]["f"+f+"s"+s] = [x[1] for x in file_res][-1]
                 dw[trace]["f"+f+"s"+s] = [x[5] for x in file_res][-1]
 
-    pickle.dump(ohr, open("/mydata/output-offline/ohr.pkl", "wb"))
-    pickle.dump(bmr, open("/mydata/output-offline/bmr.pkl", "wb"))
-    pickle.dump(dw, open("/mydata/output-offline/dw.pkl", "wb"))
+    pickle.dump(ohr, open("/mydata/results-offline/ohr.pkl", "wb"))
+    pickle.dump(bmr, open("/mydata/results-offline/bmr.pkl", "wb"))
+    pickle.dump(dw, open("/mydata/results-offline/dw.pkl", "wb"))
     
 if __name__ == "__main__":
     countStat("/mydata/output-offline/")
