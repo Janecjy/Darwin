@@ -6,45 +6,51 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 sns.set(font_scale=1.5, style='white')
-online_result = pickle.load(open("/mydata/results-online/bmr.pkl", "rb"))
+online_result = {
+    1: {
+        "f2s100": 17.328,
+        "f2s10": 13.03,
+        "f3s100": 18.62,
+        "f3s10": 11.78,
+        "f2s1000": 15.49,
+        "f3s1000": 16.9,
+        "f4s1000": 17.52,
+        "online": 18.70
+    },
+    2: {
+        "f2s100": 17.099,
+        "f2s10": 13.247,
+        "f3s100": 5.1585,
+        "f3s10": 11.68,
+        "f2s1000": 15.74,
+        "f3s1000": 15.65,
+        "f4s1000": 18.73,
+        "online": 18.82
+    },
+    3: {
+        "f2s100": 8.76,
+        "f2s10": 18.42,
+        "f3s100": 7.315,
+        "f3s10": 15.86,
+        "f2s1000": 7.29,
+        "f3s1000": 6.1,
+        "f4s1000": 5.49,
+        "online": 20.74
+    },
+    # 4: {
+    #     "f2s100": 69.89,
+    #     "f2s10": 40.17,
+    #     "f3s100": 5.1585,
+    #     "f3s10": 11.68,
+    #     "f2s1000": 74.62,
+    #     "f3s1000": 61.47,
+    #     "f4s1000": 67.75,
+    #     "online": 75.59
+    # }
+}
 
-# best map based one single best expert
-best_map = {} # best expert: [traces]
-for trace in online_result.keys():
-    values = []
-    if "online" not in online_result[trace].keys():
-        print(trace)
-        continue
-    for k in online_result[trace].keys():
-        if k.startswith("f"):
-            values.append(online_result[trace][k])
-    if len(values) > 0:
-        min_v = min(values)
-    for k in online_result[trace].keys():
-        if online_result[trace][k] == min_v:
-            best = k
-    if best not in best_map.keys():
-        best_map[best] = []
-    best_map[best].append(trace)
-
-trace_list = []
-for k in best_map.keys():
-    diff_map = {} # trace: diff
-    for t in best_map[k]:
-        min_v = min(online_result[t].values())
-        diff_map[t] = online_result[t]["online"]-min_v
-    trace_list.append(min(diff_map, key=diff_map.get))
-    # trace_list.append(random.choice(best_map[k]))
-print(trace_list)
     
-baseline_list = []
-# for f in [2, 3, 4, 5, 6, 7]:
-for f in [2, 4, 5, 6, 7]:
-    # for s in [20, 500]:
-    for s in [20, 500]:
-        baseline_list.append('f'+str(f)+'s'+str(s))
-# baseline_list.append("percentile")
-# baseline_list.append("hillclimbing")
+baseline_list = ["f2s10", "f2s100", "f2s1000", "f3s10", "f3s100", "f3s1000", "f4s1000"] # 
 
 diff_data = []
 diff_percentage_data = []
@@ -52,27 +58,32 @@ for baseline in baseline_list:
     print(baseline)
     diff = []
     diff_percentage = []
-    for trace in trace_list:
+    for trace in range(3):
+        trace = trace+1
         if baseline not in online_result[trace].keys():
             print(trace, baseline)
             continue
         
-        diff.append(online_result[trace][baseline]-online_result[trace]['online'])
-        diff_percentage.append((online_result[trace][baseline]-online_result[trace]['online'])/online_result[trace][baseline]*100)
+        diff.append(online_result[trace]['online']-online_result[trace][baseline])
+        diff_percentage.append((online_result[trace]['online']-online_result[trace][baseline])/online_result[trace][baseline]*100)
         # baseline_data.append(result[trace]['6exp-online']-result[trace][baseline])
     diff_data.append(diff)
     diff_percentage_data.append(diff_percentage)
-    print("for baseline {}, the avg reduced is {}, the avg reduced rate is {}".format(baseline, sum(diff)/len(diff), sum(diff_percentage)/len(diff_percentage)))
+    print("for baseline {}, the avg improvement is {}, the avg improvement rate is {}".format(baseline, sum(diff)/len(diff), sum(diff_percentage)/len(diff_percentage)))
 
-pickle.dump(diff_data, open("./diff_data.pkl", "wb"))    
-pickle.dump(diff_percentage_data, open("/mydata/results-online/diff_percentage_data_bmr.pkl", "wb"))   
+# pickle.dump(diff_data, open("./diff_data.pkl", "wb"))    
+# pickle.dump(diff_percentage_data, open("./diff_percentage_data.pkl", "wb"))   
 
 sns.set_palette(palette=sns.color_palette("deep"))
-diff_data = pickle.load(open("./diff_data.pkl", "rb"))
-diff_percentage_data = pickle.load(open("/mydata/results-online/diff_percentage_data_bmr.pkl", "rb"))
+# diff_data = pickle.load(open("./diff_data.pkl", "rb"))
+# diff_percentage_data = pickle.load(open("./diff_percentage_data.pkl", "rb"))
 diff_data_dict = {}
 diff_percentage_data_dict = {}
 for i, baseline in enumerate(baseline_list):
+    if baseline == "hillclimbing-continuous-c1":
+        baseline = "hillclimbing-s1"
+    if baseline == "hillclimbing-continuous-c10":
+        baseline = "hillclimbing-s10"
     diff_data_dict[baseline] = diff_data[i]
     diff_percentage_data_dict[baseline] = diff_percentage_data[i]
 df_diff = pd.DataFrame.from_dict(diff_data_dict)
@@ -83,16 +94,16 @@ plt.figure()
 ax = sns.boxplot(data=df_diff, color="C10")
 ax.set_xticklabels(ax.get_xticklabels(),rotation=70)
 ax.axhline(0, color="C3")
-plt.ylabel("HOC BMR Reduction (%)")
-plt.savefig("bmr-baseline-reduction.png",bbox_inches='tight')
+plt.xlabel("HOC OHR Improvement (%)")
+plt.savefig("baseline-improvement.png",bbox_inches='tight')
 
 plt.figure()
 ax = sns.boxplot(data=df_diff_percentage, color="C10")
 ax.set_xticklabels(ax.get_xticklabels(),rotation=70)
 ax.axhline(0, color="C3")
-plt.ylabel("Darwin Improvement Rate (%)")
+plt.ylabel("HOC OHR Improvement Rate (%)")
 # ax = sns.lineplot(x=[0]*len(baseline_list), y=[y*5 for y in range(len(baseline_list))], ax=ax, linewidth = 2)
-plt.savefig("bmr-baseline-reduction-percentage.png",bbox_inches='tight')
+plt.savefig("baseline-improvement-percentage.png",bbox_inches='tight')
 
 # # plot improvement
 # fig = plt.figure(figsize=(30, 10))
