@@ -745,7 +745,7 @@ def main():
     print("Zs:")
     print(cache.zs)
     print('hoc hit num: {}, request num: {}'.format(cache.tot_hoc_hit, cache.tot_req_num))
-    print('hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:f}, disk write: {:f}, ohr dw comb: {:f}'.format(cache.tot_hoc_hit/cache.tot_req_num*100, cache.tot_obj_hit/cache.tot_req_num*100, cache.tot_byte_miss/cache.tot_req_bytes*100, cache.tot_disk_read, cache.tot_disk_write, cache.tot_hoc_hit/cache.tot_req_num*100 - cache.tot_disk_write*1e-7))
+    print('hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:f}, disk write: {:f}, ohr dw comb: {:f}'.format(cache.tot_hoc_hit/cache.tot_req_num*100, cache.tot_obj_hit/cache.tot_req_num*100, cache.tot_byte_miss/cache.tot_req_bytes*100, cache.tot_disk_read, cache.tot_disk_write, cache.tot_hoc_hit/cache.tot_req_num*100 - cache.tot_disk_write/cache.tot_req_num))
     return 0
 
 if __name__ == '__main__':
