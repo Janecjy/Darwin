@@ -432,11 +432,14 @@ class OnlineHierarchy:
                     self.round_avg_size += BUCKET_LIST[i-1]*self.bucket_count[i]
                 else:
                     self.round_avg_size += (BUCKET_LIST[i]+BUCKET_LIST[i-1])/2*self.bucket_count[i]
+        self.round_avg_size /= sum(self.bucket_count)
+        self.bucket_count = [0]*(len(BUCKET_LIST)+1)
     
     def updateReward(self):
         self.calculateAvgSize()
+        print("Round {:d}, average size: {:.4f}%".format(self.round, self.round_avg_size))
         current_exp = 'f'+str(self.freq_thres)+'s'+str(self.size_thres)
-        self.observed_rewards[current_exp].append(self.round_hoc_hit_num/(self.round_request_num/2)*100 - self.round_dw*1e-7)
+        self.observed_rewards[current_exp].append(self.round_hoc_hit_num/(self.round_request_num/2)*100 - self.round_dw/(self.round_request_num/2))
         for e in self.potential_experts:
             if e != current_exp:
                 [pred_hit_hit_prob, pred_hit_miss_prob] = self.models[(current_exp, e)]
@@ -445,7 +448,7 @@ class OnlineHierarchy:
                 # change to sampling
                 pred_e1_hitrate = (np.random.binomial(e0_hit_count, pred_hit_hit_prob) + np.random.binomial(e0_miss_count, pred_hit_miss_prob)) / (e0_hit_count + e0_miss_count)
                 # pred_e1_hitrate = (e0_hit_count * pred_hit_hit_prob + e0_miss_count * pred_hit_miss_prob) / (e0_hit_count + e0_miss_count)
-                self.observed_rewards[e].append(pred_e1_hitrate*100 - (1-pred_e1_hitrate)*(self.round_request_num/2)*self.round_avg_size/4)
+                self.observed_rewards[e].append(pred_e1_hitrate*100 - (1-pred_e1_hitrate)*(self.round_request_num/2)*self.round_avg_size/4/(self.round_request_num/2))
                 model_var = pred_hit_miss_prob*(1-pred_hit_miss_prob)*e0_miss_count/(self.round_request_num/2) + pred_hit_hit_prob*(1-pred_hit_hit_prob)*e0_hit_count/(self.round_request_num/2)
             else:
                 model_var = self.round_hoc_hit_num/(self.round_request_num/2)*(1-self.round_hoc_hit_num/(self.round_request_num/2))
@@ -453,7 +456,7 @@ class OnlineHierarchy:
             self.model_variance_list[(current_exp, e)].append(model_var)
             self.model_variance[(current_exp, e)] = sum(self.model_variance_list[(current_exp, e)])/len(self.model_variance_list[(current_exp, e)])
             # print("model variance for ({}, {}): {:.4f}".format(current_exp, e, self.model_variance[(current_exp, e)]))
-        self.bucket_count = [0]*(len(BUCKET_LIST)+1)
+        
         # update estimated reward
         self.calculateEstimated(current_exp)
         # self.updateBadSet()
