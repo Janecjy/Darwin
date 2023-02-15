@@ -175,6 +175,8 @@ class OnlineHierarchy:
         self.round_request_num = 0
         self.round_hoc_hit_num = 0
         self.round_hoc_hit_num_all = 0
+        self.round_byte_hit = 0
+        self.round_bytes = 0
         self.round_dw = 0
         self.round_avg_size = 0
         self.bandit_end = False
@@ -439,7 +441,7 @@ class OnlineHierarchy:
         self.calculateAvgSize()
         print("Round {:d}, average size: {:.4f}%".format(self.round, self.round_avg_size))
         current_exp = 'f'+str(self.freq_thres)+'s'+str(self.size_thres)
-        self.observed_rewards[current_exp].append((self.round_hoc_hit_num/(self.round_request_num/2)*100 - self.round_dw/(self.round_request_num/2))/100)
+        self.observed_rewards[current_exp].append(self.round_byte_hit/self.round_bytes)
         for e in self.potential_experts:
             if e != current_exp:
                 [pred_hit_hit_prob, pred_hit_miss_prob] = self.models[(current_exp, e)]
@@ -448,7 +450,7 @@ class OnlineHierarchy:
                 # change to sampling
                 pred_e1_hitrate = (np.random.binomial(e0_hit_count, pred_hit_hit_prob) + np.random.binomial(e0_miss_count, pred_hit_miss_prob)) / (e0_hit_count + e0_miss_count)
                 # pred_e1_hitrate = (e0_hit_count * pred_hit_hit_prob + e0_miss_count * pred_hit_miss_prob) / (e0_hit_count + e0_miss_count)
-                self.observed_rewards[e].append((pred_e1_hitrate*100 - (1-pred_e1_hitrate)*(self.round_request_num/2)*self.round_avg_size/4/(self.round_request_num/2))/100)
+                self.observed_rewards[e].append(pred_e1_hitrate*self.round_avg_size*(self.round_request_num/2)/self.round_bytes)
                 model_var = pred_hit_miss_prob*(1-pred_hit_miss_prob)*e0_miss_count/(self.round_request_num/2) + pred_hit_hit_prob*(1-pred_hit_hit_prob)*e0_hit_count/(self.round_request_num/2)
             else:
                 model_var = self.round_hoc_hit_num/(self.round_request_num/2)*(1-self.round_hoc_hit_num/(self.round_request_num/2))
@@ -615,7 +617,7 @@ class OnlineHierarchy:
         self.tot_req_num += 1
         self.tot_req_bytes += size
         if self.tot_req_num % 100000 == 0:
-            print('hoc hit: {:.4f}%, disk write: {:.4f}'.format(self.tot_hoc_hit/self.tot_req_num*100, self.tot_disk_write))
+            print('hoc hit: {:.4f}%, hoc byte miss: {:.4f}%'.format(self.tot_hoc_hit/self.tot_req_num*100, self.tot_byte_miss/self.tot_req_bytes*100))
             sys.stdout.flush()
         
     def featureCacheInit(self, t, id, size):
@@ -689,6 +691,8 @@ class OnlineHierarchy:
                 self.round_hoc_hit_num += 1
             if self.round_request_num >= BANDIT_ROUND_LENGTH/2:
                 self.round_dw += disk_write
+                self.round_bytes += size
+                self.round_byte_hit += (size-byte_miss)
             for i in range(len(BUCKET_LIST)):
                 if size < BUCKET_LIST[i]:
                     self.bucket_count[i] += 1
@@ -701,7 +705,7 @@ class OnlineHierarchy:
                 self.applyModels()
                 self.updateReward()
                 self.round += 1
-                self.round_request_num = self.round_hoc_hit_num = self.round_hoc_hit_num_all = self.round_dw = self.round_avg_size = 0
+                self.round_request_num = self.round_hoc_hit_num = self.round_hoc_hit_num_all = self.round_dw = self.round_bytes = self.round_avg_size = self.round_byte_hit = 0
                 self.selectArm()
                 # t2 = datetime.datetime.now()
                 # print("Bandit reward update and arm selection delay: {:f}".format((t2-t1).total_seconds() * 1000))
@@ -724,8 +728,8 @@ def main():
     name = trace_path.split('/')[-1].split('.')[0]
     
     global CLUSTER_MODEL_PATH, CLUSTER_RESULT_PATH, FEATURE_MAX_LIST, FEATURE_MIN_LIST
-    CLUSTER_MODEL_PATH = model_path+"ohr_dw_kmeans_2.pkl"
-    CLUSTER_RESULT_PATH = model_path+"ohr_dw_cluster_experts_2.pkl"
+    CLUSTER_MODEL_PATH = model_path+"bmr_kmeans_2.pkl"
+    CLUSTER_RESULT_PATH = model_path+"bmr_cluster_experts_2.pkl"
 
     cache = OnlineHierarchy(name, 3, 50, hoc_s, dc_s)
     

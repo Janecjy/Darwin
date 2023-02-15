@@ -29,4 +29,4 @@ for thres in [1, 2, 3, 4, 5]:
         for exp in results.keys():
             if results[exp] - min_result < thres:
                 coarse_best_result[trace].append(exp)
-    pickle.dump(coarse_best_result, open("/mydata/results/oh_dw_coarse_best_result_"+str(thres)+".pkl", "wb"))
+    pickle.dump(coarse_best_result, open("/mydata/results/bmr_coarse_best_result_"+str(thres)+".pkl", "wb"))
