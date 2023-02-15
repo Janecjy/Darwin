@@ -16,7 +16,9 @@ do
         for s in 20 1000
         do
             for r in 500 1000 5000
-            python3 ./algs/hierarchy-static-results-3d.py -t $TRACE -o $2$NAME -f ${f} -s ${s} -r ${r} -h 100000 -d 10000000 > $2$NAME/f${f}-s${s}.txt &
+            do
+                python3 ./algs/hierarchy-static-results-3d.py -t $TRACE -o $2$NAME -f ${f} -s ${s} -r ${r} -h 100000 -d 10000000 > $2$NAME/f${f}-s${s}-r${r}.txt &
+            done
         done
     done
     wait
