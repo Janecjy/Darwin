@@ -20,8 +20,8 @@ def countStat(dirPath):
 
             if trace not in ohr.keys():
                 ohr[trace] = {}
-                bmr[trace] = {}
-                dw[trace] = {}
+                # bmr[trace] = {}
+                # dw[trace] = {}
             
             f = file.split('-')[0].replace("f", "")
             s = file.split('-')[1].replace("s", "")
