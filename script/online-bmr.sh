@@ -12,6 +12,6 @@ do
     mkdir -p $2$NAME
     echo ${NAME}
 
-    python3 ./algs/hierarchy-online-ohr-dw.py -t $TRACE -m /mydata/ -h 100000 -d 10000000 > $2$NAME/online-ohr-dw.out &
+    python3 ./algs/hierarchy-online-bmr.py -t $TRACE -m /mydata/ -h 100000 -d 10000000 > $2$NAME/online-bmr.out &
 done
 wait
