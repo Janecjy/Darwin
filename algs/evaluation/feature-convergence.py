@@ -3,7 +3,7 @@ import os
 
 input_dir = "/mydata/features-online/"
 features_list = ['iat_avg', 'sd_avg', 'size_avg']
-comparison_length = 50
+comparison_length = 10
 
 output = {}
 for trace in os.listdir(input_dir):
@@ -36,6 +36,13 @@ for i in range(7):
     features_list.append('sd_avg'+str(i))
 features_list.append('size_avg')
 
+new_features_list = []
+for i in range(7):
+    new_features_list.append('iat'+str(i+1))
+for i in range(7):
+    new_features_list.append('sd'+str(i+1))
+new_features_list.append('size')
+
 diff_output = {}
 for feature in features_list:
     diff_output[feature] = {}
@@ -67,7 +74,7 @@ import seaborn as sns
 
 sns.set(font_scale=1.5, style='white')
 
-fig = plt.figure()
+fig = plt.figure(figsize=(10, 10))
 markers = ["d", "v", "s", "*", "^", "d", "v", "s", "*", "^"]
 diff_output = pickle.load(open("/mydata/features-online/feature_diff.pkl", "rb"))
 # for i, length in enumerate([1, 2, 3, 5, 10, 20, 30, 40]):
@@ -82,17 +89,17 @@ for i, length in enumerate(length_list):
             # print(diff_output[feature][length])
             data.append(diff_output[feature][length])
         if length == 3:
-            size = 50
+            size = 400
         else:
-            size = 5
+            size = 50
         if comparison_length == 10:
             plt.scatter(x=range(len((data))), y=data, s=size, label=str(length)+'M', marker=markers[length])
         else:
             plt.scatter(x=range(len((data))), y=data, s=size, label=str(length)+'M', marker=markers[i+1])
         if length == 3:
             print(data)
-plt.xticks(range(len((data))), features_list, rotation=70, fontsize=15)
-plt.xlabel("Feature", fontsize=15)
-plt.ylabel("Difference (%)", fontsize=15)
-plt.legend(edgecolor='black',fontsize=15,bbox_to_anchor=(1.02, 1))
+plt.xticks(range(len((data))), new_features_list, rotation=70)
+plt.xlabel("Feature", fontsize=25)
+plt.ylabel("Absolute Difference (%)", fontsize=25)
+plt.legend(edgecolor='black', loc='upper center', ncol=5, fancybox=True, framealpha=.2)#,bbox_to_anchor=(1.02, 1))
 plt.savefig("feature-convergence.png",bbox_inches='tight')

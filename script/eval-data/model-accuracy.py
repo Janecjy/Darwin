@@ -101,16 +101,30 @@ results_1_ood = pickle.load(open("/mydata/results/nn_results_1_ood.pkl", "rb"))
 results_2_ood = pickle.load(open("/mydata/results/nn_results_2_ood.pkl", "rb"))
 results_3_ood = pickle.load(open("/mydata/results/nn_results_3_ood.pkl", "rb"))
 
-plt.figure()
-labels = ["1% Accuracy", "1% OOD Accuracy", "2% Accuracy", "2% OOD Accuracy", "3% Accuracy", "3% OOD Accuracy"]
-for i, result in enumerate([results_1, results_1_ood, results_2, results_2_ood, results_3, results_3_ood]):
+plt.figure(figsize=(10, 10))
+labels = ["1% Proximal", "2% Proximal", "3% Proximal"]
+for i, result in enumerate([results_1, results_2, results_3]):
     sorted_len = np.sort(result)
     p = 1. * np.arange(len(sorted_len)) / (len(sorted_len) - 1)
-    plt.plot([x*100 for x in sorted_len], p, label=labels[i])
-plt.ylabel("CDF")
-plt.xlabel("Accuracy (%)")
+    plt.plot([x*100 for x in sorted_len], p, label=labels[i], linewidth=4)
+plt.ylabel("CDF", fontsize=25)
+plt.xlabel("Order Prediction Accuracy (%)", fontsize=25)
 # plt.legend(bbox_to_anchor=(1.02, 1))
-plt.legend()
+plt.legend(loc='upper left')
 plt.xlim([0, 101])
 plt.ylim([0, 1])
 plt.savefig("nnmodel-accuracy.png",bbox_inches='tight')
+
+plt.figure(figsize=(10, 10))
+labels = ["1% Proximal", "1% Proximal OOD", "2% Proximal", "2% Proximal OOD", "3% Proximal", "3% Proximal OOD"]
+for i, result in enumerate([results_1, results_1_ood, results_2, results_2_ood, results_3, results_3_ood]):
+    sorted_len = np.sort(result)
+    p = 1. * np.arange(len(sorted_len)) / (len(sorted_len) - 1)
+    plt.plot([x*100 for x in sorted_len], p, label=labels[i], linewidth=4)
+plt.ylabel("CDF", fontsize=25)
+plt.xlabel("Order Prediction Accuracy (%)", fontsize=25)
+# plt.legend(bbox_to_anchor=(1.02, 1))
+plt.legend(loc='upper left')
+plt.xlim([0, 101])
+plt.ylim([0, 1])
+plt.savefig("nnmodel-accuracy-ood.png",bbox_inches='tight')

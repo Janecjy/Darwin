@@ -36,12 +36,12 @@ for f in os.listdir(dir_path):
         if line.startswith("selected times:"):
             finish = True
 
-plt.figure()
+plt.figure(figsize=(10, 10))
 sorted_len = np.sort(round_length)
 p = 1. * np.arange(len(sorted_len)) / (len(sorted_len) - 1)
-plt.plot(sorted_len, p)
-plt.ylabel("CDF")
-plt.xlabel("Number of Rounds")
+plt.plot(sorted_len, p, linewidth=4)
+plt.ylabel("CDF", fontsize=25)
+plt.xlabel("Number of Rounds", fontsize=25)
 # plt.legend(bbox_to_anchor=(1.02, 1))
 # plt.legend()
 # plt.xlim([0, 101])

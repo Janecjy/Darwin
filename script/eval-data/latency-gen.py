@@ -3,7 +3,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-sns.set(font_scale=1.5, style='white')
+sns.set(font_scale=2, style='white')
 
 trace_length = 100000
 proxy_lat = 20
@@ -77,19 +77,22 @@ pickle.dump(fb_latency, open("/mydata/fb-latency.pkl", "wb"))
 
 # fb_latency = pickle.load(open("/mydata/fb-latency.pkl", "rb"))
 
-plt.figure()
+plt.figure(figsize=(12, 10))
 for exp in exp_list:
     
     sorted_len = np.sort(fb_latency[exp])
     p = 1. * np.arange(len(fb_latency[exp])) / (len(fb_latency[exp]) - 1)
     if exp == "online":
         exp = "Darwin"
-    plt.plot(sorted_len, p, label=exp)
-plt.ylabel("CDF")
-plt.xlabel("Latency (ms)")
+    if exp == "Darwin":
+        plt.plot(sorted_len, p, label=exp, linewidth=4, color="tab:cyan")
+    else:
+        plt.plot(sorted_len, p, label=exp)
+plt.ylabel("CDF", fontsize=25)
+plt.xlabel("Latency (ms)", fontsize=25)
 # plt.legend(bbox_to_anchor=(1.02, 1))
 # plt.legend()
 # plt.xlim([0, 101])
 plt.ylim([0, 1])
-plt.legend(edgecolor='black',bbox_to_anchor=(1.02, 1))
+plt.legend(edgecolor='black', loc='upper center', ncol=3, fancybox=True, framealpha=.2)
 plt.savefig("fb-lat.png",bbox_inches='tight')

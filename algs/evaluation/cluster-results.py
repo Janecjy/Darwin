@@ -128,38 +128,45 @@ import pandas as pd
 
 sns.set(font_scale=1.5, style='white')
 
-plt.figure()
-ax = sns.barplot(x = list(included_rate.keys()), y = list(included_rate.values()), color="C10")
-# ax.axvline(0, color="C3")
-plt.xlabel("Cluster Threshold (%)")
-plt.ylabel("Included Rate (%)")
-plt.savefig("included_rate.png",bbox_inches='tight')
+# plt.figure(figsize=(10, 10))
+# ax = sns.barplot(x = list(included_rate.keys()), y = list(included_rate.values()), color="C10")
+# # ax.axvline(0, color="C3")
+# plt.xlabel("Cluster Threshold (%)", fontsize=25)
+# plt.ylabel("Included Rate (%)", fontsize=25)
+# plt.savefig("included_rate.png",bbox_inches='tight')
 
-plt.figure()
+plt.figure(figsize=(10, 10))
 ax = sns.barplot(x = list(correct_rate.keys()), y = list(correct_rate.values()), color="C10")
 # ax.axvline(0, color="C3")
-plt.xlabel("Cluster Threshold (%)")
-plt.ylabel("Correct Rate (%)")
+plt.xlabel("Cluster Threshold (%)", fontsize=25)
+plt.ylabel("Correct Rate (%)", fontsize=25)
 plt.savefig("correct_rate.png",bbox_inches='tight')
 
-plt.figure()
+plt.figure(figsize=(10, 10))
 ax = sns.barplot(x = list(reduced_rate.keys()), y = list(reduced_rate.values()), color="C10")
 # ax.axvline(0, color="C3")
-plt.xlabel("Cluster Threshold (%)")
-plt.ylabel("Reduced Rate (%)")
+plt.xlabel("Cluster Threshold (%)", fontsize=25)
+plt.ylabel("Reduced Rate (%)", fontsize=25)
 plt.savefig("reduced_rate.png",bbox_inches='tight')
 
-plt.figure()
+print(reduced_rate[2])
+
+plt.figure(figsize=(10, 10))
 for t in thres:
     sorted_len = np.sort(exp_num[t])
     p = 1. * np.arange(len(sorted_len)) / (len(sorted_len) - 1)
-    plt.plot(sorted_len, p, label=str(t)+'%')
-    plt.ylabel("CDF")
-    plt.xlabel("Remaining Expert Number")
+    plt.plot(sorted_len, p, label=str(t)+'%', linewidth=4)
+    plt.ylabel("CDF", fontsize=25)
+    plt.xlabel("Remaining Expert Number", fontsize=25)
     # plt.legend(bbox_to_anchor=(1.02, 1))
     plt.legend()
     plt.xlim([0, 37])
     plt.ylim([0, 1])
     plt.savefig("exp-num.png",bbox_inches='tight')
+    if t == 2:
+        for i, cdf in enumerate(p):
+            if cdf > 0.9:
+                print(sorted_len[i])
+        # print(sorted_len, p)
         
     

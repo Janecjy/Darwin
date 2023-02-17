@@ -5,7 +5,7 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 
-sns.set(font_scale=1.5, style='white')
+sns.set(font_scale=3, style='white')
 online_result = {
     1: {
         "f2s100": 17.328,
@@ -97,7 +97,7 @@ ax.axhline(0, color="C3")
 plt.xlabel("HOC OHR Improvement (%)")
 plt.savefig("baseline-improvement.png",bbox_inches='tight')
 
-plt.figure()
+plt.figure(figsize=(12, 10))
 ax = sns.boxplot(data=df_diff_percentage, color="C10")
 ax.set_xticklabels(ax.get_xticklabels(),rotation=70)
 ax.axhline(0, color="C3")
