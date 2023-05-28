@@ -176,9 +176,10 @@ def run():
     # freqs = []
     # hits = [] # [(size, hit)]
     
-    # print(os.path.join(output_dir, 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"))
+    hits_path = os.path.join(output_dir, 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.txt")
+    print(hits_path)
 
-    with open(trace_path) as fp:
+    with open(trace_path, 'r') as fp, open(hits_path, 'w') as fp_hits:
         for line in fp:
             line = line.split(',')
             t = int(line[0])
@@ -207,8 +208,10 @@ def run():
             #         firstWarmup = False
                 if obj_hit == 1:
                     tot_hoc_hit += 1
+                    fp_hits.write("1\n")
                     # hits.append(1)
-                # else:
+                else:
+                    fp_hits.write("0\n")
                     # hits.append(0)
                 tot_obj_hit += obj_hit
                 tot_hoc_byte_hit += hoc_byte_hit
