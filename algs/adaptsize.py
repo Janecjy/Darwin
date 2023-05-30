@@ -1,120 +1,209 @@
 from bloom_filter2 import BloomFilter
-from collections import defaultdict
+from collections import deque
 import getopt
 import sys
 import copy
+import math
+import random
+import numpy as np
 
 from lru import LRU
 
 WARMUP_LENGTH = 1000000
 
-trace_path = output_dir = freq_thres = size_thres = hoc_s = dc_s = collection_length = climb_step = None
-alpha = 0.001 # defines dc hit benefit
-t_inter = 1000000
+trace_path = (
+    output_dir
+) = freq_thres = size_thres = hoc_s = dc_s = collection_length = climb_step = None
 
-frequency_list = [2, 3, 4, 5, 6, 7]
-size_list = range(10, 1000, 1) # [10, 20, 50, 100, 500, 1000]
 
 def parseInput():
-
-    global trace_path, output_dir, hoc_s, dc_s, collection_length, climb_step
+    global trace_path, output_dir, hoc_s, dc_s, collection_length
 
     # Get the arguments from the command-line except the filename
     argv = sys.argv[1:]
-    
+
     try:
         # Define the getopt parameters
-        opts, args = getopt.getopt(argv, 't:o:h:d:l:c:', ['trace_path', 'output_dir', 'hoc_size', 'dc_size', 'collection_length', 'climb_step'])
+        opts, args = getopt.getopt(
+            argv,
+            "t:o:h:d:l:",
+            ["trace_path", "output_dir", "hoc_size", "dc_size", "collection_length"],
+        )
         # Check if the options' length is 3
-        if len(opts) != 6:
-            print('usage: adaptsize.py -t <trace_path> -o <output_dir> -h <HOC_size> -d <DC_size> -l <collection_length> -c <size_climb_step>')
+        if len(opts) != 5:
+            print(
+                "usage: adaptsize.py -t <trace_path> -o <output_dir> -h <HOC_size> -d <DC_size> -l <collection_length>"
+            )
         else:
             # Iterate the options and get the corresponding values
             for opt, arg in opts:
-                if opt == '-t':
+                if opt == "-t":
                     trace_path = arg
-                if opt == '-o':
+                if opt == "-o":
                     output_dir = arg
-                if opt == '-h':
+                if opt == "-h":
                     hoc_s = int(arg)
-                if opt == '-d':
-                    dc_s = int(arg)       
-                if opt == '-l':
-                    collection_length = int(arg) 
-                if opt == '-c':
-                    climb_step = int(arg)       
+                if opt == "-d":
+                    dc_s = int(arg)
+                if opt == "-l":
+                    collection_length = int(arg)
 
     except getopt.GetoptError as err:
         # Print help message
         print(err)
-        print('usage: adaptsize.py -t <trace_path> -o <output_dir> -h <HOC_size> -d <DC_size> -l <collection_length> -c <climb_step>')
+        print(
+            "usage: adaptsize.py -t <trace_path> -o <output_dir> -h <HOC_size> -d <DC_size> -l <collection_length>"
+        )
         sys.exit(2)
 
+
+# p_i_in_cache(r_i, s_i, c, u_c) defined by Thm 1 in the paper
+def p_i_in_cache(r_i, s_i, c, u_c):
+    prod = np.exp((-c * s_i) + (r_i / u_c)) - np.exp(-c * s_i)
+    return (prod) / (1 + prod)
+
+
+# the expected size given r, s, c, and u_c is the sum of (s_i * p_i_in_cache)
+def expected_total_size(r, s, c, u_c):
+    return np.dot(s, p_i_in_cache(r, s, c, u_c))
+
+
+# use bisection for u_c in (0, 1) to find the value that leads to the expected size of cache to equal HOC_SIZE
+def search_u_c(r, s, c, target_size):
+    L = 0.0
+    R = 1.0
+    u_c = 0
+    # bisection
+    for _ in range(40):
+        u_c = (L + R) / 2
+        result = expected_total_size(r, s, c, u_c)
+        if result < target_size:
+            R = u_c
+        else:
+            L = u_c
+    return u_c
+
+
+# predict the OHR for a given c parameter, given object request rates and sizes, and total HOC size
+def measure_ohr_c(r, s, c, HOC_SIZE):
+    # find the u_c for this c
+    found_u_c = search_u_c(r, s, c, HOC_SIZE)
+    if found_u_c == np.nan:
+        return 0
+    expected_size = expected_total_size(r, s, c, found_u_c)
+    # if the expected size is not valid or not within 1% of HOC size we have a weird c or u_c, disregard it
+    if expected_size == np.nan or ((expected_size - HOC_SIZE) / HOC_SIZE > 0.01):
+        return 0
+
+    # the hit rate is the sum of (r_i * P_i_in_cache)
+    OHR = np.dot(r, p_i_in_cache(r, s, c, found_u_c))
+
+    return OHR
+
+
+# given r (request frequency) and s (size) vectors for the objects requested in the last delta requests, find the c value that maximizes predicted OHR
+def pick_best_c(r, s, HOC_SIZE):
+    # make a vector of potential c values from 2^-2 to 2^-20 jumping by 0.25 in the exponent
+    c_s = np.reciprocal(np.power(2, np.arange(2, 20, 0.25)))
+    # make a vectorized function to measure ohr for a given c
+    vec_func = np.vectorize(measure_ohr_c, excluded=set([0, 1, 3]))
+    # calculate the hit rate for each c value
+    hit_rates = vec_func(r, s, c_s, HOC_SIZE)
+    # if we could not calculate the hit rate, replace with zero
+    np.nan_to_num(hit_rates, copy=False)
+    # return the c with the best hit rate
+    return c_s[np.argmax(hit_rates)]
+
+
 class Cache:
-    def __init__(self, hoc_s, dc_s, freq_thres, size_thres):
+    def __init__(self, hoc_s, dc_s, c, delta):
         self.dc = LRU(dc_s, {})
         self.hoc = LRU(hoc_s, {})
-        self.dcAccessTab = defaultdict(list) # dc access table for objects within size threshold {id: access timestamps}
+        self.hoc_size = hoc_s
+        self.c = c
+        self.requestLog = deque()  # store the last delta requests [id, id, id, ...]
+        self.sizeTab = dict()  # store the size of objects we have seen {id: size}
         self.bloom = BloomFilter(max_elements=1000000, error_rate=0.1)
-        
-        self.freq_thres = freq_thres
-        self.size_thres = size_thres
-        
+
+        self.delta = delta
+
         # record period of stats for this cache
         self.obj_hit = 0
         # self.byte_miss = 0
         self.disk_write = 0
         self.debug = False
-    
+
     def copy_state(self, cache):
         # fix this by using iteration to do deepcopy
         self.dc.copy_state(cache.dc)
         self.hoc.copy_state(cache.hoc)
-        self.dcAccessTab = copy.deepcopy(cache.dcAccessTab)
-    
-    def reset(self, new_freq_thres, new_size_thres):
-        self.freq_thres = new_freq_thres
-        self.size_thres = new_size_thres
+        self.c = cache.c
+        self.requestLog = copy.deepcopy(cache.requestLog)
+        self.sizeTab = copy.deepcopy(cache.sizeTab)
 
+    def reset(self, new_c):
+        print("new c:", new_c)
+        self.c = new_c
         self.obj_hit = self.disk_write = 0
 
-        
+    # given the past delta requests, find r_i, s_i, then find the best c value
+    def recalculate_c(self):
+        # store r in a vector
+        r_counter = dict()
+        r = []
+        s = []
+        # count occurrences of the ids
+        for id in self.requestLog:
+            r_counter[id] = r_counter.get(id, 0) + 1
+
+        for id in r_counter:
+            assert id in self.sizeTab, "don't know size of object %d" % id
+
+            r.append(r_counter[id] / self.delta)
+            s.append(self.sizeTab[id])
+        # now we have the request rate and size of each object that has been requested in the past delta requests
+        r = np.array(r)
+        s = np.array(s)
+        # construct an OHR vs c curve, and pick the best c
+        return np.reciprocal(pick_best_c(r, s, self.hoc_size))
+
+    # follow the formula for admission from the paper
+    def determine_admission(self, size):
+        # calculate e^(-size/c) and if it is less than rand(0,1) then admit
+        return math.exp(-size / self.c) < random.random()
+
     def request(self, t, id, size):
+        self.requestLog.append(id)
+        # store only the last delta requests
+        if len(self.requestLog) > self.delta:
+            self.requestLog.popleft()
         obj_hit = 0
         disk_write = 0
-        
-        if id in self.bloom:
-            global tot_num
 
-            if id in self.hoc:
-                self.hoc.hit(id)
-                obj_hit = 1
-                # print("Object hit: ", tot_num, id, obj_hit)
-            elif id in self.dc:
-                self.dc.hit(id)
-                if size < self.size_thres:
-                    self.dcAccessTab[id].append(t)
-                    if self.countFreq(id) == self.freq_thres:
-                        if self.debug:
-                            print("call promote")
-                        self.promote(id, size)
+        global tot_num
 
-                obj_hit = alpha
-                if tot_num >= WARMUP_LENGTH:
-                    disk_write += size/4
-            else:
+        self.sizeTab[id] = size
+
+        if id in self.hoc:
+            self.hoc.hit(id)
+            obj_hit = 1
+            # print("Object hit: ", tot_num, id, obj_hit)
+        elif id in self.dc:
+            self.dc.hit(id)
+            # random admission occurs here, bring it into HOC
+            if self.determine_admission(size):
                 if self.debug:
-                    print("call miss")
-                evicted = self.dc.miss(id, size)
+                    print("call promote")
+                self.promote(id, size)
+            if tot_num >= WARMUP_LENGTH:
+                disk_write += size / 4
+        else:
+            if self.debug:
+                print("call miss")
+            evicted = self.dc.miss(id, size)
 
-                if tot_num >= WARMUP_LENGTH:
-                    disk_write += size/4
-                for evicted_id in evicted:
-                    if evicted_id in self.dcAccessTab:
-                        del self.dcAccessTab[evicted_id]
-
-                if size < self.size_thres:
-                    self.dcAccessTab[id].append(t)
+            if tot_num >= WARMUP_LENGTH:
+                disk_write += size / 4
         self.bloom.add(id)
 
         if tot_num >= WARMUP_LENGTH:
@@ -127,7 +216,6 @@ class Cache:
     def promote(self, id, size):
         # delete the object from dc and the dc access table
         self.dc.removeFromCache(id, size)
-        del self.dcAccessTab[id]
 
         # when hoc is full, demote the hoc's lru object to the dc
         while self.hoc.current_size + size > self.hoc.cache_size:
@@ -145,62 +233,23 @@ class Cache:
         id, size = self.hoc.evict()
 
         # add the object to dc
-        evicted = self.dc.miss(id, size)
-        # self.dcAccessTab[id] = 
-        # global disk_write
-        # global tot_num
-        # if tot_num >= WARMUP_LENGTH:
-        #     disk_write += size/4
 
-        # if id not in dc_set:
-        #     dc_set.add(id)
-        #     global dc_uniq_size
-        #     dc_uniq_size += size
-
-        # remove the evicted objects in access table
-        for evicted_id in evicted:
-            if evicted_id in self.dcAccessTab:
-                del self.dcAccessTab[evicted_id]
-
+    # find the number of times the object with this id has been requested in the last delta requests
     def countFreq(self, id):
-        for t in self.dcAccessTab[id]:
-            if currentT - t > t_inter:
-                self.dcAccessTab[id].remove(t)
-            else:
-                break
-        return len(self.dcAccessTab[id])
+        return self.requestLog.count(id)
+
 
 def run():
+    global currentT, disk_write, collection_length
 
-    global currentT, disk_write, collection_length, freq_thres, size_thres, climb_step
-
-    # hoc_s = 100
-    # dc_s = 10000
-    f_cache_i = len(frequency_list)-1
-    s_cache_i = len(size_list)-1
-    f_shadow_i = f_cache_i-1
-    s_shadow_i = s_cache_i-climb_step
-    real_cache = Cache(hoc_s, dc_s, frequency_list[f_cache_i], size_list[s_cache_i])
-    f_shadow_cache = Cache(hoc_s, dc_s, frequency_list[f_shadow_i], size_list[s_cache_i]) # shadow cache for tuning frequency threshold
-    s_shadow_cache = Cache(hoc_s, dc_s, frequency_list[f_cache_i], size_list[s_shadow_i]) # shadow cache for tuning size threshold
+    real_cache = Cache(
+        hoc_s, dc_s, 64, collection_length
+    )  # TODO: find default c value, arbitrary value right now
     real_cache.debug = False
-    f_shadow_cache.debug = False
-    s_shadow_cache.debug = False
     global tot_num
-    tot_num = tot_req = tot_bytes = tot_obj_hit = tot_byte_miss = tot_hoc_hit = tot_disk_write = 0
-
-    # real_cache.request(0, 0, 1)
-    # real_cache.request(0, 0, 1)
-    # print(real_cache.dcAccessTab)
-    # f_shadow_cache.copy_state(real_cache)
-    # f_shadow_cache.request(1, 1, 2)
-    # f_shadow_cache.request(1, 1, 2)
-    # real_cache.request(2, 2, 3)
-    # real_cache.request(2, 2, 3)
-    # print(id(real_cache.dc.lru.htbl))
-    # print(real_cache.dc.lru.htbl)
-    # print(id(f_shadow_cache.dc.lru.htbl))
-    # print(f_shadow_cache.dc.lru.htbl)
+    tot_num = (
+        tot_req
+    ) = tot_bytes = tot_obj_hit = tot_byte_miss = tot_hoc_hit = tot_disk_write = 0
 
     global isWarmup
     isWarmup = True
@@ -208,19 +257,16 @@ def run():
     with open(trace_path) as fp:
         for line in fp:
             try:
-                line = line.split(',')
+                line = line.split(",")
                 t = int(line[0])
                 id = int(line[1])
                 size = int(line[2])
                 currentT = t
-
             except:
                 print(trace_path, line, file=sys.stderr)
                 continue
 
             obj_hit, disk_write = real_cache.request(t, id, size)
-            f_shadow_cache.request(t, id, size)
-            s_shadow_cache.request(t, id, size)
 
             if tot_num >= WARMUP_LENGTH:
                 if obj_hit == 1:
@@ -228,83 +274,54 @@ def run():
                 tot_obj_hit += obj_hit
                 tot_disk_write += disk_write
                 tot_req += 1
-                tot_bytes += size 
+                tot_bytes += size
             if tot_num > WARMUP_LENGTH and tot_num % collection_length == 0:
-                print('current f_cache_thres: {:d}, s_cache_thres: {:d}, f_shadow_thres: {:d}, s_cache_thres: {:d}'.format(frequency_list[f_cache_i], size_list[s_cache_i], frequency_list[f_shadow_i], size_list[s_shadow_i]))
-                print('real cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(real_cache.obj_hit/collection_length*100, real_cache.disk_write))
-                print('f shadow cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(f_shadow_cache.obj_hit/collection_length*100, f_shadow_cache.disk_write))
-                print('s shadow cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(s_shadow_cache.obj_hit/collection_length*100, s_shadow_cache.disk_write))
-                print('hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, tot_disk_write))
+                print(tot_num)
+                print(
+                    "real cache stage hoc hit: {:.4f}%, disk write: {:.4f}".format(
+                        real_cache.obj_hit / collection_length * 100,
+                        real_cache.disk_write,
+                    )
+                )
+                print(
+                    "hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk write: {:.4f}".format(
+                        tot_hoc_hit / tot_req * 100,
+                        tot_obj_hit / tot_req * 100,
+                        tot_byte_miss / tot_bytes * 100,
+                        tot_disk_write,
+                    )
+                )
                 sys.stdout.flush()
-                
-                new_f_i = 0
-                new_s_i = 0
-                if real_cache.obj_hit >= f_shadow_cache.obj_hit:
-                    new_f_i = f_cache_i
-                else:
-                    new_f_i = f_shadow_i
-                if real_cache.obj_hit >= s_shadow_cache.obj_hit:
-                    new_s_i = s_cache_i
-                else:
-                    new_s_i = s_shadow_i
-                
-                if new_f_i == max(f_cache_i, f_shadow_i):
-                    if new_f_i+1 < len(frequency_list):
-                        f_shadow_i = new_f_i+1
-                    else:
-                        f_shadow_i = min(f_cache_i, f_shadow_i) # real cache already the largest value, shadow cache choose the other value
-                else:
-                    if new_f_i-1 >= 0:
-                        f_shadow_i = new_f_i-1
-                    else:
-                        f_shadow_i = max(f_cache_i, f_shadow_i)
+                # solve for new c value and replace it as the new parameter
+                real_cache.reset(real_cache.recalculate_c())
 
-                if new_s_i == max(s_cache_i, s_shadow_i):
-                    if new_s_i+climb_step < len(size_list):
-                        s_shadow_i = new_s_i+climb_step
-                    else:
-                        s_shadow_i = min(s_cache_i, s_shadow_i) # real cache already the largest value, shadow cache choose the other value
-                else:
-                    if new_s_i-climb_step >= 0:
-                        s_shadow_i = new_s_i-climb_step
-                    else:
-                        s_shadow_i = max(s_cache_i, s_shadow_i)
-                f_cache_i = new_f_i
-                s_cache_i = new_s_i
-                f_shadow_cache.copy_state(real_cache)
-                s_shadow_cache.copy_state(real_cache)
-                # print(real_cache.hoc.lru.head.key)
-                # print(len(real_cache.hoc.lru.htbl.keys()))
-                # real_cache_seq_count = 0
-                # for e in real_cache.hoc.lru:
-                #     real_cache_seq_count += 1
-                # print(real_cache_seq_count)
-                # print(e.id, e.size)
-                # print(real_cache.hoc.lru.tail.key)
-                # print(f_shadow_cache.hoc.lru.head.key)
-                # print(len(f_shadow_cache.hoc.lru.htbl.keys()))
-                # print(f_shadow_cache.hoc.lru.tail.key)
-                # print(s_shadow_cache.hoc.lru.head.key)
-                # print(len(s_shadow_cache.hoc.lru.htbl.keys()))
-                # print(s_shadow_cache.hoc.lru.tail.key)
-                real_cache.reset(frequency_list[f_cache_i], size_list[s_cache_i])
-                f_shadow_cache.reset(frequency_list[f_shadow_i], size_list[s_cache_i])
-                s_shadow_cache.reset(frequency_list[f_cache_i], size_list[s_shadow_i])
-                
-                print('new f_cache_thres: {:d}, s_cache_thres: {:d}, f_shadow_thres: {:d}, s_cache_thres: {:d}'.format(frequency_list[f_cache_i], size_list[s_cache_i], frequency_list[f_shadow_i], size_list[s_shadow_i]))
                 sys.stdout.flush()
             tot_num += 1
-                
-    print('real cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(real_cache.obj_hit/collection_length*100, real_cache.disk_write))
-    print('f shadow cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(f_shadow_cache.obj_hit/collection_length*100, f_shadow_cache.disk_write))
-    print('s shadow cache stage hoc hit: {:.4f}%, disk write: {:.4f}'.format(s_shadow_cache.obj_hit/collection_length*100, s_shadow_cache.disk_write))
-    print('final hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, tot_disk_write))
+
+    print(
+        "real cache stage hoc hit: {:.4f}%, disk write: {:.4f}".format(
+            real_cache.obj_hit / collection_length * 100, real_cache.disk_write
+        )
+    )
+    print(
+        "final hoc hit: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk write: {:.4f}".format(
+            tot_hoc_hit / tot_req * 100,
+            tot_obj_hit / tot_req * 100,
+            tot_byte_miss / tot_bytes * 100,
+            tot_disk_write,
+        )
+    )
     sys.stdout.flush()
+
 
 def main():
     parseInput()
-    if None not in (trace_path, hoc_s, dc_s, collection_length, climb_step):
-        print('trace: {}, HOC size: {}, DC size: {}, collection length: {}, climb step: {}'.format(trace_path, hoc_s, dc_s, collection_length, climb_step))
+    if None not in (trace_path, hoc_s, dc_s, collection_length):
+        print(
+            "trace: {}, HOC size: {}, DC size: {}, collection length: {}".format(
+                trace_path, hoc_s, dc_s, collection_length
+            )
+        )
     else:
         sys.exit(2)
 
@@ -312,5 +329,6 @@ def main():
 
     return 0
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
