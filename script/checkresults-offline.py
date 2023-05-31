@@ -7,8 +7,8 @@ def confSort(keys):
 
 def countStat(dirPath):
     ohr = {}
-    bmr = {}
-    dw = {}
+    # bmr = {}
+    # dw = {}
     current_root = None
     
     for root, dirs, files in os.walk(dirPath):
@@ -20,8 +20,8 @@ def countStat(dirPath):
 
             if trace not in ohr.keys():
                 ohr[trace] = {}
-                bmr[trace] = {}
-                dw[trace] = {}
+                # bmr[trace] = {}
+                # dw[trace] = {}
             
             f = file.split('-')[0].replace("f", "")
             s = file.split('-')[1].split('.')[0].replace("s", "")
@@ -41,12 +41,15 @@ def countStat(dirPath):
                 
                 # if file.endswith(".out"):
                 ohr[trace]["f"+f+"s"+s] = [x[0] for x in file_res][-1]
-                bmr[trace]["f"+f+"s"+s] = [x[1] for x in file_res][-1]
-                dw[trace]["f"+f+"s"+s] = [x[5] for x in file_res][-1]
+                # bmr[trace]["f"+f+"s"+s] = [x[1] for x in file_res][-1]
+                # dw[trace]["f"+f+"s"+s] = [x[5] for x in file_res][-1]
 
-    pickle.dump(ohr, open("/mydata/results-offline/ohr.pkl", "wb"))
-    pickle.dump(bmr, open("/mydata/results-offline/bmr.pkl", "wb"))
-    pickle.dump(dw, open("/mydata/results-offline/dw.pkl", "wb"))
+    pickle.dump(ohr, open(dirPath+"ohr.pkl", "wb"))
+    # pickle.dump(bmr, open("/mydata/results-offline/bmr.pkl", "wb"))
+    # pickle.dump(dw, open("/mydata/results-offline/dw.pkl", "wb"))
     
 if __name__ == "__main__":
     countStat("/mydata/output-offline/")
+    countStat("/mydata/output-2x-offline/")
+    countStat("/mydata/output-5x-offline/")
+    countStat("/mydata/output-10x-offline/")
