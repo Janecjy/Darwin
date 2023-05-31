@@ -14,7 +14,7 @@ def countStat(dirPath):
     for root, dirs, files in os.walk(dirPath):
         
         for file in files:
-            if not file.endswith(".txt"):
+            if file.endswith("hits.txt") or not file.endswith("txt"):
                 continue
             trace = root.split('/')[-1]
 
