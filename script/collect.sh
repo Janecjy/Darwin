@@ -17,12 +17,14 @@ do
     do
         for s in $((10 * RATIO)) $((20 * RATIO)) $((50 * RATIO)) $((100 * RATIO)) $((500 * RATIO)) $((1000 * RATIO))
         do
-            python3 ./algs/hierarchy-static-results.py -t $TRACE -o $2$NAME -f ${f} -s ${s} -h $((100000 * RATIO)) -d 10000000 > $2$NAME/f${f}-s${s}.txt &
-            ((COUNT++))
-            if [ $COUNT -eq $COUNTMAX ]
-                then
-                    wait
-                    COUNT=0
+            if [[ ! -e $2$NAME/f${f}s${s}-hits.txt || ! $(wc -l < $2$NAME/f${f}s${s}-hits.txt) -eq 100000000 ]]; then
+                python3 ./algs/hierarchy-static-results.py -t $TRACE -o $2$NAME -f ${f} -s ${s} -h $((100000 * RATIO)) -d 10000000 > $2$NAME/f${f}-s${s}.txt &
+                ((COUNT++))
+                if [ $COUNT -eq $COUNTMAX ]
+                    then
+                        wait
+                        COUNT=0
+                fi
             fi
         done
     done
