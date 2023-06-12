@@ -195,13 +195,13 @@ def main():
     sizes = defaultdict(int) # request size distribution
     size_avg = 0
     size_count = 0
-    edcs = dict.fromkeys([x+1 for x in range(MAX_HIST)])
-    for x in edcs.keys():
-        edcs[x] = defaultdict(int)
-    edc_avg = dict.fromkeys([x+1 for x in range(MAX_HIST)])
-    for x in edc_avg.keys():
-        edc_avg[x] = 0
-    edc_count = 0
+    # edcs = dict.fromkeys([x+1 for x in range(MAX_HIST)])
+    # for x in edcs.keys():
+    #     edcs[x] = defaultdict(int)
+    # edc_avg = dict.fromkeys([x+1 for x in range(MAX_HIST)])
+    # for x in edc_avg.keys():
+    #     edc_avg[x] = 0
+    # edc_count = 0
     obj_reqs          = defaultdict(int)
     bytes_in_cache    = 0
     line_count        = 0
@@ -371,30 +371,30 @@ def main():
 
         if line_count%1000000 == 0 and line_count > 0:
             
-            edc_count = 0
-            edc_avg_ = dict.fromkeys([x+1 for x in range(MAX_HIST)])
-            for x in edc_avg_.keys():
-                edc_avg_[x] = 0
-            for id in lru.items:
-                n = lru.items[id]
-                edc_count += 1
-                for i, edc in enumerate(n.edcs):
-                    edc  = float(edc)/EDC_GRAN
-                    edc  = int(edc) * EDC_GRAN
-                    edc_avg_[i+1] += 1/edc_count*(edc-edc_avg_[i+1])
+            # edc_count = 0
+            # edc_avg_ = dict.fromkeys([x+1 for x in range(MAX_HIST)])
+            # for x in edc_avg_.keys():
+            #     edc_avg_[x] = 0
+            # for id in lru.items:
+            #     n = lru.items[id]
+            #     edc_count += 1
+            #     for i, edc in enumerate(n.edcs):
+            #         edc  = float(edc)/EDC_GRAN
+            #         edc  = int(edc) * EDC_GRAN
+            #         edc_avg_[i+1] += 1/edc_count*(edc-edc_avg_[i+1])
             
             line_num.append(line_count)
             
             features = dict()
     
-            for id in lru.items:
-                n = lru.items[id]
-                edc_count += 1
-                for i, edc in enumerate(n.edcs):
-                    edc  = float(edc)/EDC_GRAN
-                    edc  = int(edc) * EDC_GRAN
-                    edcs[i+1][edc] += 1
-                    edc_avg[i+1] += 1/edc_count*(edc-edc_avg[i+1])
+            # for id in lru.items:
+            #     n = lru.items[id]
+            #     edc_count += 1
+            #     for i, edc in enumerate(n.edcs):
+            #         edc  = float(edc)/EDC_GRAN
+            #         edc  = int(edc) * EDC_GRAN
+            #         edcs[i+1][edc] += 1
+            #         edc_avg[i+1] += 1/edc_count*(edc-edc_avg[i+1])
 
             # for num in range(7):
             #     count = sd_count[num]
@@ -441,8 +441,8 @@ def main():
             features["sd_avg"] = sd_avg
             features["iat_avg"] = iat_avg
             features["size_avg"] = size_avg
-            features["edc_avg"] = edc_avg
-            features["sizes"] = sizes
+            # features["edc_avg"] = edc_avg
+            # features["sizes"] = sizes
             
             # for num in range(7):
             #     features["sd_"+str(num+1)] = sds[num+1]
