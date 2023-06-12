@@ -12,7 +12,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-
+WARMUP_LENGTH = 1000000
 TRAINING_LEN = 2000000
 PREDICTION_LEN = 2000000
 ROUND_LEN = 500000
@@ -47,11 +47,16 @@ def gen_data(expert_0, expert_1, trace, trace_name):
     hit_miss_prob = 0 # pi(e1_hit | e0_miss)
     bucket_count = [0]*(len(bucket_list)+1)
     
-    with open(os.path.join("/mydata/output-offline/", trace_name, expert_0+"-hits.txt"), 'r') as e0_file, open(os.path.join("/mydata/output-offline/", trace_name, expert_1+"-hits.txt"), 'r') as e1_file:
+    with open(os.path.join("/mydata/output-offline/", trace_name, expert_0+"-hits.txt"), 'r') as e0_file, open(os.path.join("/mydata/output-offline/", trace_name, expert_1+"-hits.txt"), 'r') as e1_file, open(trace, 'r') as trace_file:
         count = 0
-        for e0, e1 in zip(e0_file, e1_file):
+        
+        for _ in range(WARMUP_LENGTH):
+            next(trace_file)
+        
+        for e0, e1, s in zip(e0_file, e1_file, trace_file):
             e0 = int(e0.strip())  # Remove any leading or trailing whitespace from line1
             e1 = int(e1.strip())  # Remove any leading or trailing whitespace from line2
+            s = int(s.strip().split(',')[2])
             if count > 0 and count % ROUND_LEN == 0:
                 hit_hit_prob = hit_hit_prob/e0_hit_count
                 hit_miss_prob = hit_miss_prob/e0_miss_count
@@ -62,20 +67,20 @@ def gen_data(expert_0, expert_1, trace, trace_name):
                 labels.append([hit_hit_prob, hit_miss_prob])
                 e0_hit_count = e0_miss_count = hit_hit_prob = hit_miss_prob = 0
                 bucket_count = [0]*(len(bucket_list)+1)
-            if e0[1] == 1:
+            if e0 == 1:
                 e0_hit_count += 1
-                if e1[1] == 1:
+                if e1 == 1:
                     hit_hit_prob += 1
             else:
                 e0_miss_count += 1
-                if e1[1] == 1:
+                if e1 == 1:
                     hit_miss_prob += 1
                     
             for j in range(len(bucket_list)):
-                if e1[0] < bucket_list[j]:
+                if s < bucket_list[j]:
                     bucket_count[j] += 1
                     break
-            if e1[0] >= bucket_list[-1]:
+            if s >= bucket_list[-1]:
                 bucket_count[-1] += 1
             count += 1
         if count > 0 and count % ROUND_LEN == 0:
