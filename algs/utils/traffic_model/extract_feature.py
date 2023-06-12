@@ -214,7 +214,7 @@ def main():
 
     ## Initialize the LRU stack with objects from the trace
     i = 0
-    while bytes_in_cache < 10*MIL/1000:
+    while bytes_in_cache < 10*MIL/100:
 
         l   = f.readline()
         l   = l.strip().split(",")
