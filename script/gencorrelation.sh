@@ -26,7 +26,7 @@ do
                         NAME=${FILENAMEARR[0]}
                         if [[ -e /mydata/output-offline/$NAME/$EXPERT0-hits.txt ]] && [[ -e /mydata/output-offline/$NAME/$EXPERT1-hits.txt ]] && [[ $(wc -l < /mydata/output-offline/$NAME/$EXPERT0-hits.txt) -eq $(wc -l < /mydata/output-offline/$NAME/$EXPERT1-hits.txt) ]]
                         then
-                            python algs/correlation_data_gen.py ${EXPERT0} ${EXPERT1} ${TRACE} > /mydata/correlations/${EXPERT0}-${EXPERT1}/$TRACE.out &
+                            python algs/correlation_data_gen.py ${EXPERT0} ${EXPERT1} ${TRACE} > /mydata/correlations/${EXPERT0}-${EXPERT1}/$NAME.out &
                             if [ $COUNT -eq 30 ]
                             then
                                 wait
