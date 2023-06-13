@@ -5,3 +5,4 @@ do
     cd /mydata/node$i
     zip -r node$i.zip * &
 done
+wait
