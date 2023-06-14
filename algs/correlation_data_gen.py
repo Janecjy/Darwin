@@ -8,8 +8,6 @@ from random import choices
 from collections import defaultdict
 
 
-import torch
-import torch.nn as nn
 import numpy as np
 
 WARMUP_LENGTH = 1000000
