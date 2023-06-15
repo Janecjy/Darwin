@@ -28,7 +28,7 @@ do
                         if [[ -e /mydata/output-offline/$NAME/$EXPERT0-hits.txt ]] && [[ -e /mydata/output-offline/$NAME/$EXPERT1-hits.txt ]] && [[ ! -e /mydata/correlations/${EXPERT0}-${EXPERT1}/$NAME-input.pkl ]] && [[ "$NAME" =~ $regex ]]
                         then
                             python3 algs/correlation_data_gen.py ${EXPERT0} ${EXPERT1} ${TRACE} > /mydata/correlations/${EXPERT0}-${EXPERT1}/$NAME.out &
-                            if [ $COUNT -eq 30 ]
+                            if [ $COUNT -eq $2 ]
                             then
                                 wait
                                 COUNT=0
