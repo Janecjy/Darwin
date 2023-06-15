@@ -24,8 +24,8 @@ do
                         FILENAME=${ARRAY[${#ARRAY[@]}-1]}
                         FILENAMEARR=(${FILENAME//./ })
                         NAME=${FILENAMEARR[0]}
-                        regex='.*-[0-6]'
-                        if [[ -e /mydata/output-offline/$NAME/$EXPERT0-hits.txt ]] && [[ -e /mydata/output-offline/$NAME/$EXPERT1-hits.txt ]] && [[ $(wc -l < /mydata/output-offline/$NAME/$EXPERT0-hits.txt) -eq $(wc -l < /mydata/output-offline/$NAME/$EXPERT1-hits.txt) ]] && [[ ! -e /mydata/correlations/${EXPERT0}-${EXPERT1}/$NAME-input.pkl ]] && [[ "$NAME" =~ $regex ]]
+                        regex='.*-[0-6]$'
+                        if [[ -e /mydata/output-offline/$NAME/$EXPERT0-hits.txt ]] && [[ -e /mydata/output-offline/$NAME/$EXPERT1-hits.txt ]] && [[ ! -e /mydata/correlations/${EXPERT0}-${EXPERT1}/$NAME-input.pkl ]] && [[ "$NAME" =~ $regex ]]
                         then
                             python3 algs/correlation_data_gen.py ${EXPERT0} ${EXPERT1} ${TRACE} > /mydata/correlations/${EXPERT0}-${EXPERT1}/$NAME.out &
                             if [ $COUNT -eq 30 ]
