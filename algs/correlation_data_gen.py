@@ -7,7 +7,7 @@ import random
 from random import choices
 from collections import defaultdict
 
-
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
 import numpy as np
 
 WARMUP_LENGTH = 1000000
