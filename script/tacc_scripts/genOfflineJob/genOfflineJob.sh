@@ -7,7 +7,7 @@ do
     OUTPUT_DIR=$BASE_DIR"output-offline-"$r"x/"
     for TRACE in $FILES
     do
-        NAME_EXT=$(basename "$f")  # Extract the filename with extension
+        NAME_EXT=$(basename "$TRACE")  # Extract the filename with extension
         NAME=${NAME_EXT%.*}
         mkdir -p $OUTPUT_DIR$NAME
         for f in 2 3 4 5 6 7
