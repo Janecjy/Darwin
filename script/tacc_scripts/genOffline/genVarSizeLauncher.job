@@ -1,0 +1,14 @@
+#!/bin/bash
+#SBATCH -J genVarSize
+#SBATCH -o genVarSize.o%j
+#SBATCH -N 5
+#SBATCH -n 100
+#SBATCH -t 6:00:00
+#SBATCH -p normal
+module load launcher
+module load numpy
+
+export LAUNCHER_WORKDIR=/home1/09498/janechen/Jedi/scripts/tacc_scripts/genVarSize
+export LAUNCHER_JOB_FILE=genVarSize_job
+
+$LAUNCHER_DIR/paramrun
