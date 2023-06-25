@@ -208,10 +208,10 @@ def run():
             #         firstWarmup = False
                 if obj_hit == 1:
                     tot_hoc_hit += 1
-                    fp_hits.write("1\n")
+                    fp_hits.write("1 "+str(size)+"\n")
                     # hits.append(1)
                 else:
-                    fp_hits.write("0\n")
+                    fp_hits.write("0 "+str(size)+"\n")
                     # hits.append(0)
                 tot_obj_hit += obj_hit
                 tot_hoc_byte_hit += hoc_byte_hit
