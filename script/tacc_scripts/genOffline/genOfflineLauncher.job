@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH -J genOffline
+#SBATCH -o TRACE.o%j
+#SBATCH -N 5
+#SBATCH -n 100
+#SBATCH -t 48:00:00
+#SBATCH -p normal
+module load launcher
+
+export LAUNCHER_WORKDIR=/home1/09498/janechen/MultiExpertHOCAdmission
+export LAUNCHER_JOB_FILE=getOffline_job
+
+$LAUNCHER_DIR/paramrun
