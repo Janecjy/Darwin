@@ -1,6 +1,3 @@
-NAME=$(basename "$f")  # Extract the filename with extension
-echo "python3 genTraceVarSizeNoise.py "$r" "$f" "$BASE_DIR"traces-"$r"x/"${NAME%.*}".txt" &
-
 #!/bin/bash
 
 BASE_DIR="/scratch1/09498/janechen/mydata/"
