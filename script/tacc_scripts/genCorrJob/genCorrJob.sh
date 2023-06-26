@@ -19,17 +19,18 @@ do
                 do
                     for s1 in 10 20 50 100 500 1000
                     do
-                    if [ ${f0} != ${f1} ] || [ ${s0} != ${s1} ]
-                    then
-                        EXPERT0=f${f0}s${s0}
-                        EXPERT1=f${f1}s${s1}
-                        mkdir -p $OUTPUT_DIR${EXPERT0}-${EXPERT1}
-                        regex='.*-[0-6]$'
-                        if [[ -e $OFFLINE_DIR$NAME/$EXPERT0-hits.txt ]] && [[ -e $OFFLINE_DIR$NAME/$EXPERT1-hits.txt ]] && [[ ! -e $OUTPUT_DIR${EXPERT0}-${EXPERT1}/$NAME-input.pkl ]]
+                        if [ ${f0} != ${f1} ] || [ ${s0} != ${s1} ]
                         then
-                            echo "python3 algs/correlation_data_gen_w_size.py "${EXPERT0}" "${EXPERT1}" "${TRACE}" "$BASE_DIR" "$OFFLINE_DIR" "$OUTPUT_DIR" > "$OUTPUT_DIR${EXPERT0}"-"${EXPERT1}"/"$NAME".out"
+                            EXPERT0=f${f0}s${s0}
+                            EXPERT1=f${f1}s${s1}
+                            mkdir -p $OUTPUT_DIR${EXPERT0}-${EXPERT1}
+                            regex='.*-[0-6]$'
+                            if [[ -e $OFFLINE_DIR$NAME/$EXPERT0-hits.txt ]] && [[ -e $OFFLINE_DIR$NAME/$EXPERT1-hits.txt ]] && [[ ! -e $OUTPUT_DIR${EXPERT0}-${EXPERT1}/$NAME-input.pkl ]]
+                            then
+                                echo "python3 algs/correlation_data_gen_w_size.py "${EXPERT0}" "${EXPERT1}" "${TRACE}" "$BASE_DIR" "$OFFLINE_DIR" "$OUTPUT_DIR" > "$OUTPUT_DIR${EXPERT0}"-"${EXPERT1}"/"$NAME".out"
+                            fi
                         fi
-                    fi
+                    done
                 done
             done
         done
