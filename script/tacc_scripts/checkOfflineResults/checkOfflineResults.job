@@ -3,7 +3,7 @@
 #SBATCH -o checkOfflineResults.o%j
 #SBATCH -N 1
 #SBATCH --ntasks-per-node 4
-#SBATCH -t 2:00:00
+#SBATCH -t 48:00:00
 #SBATCH -p small
 module load launcher
 

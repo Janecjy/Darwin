@@ -1,4 +1,4 @@
 python3 ./script/checkresults-offline.py /scratch1/09498/janechen/mydata/output-offline/
-python3 ./script/checkresults-offline.py /scratch1/09498/janechen/mydata/output-offline-2x/
-python3 ./script/checkresults-offline.py /scratch1/09498/janechen/mydata/output-offline-5x/
-python3 ./script/checkresults-offline.py /scratch1/09498/janechen/mydata/output-offline-10x/
+# python3 ./script/checkresults-offline.py /scratch1/09498/janechen/mydata/output-offline-2x/
+# python3 ./script/checkresults-offline.py /scratch1/09498/janechen/mydata/output-offline-5x/
+# python3 ./script/checkresults-offline.py /scratch1/09498/janechen/mydata/output-offline-10x/
