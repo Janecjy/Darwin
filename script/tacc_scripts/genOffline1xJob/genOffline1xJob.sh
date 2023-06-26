@@ -11,7 +11,7 @@ do
     mkdir -p $OUTPUT_DIR$NAME
     for f in 2 3 4 5 6 7
     do
-        for s in $((30 * r)) $((40 * r)) $((60 * r)) $((80 * r)) $((150 * r)) $((200 * r)) $((300 * r)) $((400 * r)) $((600 * r)) $((800 * r))
+        for s in $((10 * r)) $((20 * r)) $((30 * r)) $((40 * r)) $((50 * r)) $((60 * r)) $((70 * r)) $((80 * r)) $((90 * r)) $((100 * r)) $((150 * r)) $((200 * r)) $((300 * r)) $((400 * r)) $((500 * r)) $((600 * r)) $((800 * r)) $((1000 * r))
         do
             echo "python3 ./algs/hierarchy-static-results.py -t "$TRACE" -o "$OUTPUT_DIR$NAME" -f "${f}" -s "${s}" -h "$((100000 * r))" -d "$((10000000 * r))" > "$OUTPUT_DIR$NAME"/f"${f}"-s"${s}".txt" &
         done
