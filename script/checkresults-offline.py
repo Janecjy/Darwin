@@ -1,6 +1,7 @@
 import re
 import os
 import pickle
+import sys
 
 def confSort(keys):
     return sorted(keys, key=lambda element: list(int(x.replace('f', '')) for x in element.split('s')[:]))
@@ -49,7 +50,8 @@ def countStat(dirPath):
     # pickle.dump(dw, open("/mydata/results-offline/dw.pkl", "wb"))
     
 if __name__ == "__main__":
-    countStat("/mydata/output-offline/")
-    countStat("/mydata/output-2x-offline/")
-    countStat("/mydata/output-5x-offline/")
-    countStat("/mydata/output-10x-offline/")
+    dirPath = sys.argv[1]
+    countStat(dirPath+"output-offline/")
+    countStat(dirPath+"output-2x-offline/")
+    countStat(dirPath+"output-5x-offline/")
+    countStat(dirPath+"output-10x-offline/")
