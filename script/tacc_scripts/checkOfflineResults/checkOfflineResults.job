@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH -J checkOfflineResults
+#SBATCH -o checkOfflineResults.o%j
+#SBATCH -N 1
+#SBATCH --ntasks-per-node 4
+#SBATCH -t 2:00:00
+#SBATCH -p small
+module load launcher
+
+export LAUNCHER_WORKDIR=/home1/09498/janechen/MultiExpertHOCAdmission
+export LAUNCHER_JOB_FILE=$LAUNCHER_WORKDIR/script/tacc_scripts/checkOfflineResults/checkOfflineResults_job
+
+$LAUNCHER_DIR/paramrun

@@ -51,7 +51,8 @@ def countStat(dirPath):
     
 if __name__ == "__main__":
     dirPath = sys.argv[1]
-    countStat(dirPath+"output-offline/")
-    countStat(dirPath+"output-2x-offline/")
-    countStat(dirPath+"output-5x-offline/")
-    countStat(dirPath+"output-10x-offline/")
+    countStat(dirPath)
+    # countStat(dirPath+"output-offline/")
+    # countStat(dirPath+"output-2x-offline/")
+    # countStat(dirPath+"output-5x-offline/")
+    # countStat(dirPath+"output-10x-offline/")
