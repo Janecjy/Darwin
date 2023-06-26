@@ -1,0 +1,14 @@
+#!/bin/bash
+#SBATCH -J genCorrJob
+#SBATCH -o genCorrJob.o%j
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH -t 1:00:00
+#SBATCH -p small
+module load launcher
+
+export OMP_NUM_THREADS=56
+export LAUNCHER_WORKDIR=/home1/09498/janechen/MultiExpertHOCAdmission
+export LAUNCHER_JOB_FILE=$LAUNCHER_WORKDIR/script/tacc_scripts/genCorrJob/genjob
+
+$LAUNCHER_DIR/paramrun
