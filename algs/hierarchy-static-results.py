@@ -177,7 +177,7 @@ def run():
     # hits = [] # [(size, hit)]
     
     hits_path = os.path.join(output_dir, 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.txt")
-    print(hits_path)
+    # print(hits_path)
 
     with open(trace_path, 'r') as fp, open(hits_path, 'w') as fp_hits:
         for line in fp:
@@ -219,9 +219,9 @@ def run():
                 tot_req += 1
                 tot_bytes += size 
             tot_num += 1
-            if tot_num > WARMUP_LENGTH and tot_num % 100000 == 0:
-                print('hoc hit: {:.4f}%, hoc byte miss: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, (tot_bytes-tot_hoc_byte_hit)/tot_bytes*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, disk_read, disk_write))
-                sys.stdout.flush()
+            # if tot_num > WARMUP_LENGTH and tot_num % 100000 == 0:
+            #     print('hoc hit: {:.4f}%, hoc byte miss: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}'.format(tot_hoc_hit/tot_req*100, (tot_bytes-tot_hoc_byte_hit)/tot_bytes*100, tot_obj_hit/tot_req*100, tot_byte_miss/tot_bytes*100, disk_read, disk_write))
+            #     sys.stdout.flush()
                 
             #     pickle.dump(hits, open(os.path.join("../cache/output", trace_path.split('/')[6].split('.')[0], 'f'+str(freq_thres)+'s'+str(size_thres)+"-hits.pkl"), "wb"))
 
