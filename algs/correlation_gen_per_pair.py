@@ -1,3 +1,4 @@
+import json
 import pickle
 from bloom_filter2 import BloomFilter
 from collections import defaultdict
@@ -10,7 +11,7 @@ from lru import LRU
 
 WARMUP_LENGTH = 1000000
 ROUND_LEN = 500000
-BASE_DIR = "/scratch1/09498/janechen/mydata/"
+BASE_DIR = "/tmp"
 
 trace_path = output_dir = freq_thres1 = size_thres1 = freq_thres2 = size_thres2 = hoc_s = dc_s = None
 alpha = 0.001  # defines dc hit benefit
@@ -173,7 +174,7 @@ def run():
     run_exp1 = OfflineRun(freq_thres1, size_thres1, hoc_s, dc_s)
     run_exp2 = OfflineRun(freq_thres2, size_thres2, hoc_s, dc_s)
     
-    tot_num = count = 0
+    tot_num = 0
     inputs = []
     labels = []
     bucket_list = [10, 20, 50, 100, 500, 1000, 5000]
@@ -258,9 +259,13 @@ def run():
             input.extend(bucket_count)
             inputs.append([input, e0_hit_count, e0_miss_count])
             labels.append([hit_hit_prob, hit_miss_prob])
-            
-        pickle.dump(inputs, open(os.path.join(BASE_DIR, "correlations", "f"+str(freq_thres1)+"s"+str(size_thres1)+"-"+"f"+str(freq_thres2)+"s"+str(size_thres2), trace_name+"-input.pkl"), "wb"))
-        pickle.dump(labels, open(os.path.join(BASE_DIR, "correlations", "f"+str(freq_thres1)+"s"+str(size_thres1)+"-"+"f"+str(freq_thres2)+"s"+str(size_thres2), trace_name+"-labels.pkl"), "wb"))
+        
+        with open(os.path.join(BASE_DIR, "correlations", "f"+str(freq_thres1)+"s"+str(size_thres1)+"-"+"f"+str(freq_thres2)+"s"+str(size_thres2), trace_name+"-input.json"), 'a') as inputf:
+            inputf.write(json.dumps(inputs)) # each line is a json object
+            inputf.write('\n')
+        with open(os.path.join(BASE_DIR, "correlations", "f"+str(freq_thres1)+"s"+str(size_thres1)+"-"+"f"+str(freq_thres2)+"s"+str(size_thres2), trace_name+"-labels.json"), 'a') as labelsf:
+            labelsf.write(json.dumps(labels)) # each line is a json object
+            labelsf.write('\n')
 
         print('trace: {}, f: {}, s: {}, final hoc hit: {:.4f}%, hoc byte miss: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}'.format(trace_name, freq_thres1, size_thres1, run_exp1.tot_hoc_hit/run_exp1.tot_req*100, (run_exp1.tot_bytes-run_exp1.tot_hoc_byte_hit)/run_exp1.tot_bytes*100, run_exp1.tot_obj_hit/run_exp1.tot_req*100, run_exp1.tot_byte_miss/run_exp1.tot_bytes*100, run_exp1.disk_read, run_exp1.disk_write))
         print('trace: {}, f: {}, s: {}, final hoc hit: {:.4f}%, hoc byte miss: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}'.format(trace_name, freq_thres2, size_thres2, run_exp2.tot_hoc_hit/run_exp2.tot_req*100, (run_exp2.tot_bytes-run_exp2.tot_hoc_byte_hit)/run_exp2.tot_bytes*100, run_exp2.tot_obj_hit/run_exp2.tot_req*100, run_exp2.tot_byte_miss/run_exp2.tot_bytes*100, run_exp2.disk_read, run_exp2.disk_write))
