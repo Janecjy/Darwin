@@ -1,1 +1,1 @@
-./script/tacc_scripts/genOfflineJob/genOfflineJob.sh > genOffline_job
+./script/tacc_scripts/genOfflineJob/genFeatureJob.sh
