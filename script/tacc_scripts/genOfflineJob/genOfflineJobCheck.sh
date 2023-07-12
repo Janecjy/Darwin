@@ -1,12 +1,12 @@
 #!/bin/bash
 
 BASE_DIR="/scratch1/09498/janechen/mydata/"
-FEATURE_DIR=$BASE_DIR"/tragen-features/"
 for r in 1 2 5 10
 do
     FILES=$BASE_DIR"tragen-traces-"$r"x/*"
     OUTPUT_DIR=$BASE_DIR"tragen-output-offline-"$r"x/"
     CORR_DIR=$BASE_DIR"tragen-correlations-"$r"x/"
+    FEATURE_DIR=$BASE_DIR"tragen-features-"$r"x/"
     for f0 in 2 3 4 5 6 7
         do
             for s0 in $((10 * r)) $((20 * r)) $((50 * r)) $((100 * r)) $((500 * r)) $((1000 * r))
