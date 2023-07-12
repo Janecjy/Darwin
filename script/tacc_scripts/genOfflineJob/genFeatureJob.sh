@@ -15,7 +15,7 @@ do
         then
             # generate features
             mkdir -p $FEATURE_DIR$NAME
-            echo "./script/collectfeaturesub.sh "$TRACE" "$FEATURE_DIR$NAME" 50000 150000" >> ../genFeatures/genFeatures_job
+            echo "./script/collectfeaturesub.sh "$TRACE" "$FEATURE_DIR$NAME" 50000 150000" >> ./script/tacc_scripts/genFeatures/genFeatures_job
         fi
     done
 done
