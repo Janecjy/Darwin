@@ -1,6 +1,7 @@
 #!/bin/bash
 
 BASE_DIR="/scratch1/09498/janechen/mydata/"
+FEATURE_DIR="/scratch1/09498/janechen/mydata/tragen-features/"
 for r in 1 2 5 10
 do
     FILES=$BASE_DIR"tragen-traces-"$r"x/*"
