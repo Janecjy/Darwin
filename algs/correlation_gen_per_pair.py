@@ -1,4 +1,4 @@
-import json
+# import json
 import pickle
 from bloom_filter2 import BloomFilter
 from collections import defaultdict
@@ -11,7 +11,6 @@ from lru import LRU
 
 WARMUP_LENGTH = 1000000
 ROUND_LEN = 500000
-BASE_DIR = "/tmp"
 
 trace_path = output_dir = freq_thres1 = size_thres1 = freq_thres2 = size_thres2 = hoc_s = dc_s = None
 alpha = 0.001  # defines dc hit benefit
@@ -20,25 +19,27 @@ t_inter = 1000000
 
 def parseInput():
 
-    global trace_path, output_dir, freq_thres, size_thres, hoc_s, dc_s
+    global trace_path, feature_path, correlation_path, freq_thres, size_thres, hoc_s, dc_s
 
     # Get the arguments from the command-line except the filename
     argv = sys.argv[1:]
 
     try:
         # Define the getopt parameters
-        opts, args = getopt.getopt(argv, 't:o:f:s:g:u:h:d:', [
-                                   'trace_path', 'output_dir', 'freq_thres1', 'size_thres1', 'freq_thres2', 'size_thres2', 'hoc_size', 'dc_size'])
+        opts, args = getopt.getopt(argv, 't:i:c:f:s:g:u:h:d:', [
+                                   'trace_path', 'feature_path', 'correlation_path', 'freq_thres1', 'size_thres1', 'freq_thres2', 'size_thres2', 'hoc_size', 'dc_size'])
         # Check if the options' length is 3
-        if len(opts) != 8:
-            print('usage: hierarchy.py -t <trace_path> -o <output_dir> -f <frequency_threshold1> -s <size_threshold1> -g <frequency_threshold2> -u <size_threshold2> -h <HOC_size> -d <DC_size>')
+        if len(opts) != 9:
+            print('usage: hierarchy.py -t <trace_path> -i <feature_path> -c <correlation_path> -f <frequency_threshold1> -s <size_threshold1> -g <frequency_threshold2> -u <size_threshold2> -h <HOC_size> -d <DC_size>')
         else:
             # Iterate the options and get the corresponding values
             for opt, arg in opts:
                 if opt == '-t':
                     trace_path = arg
-                if opt == '-o':
-                    output_dir = arg
+                if opt == '-i':
+                    feature_path = arg
+                if opt == '-c':
+                    correlation_path = arg
                 if opt == '-f':
                     freq_thres1 = int(arg)
                 if opt == '-s':
@@ -189,7 +190,7 @@ def run():
     
     feature = []
         
-    features = pickle.load(open(os.path.join(BASE_DIR, "features/", trace_name, "3M.pkl"), "rb"))
+    features = pickle.load(open(os.path.join(feature_path, trace_name, "3M.pkl"), "rb"))
     for f in feature_set:
         v = features[f]
         if type(v) is dict or type(v) is defaultdict:
@@ -260,23 +261,26 @@ def run():
             inputs.append([input, e0_hit_count, e0_miss_count])
             labels.append([hit_hit_prob, hit_miss_prob])
         
-        with open(os.path.join(BASE_DIR, "correlations", "f"+str(freq_thres1)+"s"+str(size_thres1)+"-"+"f"+str(freq_thres2)+"s"+str(size_thres2), trace_name+"-input.json"), 'a') as inputf:
-            inputf.write(json.dumps(inputs)) # each line is a json object
-            inputf.write('\n')
-        with open(os.path.join(BASE_DIR, "correlations", "f"+str(freq_thres1)+"s"+str(size_thres1)+"-"+"f"+str(freq_thres2)+"s"+str(size_thres2), trace_name+"-labels.json"), 'a') as labelsf:
-            labelsf.write(json.dumps(labels)) # each line is a json object
-            labelsf.write('\n')
+        pickle.dump(inputs, open(os.path.join(correlation_path, "f"+str(freq_thres1)+"s"+str(size_thres1)+"-"+"f"+str(freq_thres2)+"s"+str(size_thres2), trace_name+"-input.pkl"), "wb"))
+        pickle.dump(labels, open(os.path.join(correlation_path, "f"+str(freq_thres1)+"s"+str(size_thres1)+"-"+"f"+str(freq_thres2)+"s"+str(size_thres2), trace_name+"-labels.pkl"), "wb"))
+        
+        # with open(os.path.join(BASE_DIR, "correlations", "f"+str(freq_thres1)+"s"+str(size_thres1)+"-"+"f"+str(freq_thres2)+"s"+str(size_thres2), trace_name+"-input.json"), 'a') as inputf:
+        #     inputf.write(json.dumps(inputs)) # each line is a json object
+        #     inputf.write('\n')
+        # with open(os.path.join(BASE_DIR, "correlations", "f"+str(freq_thres1)+"s"+str(size_thres1)+"-"+"f"+str(freq_thres2)+"s"+str(size_thres2), trace_name+"-labels.json"), 'a') as labelsf:
+        #     labelsf.write(json.dumps(labels)) # each line is a json object
+        #     labelsf.write('\n')
 
-        print('trace: {}, f: {}, s: {}, final hoc hit: {:.4f}%, hoc byte miss: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}'.format(trace_name, freq_thres1, size_thres1, run_exp1.tot_hoc_hit/run_exp1.tot_req*100, (run_exp1.tot_bytes-run_exp1.tot_hoc_byte_hit)/run_exp1.tot_bytes*100, run_exp1.tot_obj_hit/run_exp1.tot_req*100, run_exp1.tot_byte_miss/run_exp1.tot_bytes*100, run_exp1.disk_read, run_exp1.disk_write))
-        print('trace: {}, f: {}, s: {}, final hoc hit: {:.4f}%, hoc byte miss: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}'.format(trace_name, freq_thres2, size_thres2, run_exp2.tot_hoc_hit/run_exp2.tot_req*100, (run_exp2.tot_bytes-run_exp2.tot_hoc_byte_hit)/run_exp2.tot_bytes*100, run_exp2.tot_obj_hit/run_exp2.tot_req*100, run_exp2.tot_byte_miss/run_exp2.tot_bytes*100, run_exp2.disk_read, run_exp2.disk_write))
-        sys.stdout.flush()
-
+        offline_path = os.path.join(correlation_path, "offline_results.txt")
+        with open(offline_path, 'a') as f:
+            f.write('trace: {}, f: {}, s: {}, final hoc hit: {:.4f}%, hoc byte miss: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}\n'.format(trace_name, freq_thres1, size_thres1, run_exp1.tot_hoc_hit/run_exp1.tot_req*100, (run_exp1.tot_bytes-run_exp1.tot_hoc_byte_hit)/run_exp1.tot_bytes*100, run_exp1.tot_obj_hit/run_exp1.tot_req*100, run_exp1.tot_byte_miss/run_exp1.tot_bytes*100, run_exp1.disk_read, run_exp1.disk_write))
+            f.write('trace: {}, f: {}, s: {}, final hoc hit: {:.4f}%, hoc byte miss: {:.4f}%, hr: {:.4f}%, bmr: {:.4f}%, disk read: {:.4f}, disk write: {:.4f}\n'.format(trace_name, freq_thres2, size_thres2, run_exp2.tot_hoc_hit/run_exp2.tot_req*100, (run_exp2.tot_bytes-run_exp2.tot_hoc_byte_hit)/run_exp2.tot_bytes*100, run_exp2.tot_obj_hit/run_exp2.tot_req*100, run_exp2.tot_byte_miss/run_exp2.tot_bytes*100, run_exp2.disk_read, run_exp2.disk_write))
 
 def main():
     parseInput()
     if None not in (trace_path, freq_thres1, size_thres1, freq_thres2, size_thres2, hoc_s, dc_s):
-        print('trace: {}, freq: {}, size: {}, HOC size: {}, DC size: {}'.format(
-            trace_path, freq_thres, size_thres, hoc_s, dc_s))
+        print('trace_path: {}, output_dir: {}, freq_thres1: {}, size_thres1: {}, freq_thres2: {}, size_thres2: {}, hoc_size: {}, dc_size: {}'.format(
+            trace_path, output_dir, freq_thres1, size_thres1, freq_thres2, size_thres2, hoc_s, dc_s))
     else:
         sys.exit(2)
 
