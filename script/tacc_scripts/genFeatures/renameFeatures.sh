@@ -13,10 +13,7 @@ do
         then
             CORRECT_FEATURE_PATH=$BASE_DIR"tragen-features-"$r"x/"$NAME
             WRONG_FEATURE_PATH=$BASE_DIR"tragen-features-"$r"x/"$NAME$NAME
-            echo "correct path: "$CORRECT_FEATURE_PATH
-            echo "correct path file number: "$(ls $CORRECT_FEATURE_PATH | wc -l)
-            echo "wrong path: "$WRONG_FEATURE_PATH
-            echo "wrong path file number: "$(ls $WRONG_FEATURE_PATH | wc -l)
+            mv $WRONG_FEATURE_PATH $CORRECT_FEATURE_PATH
         fi
     done
 done
