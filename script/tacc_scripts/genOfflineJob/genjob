@@ -1,1 +1,4 @@
-./script/tacc_scripts/genOfflineJob/genFeatureJob.sh
+./script/tacc_scripts/genOfflineJob/genOfflineJobCheck.sh 1
+./script/tacc_scripts/genOfflineJob/genOfflineJobCheck.sh 2
+./script/tacc_scripts/genOfflineJob/genOfflineJobCheck.sh 5
+./script/tacc_scripts/genOfflineJob/genOfflineJobCheck.sh 10
