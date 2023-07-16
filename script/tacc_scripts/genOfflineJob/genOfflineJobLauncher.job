@@ -2,7 +2,7 @@
 #SBATCH -J genOfflineJob
 #SBATCH -o genOfflineJob.o%j
 #SBATCH -N 4
-#SBATCH -n 1
+#SBATCH -n 4
 #SBATCH -t 2:00:00
 #SBATCH -p small
 module load launcher
