@@ -12,8 +12,9 @@ do
         if [[ $NAME =~ $regex ]]
         then
             CORRECT_FEATURE_PATH=$BASE_DIR"tragen-features-"$r"x/"$NAME
-            WRONG_FEATURE_PATH=$BASE_DIR"tragen-features-"$r"x/"$NAME$NAME
-            mv $WRONG_FEATURE_PATH $CORRECT_FEATURE_PATH
+            WRONG_FEATURE_PATH=$BASE_DIR"tragen-features-"$r"x/"$NAME"/"$NAME$NAME
+            mv $WRONG_FEATURE_PATH/* $CORRECT_FEATURE_PATH/
+            rmdir $WRONG_FEATURE_PATH
         fi
     done
 done
