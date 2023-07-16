@@ -4,7 +4,7 @@
 #SBATCH -N 512
 #SBATCH --ntasks-per-node 20
 #SBATCH -t 48:00:00
-#SBATCH -p small
+#SBATCH -p normal
 module load launcher
 
 export LAUNCHER_WORKDIR=/home1/09498/janechen/MultiExpertHOCAdmission
