@@ -52,7 +52,7 @@ def gen_data(expert_0, expert_1, trace, trace_name):
     with open(os.path.join(OFFLINE_DIR, trace_name, expert_0+"-hits.txt"), 'r') as e0_file, open(os.path.join(OFFLINE_DIR, trace_name, expert_1+"-hits.txt"), 'r') as e1_file:
         count = 0
         
-        for e0, e1, s in zip(e0_file, e1_file):
+        for e0, e1 in zip(e0_file, e1_file):
             e0 = int(e0.strip().split()[0])  # Remove any leading or trailing whitespace from line1
             e1 = int(e1.strip().split()[0])  # Remove any leading or trailing whitespace from line2
             s = int(e0.strip().split()[1])
