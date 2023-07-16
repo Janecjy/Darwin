@@ -27,7 +27,8 @@ def gen_data(expert_0, expert_1, trace, trace_name):
     
     feature = []
         
-    features = pickle.load(open(os.path.join(BASE_DIR, "features/", trace_name, "3M.pkl"), "rb"))
+    features = pickle.load(open(os.path.join(BASE_DIR, "tragen-features"+OUTPUT_DIR[-4:], trace_name, "3M.pkl"), "rb"))
+    print(os.path.join(BASE_DIR, "tragen-features"+OUTPUT_DIR[-4:], trace_name, "3M.pkl"))
     for f in feature_set:
         v = features[f]
         if type(v) is dict or type(v) is defaultdict:
@@ -101,10 +102,10 @@ def main():
     trace = sys.argv[3]
     trace_name = trace.split('/')[-1].split('.')[0]
         
-    if os.path.exists(os.path.join(OFFLINE_DIR, trace_name, expert_0+"-hits.txt")) and os.path.exists(os.path.join("/mydata/output-offline/", trace_name, expert_1+"-hits.txt")):
+    if os.path.exists(os.path.join(OFFLINE_DIR, trace_name, expert_0+"-hits.txt")) and os.path.exists(os.path.join(OFFLINE_DIR, trace_name, expert_1+"-hits.txt")):
         gen_data(expert_0, expert_1, trace, trace_name)
     else:
-        print("{} or {} not exist".format(os.path.join(OFFLINE_DIR, trace_name, expert_0+"-hits.txt"), os.path.join("/mydata/output-offline/", trace_name, expert_1+"-hits.txt")))
+        print("{} or {} not exist".format(os.path.join(OFFLINE_DIR, trace_name, expert_0+"-hits.txt"), os.path.join(os.path.join(OFFLINE_DIR, trace_name, expert_1+"-hits.txt"))))
         return
 
 if __name__ == '__main__':
