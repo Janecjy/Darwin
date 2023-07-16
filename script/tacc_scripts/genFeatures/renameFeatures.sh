@@ -3,7 +3,7 @@
 BASE_DIR="/scratch1/09498/janechen/mydata/"
 for r in 1 2 5 10
 do
-    FILES=$BASE_DIR"traces-"$r"x/*"
+    FILES=$BASE_DIR"tragen-traces-"$r"x/*"
     for TRACE in $FILES
     do
         NAME_EXT=$(basename "$TRACE")  # Extract the filename with extension
