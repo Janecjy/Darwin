@@ -1,7 +1,9 @@
 #!/bin/bash
 
-SRC_DIR=/scratch1/09498/janechen/mydata/tragen-output-offline-1x
-DST_DIR=/scratch2/09498/janechen
+SUB_DIR="tragen-output-offline-1x"
+
+SRC_DIR=/scratch1/09498/janechen/mydata/$SUB_DIR
+DST_DIR=/scratch2/09498/janechen/$SUB_DIR
 
 # Check if the source directory exists
 if [ ! -d "$SRC_DIR" ]; then
