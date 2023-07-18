@@ -1,1 +1,3 @@
-./script/tacc_scripts/genCorrJob/genCorrJob.sh > ./script/tacc_scripts/genCorr/genCorr_Job
+./script/tacc_scripts/genCorrJob/genCorrJob.sh 1
+./script/tacc_scripts/genCorrJob/genCorrJob.sh 2
+./script/tacc_scripts/genCorrJob/genCorrJob.sh 5

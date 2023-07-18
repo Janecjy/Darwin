@@ -21,7 +21,7 @@ BASE_DIR = sys.argv[4]
 OFFLINE_DIR = sys.argv[5]
 OUTPUT_DIR = sys.argv[6]
 
-def gen_data(expert_0, expert_1, trace, trace_name):
+def gen_data(expert_0, expert_1, trace_name):
 
     feature_set = ['iat_avg', 'sd_avg', 'size_avg']
     
@@ -99,11 +99,10 @@ def gen_data(expert_0, expert_1, trace, trace_name):
 def main():
     expert_0 = sys.argv[1]
     expert_1 = sys.argv[2]
-    trace = sys.argv[3]
-    trace_name = trace.split('/')[-1].split('.')[0]
+    trace_name = sys.argv[3]
         
     if os.path.exists(os.path.join(OFFLINE_DIR, trace_name, expert_0+"-hits.txt")) and os.path.exists(os.path.join(OFFLINE_DIR, trace_name, expert_1+"-hits.txt")):
-        gen_data(expert_0, expert_1, trace, trace_name)
+        gen_data(expert_0, expert_1, trace_name)
     else:
         print("{} or {} not exist".format(os.path.join(OFFLINE_DIR, trace_name, expert_0+"-hits.txt"), os.path.join(os.path.join(OFFLINE_DIR, trace_name, expert_1+"-hits.txt"))))
         return
