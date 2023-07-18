@@ -5,6 +5,8 @@
 #SBATCH --ntasks-per-node 56
 #SBATCH -t 24:00:00
 #SBATCH -p normal
+#SBATCH --mail-type=all
+#SBATCH --mail-user=janechen@utexas.edu
 module load launcher
 
 export LAUNCHER_WORKDIR=/home1/09498/janechen/MultiExpertHOCAdmission
