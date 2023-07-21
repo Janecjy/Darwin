@@ -25,14 +25,14 @@ def main():
     hidden_size = int(sys.argv[1]) # hidden layer node number (2-9)
     expert_0 = sys.argv[2]
     expert_1 = sys.argv[3]
-    corr_dir = sys.argv[3]
-    model_dir = sys.argv[4]
+    corr_dir = sys.argv[4]
+    model_dir = sys.argv[5]
     
-    print("hidden_size: ", hidden_size)
-    print("expert_0: ", expert_0)
-    print("expert_1: ", expert_1)
-    print("corr_dir: ", corr_dir)
-    print("model_dir: ", model_dir)
+    # print("hidden_size: ", hidden_size)
+    # print("expert_0: ", expert_0)
+    # print("expert_1: ", expert_1)
+    # print("corr_dir: ", corr_dir)
+    # print("model_dir: ", model_dir)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
