@@ -27,6 +27,7 @@ def main():
     expert_1 = sys.argv[3]
     corr_dir = sys.argv[4]
     model_dir = sys.argv[5]
+    corr_dir = os.path.join(corr_dir, expert_0+"-"+expert_1)
     
     # print("hidden_size: ", hidden_size)
     # print("expert_0: ", expert_0)
@@ -62,6 +63,7 @@ def main():
             return out
         
     for corr_file in os.listdir(corr_dir):
+        print(corr_file)
         # load each pickle file and append to a list
         if corr_file.endswith("-input.pkl"):
             trace = corr_file.split("-")[:-1]
