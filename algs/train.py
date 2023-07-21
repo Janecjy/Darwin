@@ -28,6 +28,7 @@ def main():
     corr_dir = sys.argv[4]
     model_dir = sys.argv[5]
     corr_dir = os.path.join(corr_dir, expert_0+"-"+expert_1)
+    model_dir = os.path.join(model_dir, expert_0+"-"+expert_1)
     
     # print("hidden_size: ", hidden_size)
     # print("expert_0: ", expert_0)
