@@ -66,7 +66,7 @@ def main():
         print(corr_file)
         # load each pickle file and append to a list
         if corr_file.endswith("-input.pkl"):
-            trace = corr_file.split("-")[:-1]
+            trace = '-'.join(corr_file.split("-")[:-1])
             print(trace)
             data_input = pickle.load(open(os.path.join(corr_dir, corr_file), "rb"))
             label_input = pickle.load(open(os.path.join(corr_dir, trace+"-labels.pkl"), "rb"))
