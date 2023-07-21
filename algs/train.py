@@ -27,6 +27,12 @@ def main():
     expert_1 = sys.argv[3]
     corr_dir = sys.argv[3]
     model_dir = sys.argv[4]
+    
+    print("hidden_size: ", hidden_size)
+    print("expert_0: ", expert_0)
+    print("expert_1: ", expert_1)
+    print("corr_dir: ", corr_dir)
+    print("model_dir: ", model_dir)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
