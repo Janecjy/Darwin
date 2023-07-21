@@ -1,0 +1,3 @@
+./script/tacc_scripts/genTrainJob/genTrainJob.sh 1
+./script/tacc_scripts/genTrainJob/genTrainJob.sh 2
+./script/tacc_scripts/genTrainJob/genTrainJob.sh 5
