@@ -19,6 +19,7 @@ do
                     MODEL_DIR=$BASE_DIR"tragen-models-"$r"x/"${EXPERT0}-${EXPERT1}
                     mkdir -p $MODEL_DIR
                     echo "python3 algs/train.py "$HIDDEN" "${EXPERT0}" "${EXPERT1}" "$CORR_DIR" "$MODEL_DIR" > "$MODEL_DIR"/"$HIDDEN"-result.out" > "./script/tacc_scripts/train/train_"$r"x_job"
+                fi
             done
         done
     done

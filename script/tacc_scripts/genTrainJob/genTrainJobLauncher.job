@@ -5,8 +5,6 @@
 #SBATCH -n 3
 #SBATCH -t 2:00:00
 #SBATCH -p small
-#SBATCH --mail-type=all
-#SBATCH --mail-user=janechen@utexas.edu
 module load launcher
 
 export LAUNCHER_WORKDIR=/home1/09498/janechen/MultiExpertHOCAdmission
