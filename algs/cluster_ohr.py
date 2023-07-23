@@ -32,8 +32,8 @@ def feature_cluster(thres):
         if dir.endswith("-7") or dir.endswith("-8") or dir.endswith("-9"):
             continue
         feature = []
-        name_list.append(dir.split('/')[-1])
-        features = pickle.load(open(os.path.join(dir, "3M.pkl"), "rb"))
+        name_list.append(dir)
+        features = pickle.load(open(os.path.join(feature_dir, dir, "3M.pkl"), "rb"))
         for f in feature_set:
             v = features[f]
             if type(v) is dict or type(v) is defaultdict:
