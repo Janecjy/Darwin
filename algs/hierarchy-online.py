@@ -225,7 +225,7 @@ class OnlineHierarchy:
             for exp1 in self.potential_experts:
                 if exp0 != exp1:
                     model = NeuralNet(INPUT_SIZE, HIDDEN_SIZE, OUTPUT_SIZE).to(DEVICE)
-                    model.load_state_dict(torch.load(os.path.join(model_path+"nn-models/", exp0+"-"+exp1+"-h"+str(HIDDEN_SIZE)+".ckpt"), map_location=torch.device('cpu')))
+                    model.load_state_dict(torch.load(os.path.join(model_path, exp0+"-"+exp1, "model-h"+str(HIDDEN_SIZE)+".ckpt"), map_location=torch.device('cpu')))
                     model.eval()
                     self.raw_models[(exp0, exp1)] = model
                     # d = torch.tensor(self.feature).to(DEVICE)
@@ -715,8 +715,8 @@ def main():
     name = trace_path.split('/')[-1].split('.')[0]
     
     global CLUSTER_MODEL_PATH, CLUSTER_RESULT_PATH, FEATURE_MAX_LIST, FEATURE_MIN_LIST
-    CLUSTER_MODEL_PATH = model_path+"kmeans.pkl"
-    CLUSTER_RESULT_PATH = model_path+"cluster_experts.pkl"
+    CLUSTER_MODEL_PATH = model_path+"kmeans_1.pkl"
+    CLUSTER_RESULT_PATH = model_path+"cluster_experts_1.pkl"
     # trained feature parameters
     # FEATURE_MAX_LIST = pickle.load(open(model_path+"max_list.pkl", "rb"))
     # print(FEATURE_MAX_LIST)
