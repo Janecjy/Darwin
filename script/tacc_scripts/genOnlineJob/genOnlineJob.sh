@@ -12,6 +12,6 @@ do
     regex='.*-[7-9]$'
     if [[ $NAME =~ $regex ]]
     then
-        echo "python3 ./algs/hierarchy-online.py -t "$TRACE" -m "$BASE_DIR"tragen-models-"$r"x -h "$((100000 * r))" -d "$((10000000 * r))" > "$OUTPUT_DIR$NAME".txt"
+        echo "python3 ./algs/hierarchy-online.py -t "$TRACE" -m "$BASE_DIR"tragen-models-"$r"x -h "$((100000 * r))" -d "$((10000000 * r))" > "$OUTPUT_DIR$NAME".txt" > ./script/tacc_scripts/genOnline/genOnline1x_job
     fi
 done
