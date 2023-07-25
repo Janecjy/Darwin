@@ -414,7 +414,9 @@ class OnlineHierarchy:
             alphas = self.selectAlpha()
             arm = self.selectArmWithAlpha(alphas)
             # arm = "f2s50"
-            
+        
+        print(self.round, k)
+        print(arm)
         self.selected_times[arm] += 1
         # set the new freq and size threshold
         new_f, new_s = self.extractThres(arm)
