@@ -1,0 +1,15 @@
+#!/bin/bash
+#SBATCH -J percentile
+#SBATCH -o percentile.o%j
+#SBATCH -N 5
+#SBATCH --ntasks-per-node 56
+#SBATCH -t 12:00:00
+#SBATCH -p normal
+#SBATCH --mail-type=all
+#SBATCH --mail-user=janechen@utexas.edu
+module load launcher
+
+export LAUNCHER_WORKDIR=/home1/09498/janechen/MultiExpertHOCAdmission
+export LAUNCHER_JOB_FILE=$LAUNCHER_WORKDIR/script/tacc_scripts/runPercentile/percentile_1x_job
+
+$LAUNCHER_DIR/paramrun
