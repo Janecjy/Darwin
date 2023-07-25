@@ -101,14 +101,14 @@ for i, baseline in enumerate(baseline_list):
 # diff_percentage_data_dict["DM"] = [-.9, -1.2, 1.5, 1.2, 11, 27, 7, .1, .7]
 # print("for baseline {}, the avg improvement is {}, the avg improvement rate is {}".format("directmapping", sum(diff)/len(diff), sum(diff_percentage_data_dict["DM"])/len(diff_percentage_data_dict["DM"])))
     
-# df_diff = pd.DataFrame.from_dict(diff_data_dict)
-# df_diff_percentage = pd.DataFrame.from_dict(diff_percentage_data_dict)
+df_diff = pd.DataFrame.from_dict(diff_data_dict)
+df_diff_percentage = pd.DataFrame.from_dict(diff_percentage_data_dict)
 
 
-# plt.figure(figsize=(15, 10))
-# ax = sns.boxplot(data=df_diff_percentage, color="C10")
-# ax.set_xticklabels(ax.get_xticklabels(),rotation=70)
-# ax.axhline(0, color="C3")
-# plt.ylabel("HOC OHR Improvement Rate (%)")
-# # ax = sns.lineplot(x=[0]*len(baseline_list), y=[y*5 for y in range(len(baseline_list))], ax=ax, linewidth = 2)
-# plt.savefig("baseline-improvement-percentage-1x.png",bbox_inches='tight')
+plt.figure(figsize=(15, 10))
+ax = sns.boxplot(data=df_diff_percentage, color="C10")
+ax.set_xticklabels(ax.get_xticklabels(),rotation=70)
+ax.axhline(0, color="C3")
+plt.ylabel("HOC OHR Improvement Rate (%)")
+# ax = sns.lineplot(x=[0]*len(baseline_list), y=[y*5 for y in range(len(baseline_list))], ax=ax, linewidth = 2)
+plt.savefig("baseline-improvement-percentage-"+str(rate)+"x.png",bbox_inches='tight')
