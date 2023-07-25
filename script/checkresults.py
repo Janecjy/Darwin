@@ -16,7 +16,7 @@ def countStat(dirPath):
             if not file.endswith(".txt"):
                 continue
             trace = file.split('/')[-1].split('.')[0]
-
+            print(trace)
             if trace not in trace_stats.keys():
                 trace_stats[trace] = {}
                 
@@ -32,7 +32,7 @@ def countStat(dirPath):
                     file_res.append(exp)
 
             if file_res:
-                trace_stats[trace]["online"] = [x[0] for x in file_res][-1]
+                trace_stats[trace][root.split('/')[-1]] = [x[0] for x in file_res][-1]
     print(trace_stats)  
     pickle.dump(trace_stats, open(dirPath+"results.pkl", "wb"))
     
