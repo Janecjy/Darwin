@@ -14,7 +14,7 @@ offline_result = pickle.load(open(BASE_DIR+"tragen-output-offline-"+str(rate)+"x
 
 # best map based one single best expert
 best_map = {} # best expert: [traces]
-for trace in offline_result.keys():
+for trace in online_result.keys():
     values = []
     for k in offline_result[trace].keys():
         values.append(offline_result[trace][k])
