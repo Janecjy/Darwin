@@ -38,7 +38,7 @@ for baseline in baseline_list:
         if trace not in baseline_result.keys() or not baseline_result[trace].values():
             # print(trace, baseline)
             continue
-        
+        print(online_result[trace], baseline_result[trace])
         diff.append(list(online_result[trace].values())[0]-list(baseline_result[trace].values())[0])
         diff_percentage.append((list(online_result[trace].values())[0]-list(baseline_result[trace].values())[0])/list(online_result[trace].values())[0]*100)
         # baseline_data.append(result[trace]['6exp-online']-result[trace][baseline])
