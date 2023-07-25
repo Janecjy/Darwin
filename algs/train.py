@@ -67,9 +67,12 @@ def main():
         if corr_file.endswith("-input.pkl"):
             trace = '-'.join(corr_file.split("-")[:-1])
             print(trace)
-            data_input = pickle.load(open(os.path.join(corr_dir, corr_file), "rb"))
             print(os.path.join(corr_dir, trace+"-labels.pkl"))
-            label_input = pickle.load(open(os.path.join(corr_dir, trace+"-labels.pkl"), "rb"))
+            try:
+                data_input = pickle.load(open(os.path.join(corr_dir, corr_file), "rb"))
+                label_input = pickle.load(open(os.path.join(corr_dir, trace+"-labels.pkl"), "rb"))
+            except:
+                continue
             for d,l in zip(data_input, label_input):
                 data.append(d[0])
                 label.append(l)
