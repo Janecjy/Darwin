@@ -415,8 +415,8 @@ class OnlineHierarchy:
             arm = self.selectArmWithAlpha(alphas)
             # arm = "f2s50"
         
-        print(self.round, k)
-        print(arm)
+        # print(self.round, k)
+        # print(arm)
         self.selected_times[arm] += 1
         # set the new freq and size threshold
         new_f, new_s = self.extractThres(arm)
@@ -465,7 +465,8 @@ class OnlineHierarchy:
             self.betas.append(beta)
             self.zs.append(z)
             if z >= beta:
-                arm = np.argmax(list(self.avg_estimated.values()))
+                arm_index = np.argmax(list(self.avg_estimated.values()))
+                arm = self.potential_experts[arm_index]
                 new_f, new_s = self.extractThres(arm)
                 self.freq_thres = new_f
                 self.size_thres = new_s
