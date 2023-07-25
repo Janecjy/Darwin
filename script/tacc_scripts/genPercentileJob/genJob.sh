@@ -13,7 +13,7 @@ do
         regex='.*-[7-9]$'
         if [[ $NAME =~ $regex ]]
         then
-            echo "python3 algs/percentile.py -t "$TRACE" -o "$OUTPUT_DIR$NAME" -f 60 -s 90 -h 100000 -d 10000000 -l 100000 > "$OUTPUT_DIR$NAME".txt" >> "./script/tacc_scripts/runPercentile/percentile_"$r"x_job"
+            echo "python3 algs/percentile.py -t "$TRACE" -o "$OUTPUT_DIR$NAME" -f 60 -s 90 -h "$((100000 * r))" -d "$((10000000 * r))" -l 100000 > "$OUTPUT_DIR$NAME".txt" >> "./script/tacc_scripts/runPercentile/percentile_"$r"x_job"
         fi
     done
 done
