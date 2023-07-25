@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 sns.set(font_scale=3, style='white')
 rate = 5
 BASE_DIR = "/scratch2/09498/janechen/"
-online_result = pickle.load(open(BASE_DIR+"tragen-output-online-"+str(rate)+"x", "rb"))
+online_result = pickle.load(open(BASE_DIR+"tragen-output-online-"+str(rate)+"x/results.pkl", "rb"))
 
 trace_list = list(online_result.keys())
 # trace_list = ['tc-0-1-150:115', 'tc-0-1-136:128', 'tc-0-1-80:185', 'tc-0-1-244:21', 'tc-0-1-2:263', 'tc-0-1-206:59', 'tc-0-1-0:265', 'tc-0-1-265:0', 'tc-0-1-8:257']
