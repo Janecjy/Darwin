@@ -16,7 +16,7 @@ do
             regex='.*-[7-9]$'
             if [[ $NAME =~ $regex ]]
             then
-                echo "python3 algs/hillclimbing-continuous.py -t "$TRACE" -o "$OUTPUT_DIR" -h "$((100000 * r))" -d "$((10000000 * r))" -l "${l}" -c "${c}" > "$OUTPUT_DIR$NAME".txt" >> "./script/tacc_scripts/hillclimbing/hillclimbing_c"$c"_"$r"x_job"
+                echo "python3 algs/hillclimbing-continuous.py -t "$TRACE" -o "$OUTPUT_DIR" -h "$((100000 * r))" -d "$((10000000 * r))" -l "${l}" -c "${c}" > "$OUTPUT_DIR$NAME".txt" >> "./script/tacc_scripts/runHC/hillclimbing_c"$c"_"$r"x_job"
             fi
         done
     done
