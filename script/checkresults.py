@@ -32,7 +32,7 @@ def countStat(dirPath):
                     file_res.append(exp)
 
             if file_res:
-                trace_stats[trace][root.split('/')[-1]] = [x[0] for x in file_res][-1]
+                trace_stats[trace][root.split('/')[-2]] = [x[0] for x in file_res][-1]
     print(trace_stats)  
     pickle.dump(trace_stats, open(dirPath+"results.pkl", "wb"))
     
