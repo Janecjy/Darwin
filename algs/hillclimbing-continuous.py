@@ -17,7 +17,7 @@ alpha = 0.001 # defines dc hit benefit
 t_inter = 1000000
 
 frequency_list = [2, 3, 4, 5, 6, 7]
-size_list = range(10, 1000, 1) # [10, 20, 50, 100, 500, 1000]
+size_list = list(range(10, 1000, 1)) # [10, 20, 50, 100, 500, 1000]
 
 def parseInput():
 
