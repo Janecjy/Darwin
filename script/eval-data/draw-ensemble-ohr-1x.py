@@ -17,7 +17,7 @@ best_map = {} # best expert: [traces]
 for trace in offline_result.keys():
     values = []
     for k in offline_result[trace].keys():
-        values.append(online_result[trace][k])
+        values.append(offline_result[trace][k])
     if len(values) > 0:
         max_v = max(values)
     for k in offline_result[trace].keys():
