@@ -35,7 +35,7 @@ for baseline in baseline_list:
     diff = []
     diff_percentage = []
     for trace in trace_list:
-        if trace not in baseline_result.keys() or not baseline_result[trace].values():
+        if trace not in baseline_result.keys() or not baseline_result[trace].values() or not online_result[trace].values():
             # print(trace, baseline)
             continue
         print(online_result[trace], baseline_result[trace])
