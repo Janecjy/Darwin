@@ -53,9 +53,9 @@ diff_data = []
 diff_percentage_data = []
 for baseline in baseline_list:
     if baseline.startswith('f'):
-        baseline_result = pickle.load(open(BASE_DIR+"tragen-output-offline-"+str(rate)+"x/ohr.pkl", "rb"))
-    else:
         baseline_result = offline_result
+    else:
+        baseline_result = pickle.load(open(BASE_DIR+baseline+"/results.pkl", "rb"))
     
     # print(baseline)
     diff = []
