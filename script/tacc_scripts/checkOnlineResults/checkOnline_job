@@ -1,0 +1,8 @@
+python3 ./script/checkresults.py /scratch2/09498/janechen/output-online-1x/
+python3 ./script/checkresults.py /scratch2/09498/janechen/output-online-5x/
+python3 ./script/checkresults.py /scratch2/09498/janechen/output-hillclimbing-c10-1x/
+python3 ./script/checkresults.py /scratch2/09498/janechen/output-hillclimbing-c10-5x/
+python3 ./script/checkresults.py /scratch2/09498/janechen/output-hillclimbing-c20-1x/
+python3 ./script/checkresults.py /scratch2/09498/janechen/output-hillclimbing-c20-5x/
+python3 ./script/checkresults.py /scratch2/09498/janechen/output-percentile-1x/
+python3 ./script/checkresults.py /scratch2/09498/janechen/output-percentile-5x/
