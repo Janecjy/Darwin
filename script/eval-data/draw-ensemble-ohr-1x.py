@@ -10,29 +10,29 @@ sns.set(font_scale=3, style='white')
 rate = int(sys.argv[1])
 BASE_DIR = "/scratch2/09498/janechen/"
 online_result = pickle.load(open(BASE_DIR+"tragen-output-online-"+str(rate)+"x/results.pkl", "rb"))
+offline_result = pickle.load(open(BASE_DIR+"tragen-output-offline-"+str(rate)+"x/ohr.pkl", "rb"))
 
-# # best map based one single best expert
-# best_map = {} # best expert: [traces]
-# for trace in online_result.keys():
-#     values = []
-#     for k in online_result[trace].keys():
-#         if k.startswith("f"):
-#             values.append(online_result[trace][k])
-#     if len(values) > 0:
-#         max_v = max(values)
-#     for k in online_result[trace].keys():
-#         if online_result[trace][k] == max_v:
-#             best = k
-#     if best not in best_map.keys():
-#         best_map[best] = []
-#     best_map[best].append(trace)
+# best map based one single best expert
+best_map = {} # best expert: [traces]
+for trace in offline_result.keys():
+    values = []
+    for k in offline_result[trace].keys():
+        values.append(online_result[trace][k])
+    if len(values) > 0:
+        max_v = max(values)
+    for k in offline_result[trace].keys():
+        if offline_result[trace][k] == max_v:
+            best = k
+    if best not in best_map.keys():
+        best_map[best] = []
+    best_map[best].append(trace)
 
-# trace_list = []
-# for k in best_map.keys():
-#     trace_list.append(random.choice(best_map[k]))
-# print(trace_list)
+trace_list = []
+for k in best_map.keys():
+    trace_list.append(random.choice(best_map[k]))
+print(trace_list)
 
-trace_list = list(online_result.keys())
+# trace_list = list(online_result.keys())
 # trace_list = ['tc-0-1-150:115', 'tc-0-1-136:128', 'tc-0-1-80:185', 'tc-0-1-244:21', 'tc-0-1-2:263', 'tc-0-1-206:59', 'tc-0-1-0:265', 'tc-0-1-265:0', 'tc-0-1-8:257']
     
 baseline_list = []
@@ -55,7 +55,7 @@ for baseline in baseline_list:
     if baseline.startswith('f'):
         baseline_result = pickle.load(open(BASE_DIR+"tragen-output-offline-"+str(rate)+"x/ohr.pkl", "rb"))
     else:
-        baseline_result = pickle.load(open(BASE_DIR+baseline+"/results.pkl", "rb"))
+        baseline_result = offline_result
     
     # print(baseline)
     diff = []
