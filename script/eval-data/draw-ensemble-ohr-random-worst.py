@@ -33,10 +33,14 @@ for k in best_map.keys():
 print(trace_list)
 
 # 1x best
+# ['tc-0-1-201:64-7', 'tc-0-1-263:2-7', 'tc-0-1-0:265-7']
 # trace_list = ['tc-0-1-214:51-8', 'tc-0-1-13:252-8', 'tc-0-1-257:8-8', 'tc-0-1-128:136-7', 'tc-0-1-265:0-8', 'tc-0-1-34:230-7', 'tc-0-1-0:265-9', 'tc-0-1-5:260-8', 'tc-0-1-8:257-7', 'tc-0-1-0:265-7']
 # trace_list = list(online_result.keys())
 # trace_list = ['tc-0-1-150:115', 'tc-0-1-136:128', 'tc-0-1-80:185', 'tc-0-1-244:21', 'tc-0-1-2:263', 'tc-0-1-206:59', 'tc-0-1-0:265', 'tc-0-1-265:0', 'tc-0-1-8:257']
-    
+
+# 5x best
+# ['tc-0-1-174:91-7', 'tc-0-1-56:209-8', 'tc-0-1-134:131-9', 'tc-0-1-0:265-8', 'tc-0-1-0:265-9', 'tc-0-1-16:249-9']
+
 baseline_list = []
 for f in [2, 3, 4, 5, 6, 7]:
 # # for f in [2, 3, 4]:
@@ -91,7 +95,7 @@ for i, baseline in enumerate(baseline_list):
         baseline = "P"
     if baseline == "tragen-output-hillclimbing-c10-"+str(rate)+"x":
         baseline = "HC-s10"
-    if baseline == "tragen-output-hillclimbing-c10-"+str(rate)+"x":
+    if baseline == "tragen-output-hillclimbing-c20-"+str(rate)+"x":
         baseline = "HC-s20"
     diff_data_dict[baseline] = diff_data[i]
     diff_percentage_data_dict[baseline] = diff_percentage_data[i]
