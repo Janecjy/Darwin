@@ -128,17 +128,18 @@ def parseInput():
 
 
 class OnlineHierarchy:
-    def __init__(self, name, default_freq_thres, default_size_thres, hoc_s, dc_s):
+    def __init__(self, name, default_freq_thres, default_size_thres, hoc_s, dc_s, rate):
         self.name = name
         self.freq_thres = default_freq_thres
         self.size_thres = default_size_thres
         self.hoc_s = hoc_s
         self.dc_s = dc_s
+        self.rate = rate
         # self.expert_list = ["f2s50", "f2s100", "f4s50"]
         self.expert_list = []
         for f in [2, 3, 4, 5, 6, 7]:
             for s in [10, 20, 50, 100, 500, 1000]:
-                self.expert_list.append('f'+str(f)+'s'+str(s))
+                self.expert_list.append('f'+str(f)+'s'+str(s*rate))
         print(self.expert_list)
                 
         self.dc = LRU(dc_s, {})
@@ -721,13 +722,15 @@ def main():
     global CLUSTER_MODEL_PATH, CLUSTER_RESULT_PATH, FEATURE_MAX_LIST, FEATURE_MIN_LIST
     CLUSTER_MODEL_PATH = os.path.join(model_path, "kmeans_"+str(BEST_THRES)+".pkl")
     CLUSTER_RESULT_PATH = os.path.join(model_path, "cluster_experts_"+str(BEST_THRES)+".pkl")
+    rate = int(model_path.split('-')[-1].split('x')[0])
+    print("rate: {}".format(rate))
     # trained feature parameters
     # FEATURE_MAX_LIST = pickle.load(open(model_path+"max_list.pkl", "rb"))
     # print(FEATURE_MAX_LIST)
     # FEATURE_MIN_LIST = pickle.load(open(model_path+"min_list.pkl", "rb"))
     # print(FEATURE_MIN_LIST)
     # sys.stdout.flush()
-    cache = OnlineHierarchy(name, 3, 50, hoc_s, dc_s)
+    cache = OnlineHierarchy(name, 3, 50*rate, hoc_s, dc_s, rate)
     
     for line in open(trace_path):
         line = line.split(',')
