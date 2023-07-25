@@ -17,6 +17,11 @@ do
                     EXPERT1=f${f1}s${s1}
                     CORR_DIR=$BASE_DIR"tragen-correlations-"$r"x/"${EXPERT0}-${EXPERT1}
                     MODEL_DIR=$BASE_DIR"tragen-models-"$r"x/"${EXPERT0}-${EXPERT1}
+                    # check if $MODEL_DIR/model-h2.ckpt exists
+                    if [ -f "$MODEL_DIR"/model-h"$HIDDEN".ckpt ]
+                    then
+                        continue
+                    fi
                     mkdir -p $MODEL_DIR
                     echo "python3 algs/train.py "$HIDDEN" "${EXPERT0}" "${EXPERT1}" "$CORR_DIR" "$MODEL_DIR" > "$MODEL_DIR"/"$HIDDEN"-result.out" >> "./script/tacc_scripts/train/train_"$r"x_job"
                 fi
