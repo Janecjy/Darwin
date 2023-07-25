@@ -24,7 +24,7 @@ def countStat(dirPath):
 
             for line in open(os.path.join(root, file), "r"):
                 
-                val2 = re.findall('hoc hit: [\d]+[.]?[\d]*%, hr: [\d]+[.]?[\d]*%, bmr: [\d]+[.]?[\d]*%, disk read: [\d]+[.]?[\d]*, disk write: [\d]+[.]?[\d]*',line)
+                val2 = re.findall('hoc hit: [\d]+[.]?[\d]*%, hr: [\d]+[.]?[\d]*%, bmr: [\d]+[.]?[\d]*%',line)
                 
                 for sentence in val2:
                     exp = sentence.split(',')
