@@ -28,6 +28,7 @@ FEATURE_MIN_LIST = None
 # FEATURE_PATH = "/home/janechen/cache/output/features/test-set-real"
 # REAL_BEST_PATH = "/home/janechen/cache/output/test_best_result.pkl"
 model_path = ""
+BEST_THRES = 1
 
 # request length of each stage
 WARMUP_LENGTH = 1000000
@@ -715,8 +716,8 @@ def main():
     name = trace_path.split('/')[-1].split('.')[0]
     
     global CLUSTER_MODEL_PATH, CLUSTER_RESULT_PATH, FEATURE_MAX_LIST, FEATURE_MIN_LIST
-    CLUSTER_MODEL_PATH = model_path+"kmeans_1.pkl"
-    CLUSTER_RESULT_PATH = model_path+"cluster_experts_1.pkl"
+    CLUSTER_MODEL_PATH = os.path.join(model_path, "kmeans_"+BEST_THRES+".pkl")
+    CLUSTER_RESULT_PATH = os.path.join(model_path, "cluster_experts_"+BEST_THRES+".pkl")
     # trained feature parameters
     # FEATURE_MAX_LIST = pickle.load(open(model_path+"max_list.pkl", "rb"))
     # print(FEATURE_MAX_LIST)
