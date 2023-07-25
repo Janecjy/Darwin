@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH -J hillclimbing_c20_5x
 #SBATCH -o hillclimbing_c20_5x.o%j
-#SBATCH -N 2
+#SBATCH -N 6
 #SBATCH --ntasks-per-node 56
 #SBATCH -t 12:00:00
-#SBATCH -p small
+#SBATCH -p normal
 #SBATCH --mail-type=all
 #SBATCH --mail-user=janechen@utexas.edu
 module load launcher
