@@ -716,8 +716,8 @@ def main():
     name = trace_path.split('/')[-1].split('.')[0]
     
     global CLUSTER_MODEL_PATH, CLUSTER_RESULT_PATH, FEATURE_MAX_LIST, FEATURE_MIN_LIST
-    CLUSTER_MODEL_PATH = os.path.join(model_path, "kmeans_"+BEST_THRES+".pkl")
-    CLUSTER_RESULT_PATH = os.path.join(model_path, "cluster_experts_"+BEST_THRES+".pkl")
+    CLUSTER_MODEL_PATH = os.path.join(model_path, "kmeans_"+str(BEST_THRES)+".pkl")
+    CLUSTER_RESULT_PATH = os.path.join(model_path, "cluster_experts_"+str(BEST_THRES)+".pkl")
     # trained feature parameters
     # FEATURE_MAX_LIST = pickle.load(open(model_path+"max_list.pkl", "rb"))
     # print(FEATURE_MAX_LIST)
