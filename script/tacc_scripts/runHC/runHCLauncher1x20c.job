@@ -10,6 +10,6 @@
 module load launcher
 
 export LAUNCHER_WORKDIR=/home1/09498/janechen/MultiExpertHOCAdmission
-export LAUNCHER_JOB_FILE=$LAUNCHER_WORKDIR/script/tacc_scripts/runHC/hillclimbing_c20_1x_job"
+export LAUNCHER_JOB_FILE=$LAUNCHER_WORKDIR/script/tacc_scripts/runHC/hillclimbing_c20_1x_job
 
 $LAUNCHER_DIR/paramrun
