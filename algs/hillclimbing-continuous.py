@@ -177,6 +177,10 @@ class Cache:
 def run():
 
     global currentT, disk_write, collection_length, freq_thres, size_thres
+    
+    rate = int(output_dir.split('-')[-1].split('x')[0])
+    for i, s in enumerate(size_list):
+        size_list[i] = s*rate
 
     # hoc_s = 100
     # dc_s = 10000
