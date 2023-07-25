@@ -4,21 +4,43 @@ import os
 import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
+import sys
 
 sns.set(font_scale=3, style='white')
-rate = 1
+rate = int(sys.argv[1])
 BASE_DIR = "/scratch2/09498/janechen/"
 online_result = pickle.load(open(BASE_DIR+"tragen-output-online-"+str(rate)+"x/results.pkl", "rb"))
+
+# # best map based one single best expert
+# best_map = {} # best expert: [traces]
+# for trace in online_result.keys():
+#     values = []
+#     for k in online_result[trace].keys():
+#         if k.startswith("f"):
+#             values.append(online_result[trace][k])
+#     if len(values) > 0:
+#         max_v = max(values)
+#     for k in online_result[trace].keys():
+#         if online_result[trace][k] == max_v:
+#             best = k
+#     if best not in best_map.keys():
+#         best_map[best] = []
+#     best_map[best].append(trace)
+
+# trace_list = []
+# for k in best_map.keys():
+#     trace_list.append(random.choice(best_map[k]))
+# print(trace_list)
 
 trace_list = list(online_result.keys())
 # trace_list = ['tc-0-1-150:115', 'tc-0-1-136:128', 'tc-0-1-80:185', 'tc-0-1-244:21', 'tc-0-1-2:263', 'tc-0-1-206:59', 'tc-0-1-0:265', 'tc-0-1-265:0', 'tc-0-1-8:257']
     
 baseline_list = []
-# for f in [2, 3, 4, 5, 6, 7]:
+for f in [2, 3, 4, 5, 6, 7]:
 # # for f in [2, 3, 4]:
-#     # for s in [20, 500]:
+    for s in [20, 500]:
 #     for s in [10, 20, 50, 100, 500, 1000]:
-#         baseline_list.append('f'+str(f)+'s'+str(s*rate))
+        baseline_list.append('f'+str(f)+'s'+str(s*rate))
 baseline_list.append("tragen-output-percentile-"+str(rate)+"x")
 # baseline_list.append("hillclimbing")
 baseline_list.append("tragen-output-hillclimbing-c10-"+str(rate)+"x")
@@ -30,7 +52,11 @@ baseline_list.append("tragen-output-hillclimbing-c20-"+str(rate)+"x")
 diff_data = []
 diff_percentage_data = []
 for baseline in baseline_list:
-    baseline_result = pickle.load(open(BASE_DIR+baseline+"/results.pkl", "rb"))
+    if baseline.startswith('f'):
+        baseline_result = pickle.load(open(BASE_DIR+"tragen-output-offline-"+str(rate)+"x/ohr.pkl", "rb"))
+    else:
+        baseline_result = pickle.load(open(BASE_DIR+baseline+"/results.pkl", "rb"))
+    
     # print(baseline)
     diff = []
     diff_percentage = []
@@ -39,8 +65,12 @@ for baseline in baseline_list:
             # print(trace, baseline)
             continue
         # print(online_result[trace], baseline_result[trace])
-        diff.append(list(online_result[trace].values())[0]-list(baseline_result[trace].values())[0])
-        diff_percentage.append((list(online_result[trace].values())[0]-list(baseline_result[trace].values())[0])/list(online_result[trace].values())[0]*100)
+        if baseline.startswith('f'):
+            diff.append(list(online_result[trace].values())[0]-baseline_result[trace][baseline])
+            diff_percentage.append((list(online_result[trace].values())[0]-baseline_result[trace][baseline])/list(online_result[trace].values())[0]*100)
+        else:
+            diff.append(list(online_result[trace].values())[0]-list(baseline_result[trace].values())[0])
+            diff_percentage.append((list(online_result[trace].values())[0]-list(baseline_result[trace].values())[0])/list(online_result[trace].values())[0]*100)
         # baseline_data.append(result[trace]['6exp-online']-result[trace][baseline])
     diff_data.append(diff)
     diff_percentage_data.append(diff_percentage)
