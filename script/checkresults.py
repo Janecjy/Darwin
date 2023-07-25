@@ -16,7 +16,7 @@ def countStat(dirPath):
             if not file.endswith(".txt"):
                 continue
             trace = file.split('/')[-1].split('.')[0]
-            print(trace)
+            # print(trace)
             if trace not in trace_stats.keys():
                 trace_stats[trace] = {}
                 
