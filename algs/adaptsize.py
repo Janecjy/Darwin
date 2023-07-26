@@ -15,6 +15,12 @@ trace_path = (
     output_dir
 ) = freq_thres = size_thres = hoc_s = dc_s = collection_length = climb_step = None
 
+def oP1(T,l,p):
+    return(l * p * T * (840.0 + 60.0 * l * T + 20.0 * l*l * T*T + l*l*l * T*T*T))
+
+def oP2(T,l,p):
+    return(840.0 + 120.0 * l * (-3.0 + 7.0 * p) * T + 60.0 * l*l * (1.0 + p) * T*T + 4.0 * l*l*l * (-1.0 + 5.0 * p) * T*T*T + l*l*l*l * p * T*T*T*T)
+
 
 def parseInput():
     global trace_path, output_dir, hoc_s, dc_s, collection_length
@@ -57,66 +63,86 @@ def parseInput():
         sys.exit(2)
 
 
-# p_i_in_cache(r_i, s_i, c, u_c) defined by Thm 1 in the paper
-def p_i_in_cache(r_i, s_i, c, u_c):
-    prod = np.exp((-c * s_i) + (r_i / u_c)) - np.exp(-c * s_i)
-    return (prod) / (1 + prod)
-
-
-# the expected size given r, s, c, and u_c is the sum of (s_i * p_i_in_cache)
-def expected_total_size(r, s, c, u_c):
-    return np.dot(s, p_i_in_cache(r, s, c, u_c))
-
-
-# use bisection for u_c in (0, 1) to find the value that leads to the expected size of cache to equal HOC_SIZE
-def search_u_c(r, s, c, target_size):
-    L = 0.0
-    R = 1.0
-    u_c = 0
-    # bisection
-    for _ in range(40):
-        u_c = (L + R) / 2
-        result = expected_total_size(r, s, c, u_c)
-        if result < target_size:
-            R = u_c
-        else:
-            L = u_c
-    return u_c
-
 
 # predict the OHR for a given c parameter, given object request rates and sizes, and total HOC size
 def measure_ohr_c(r, s, c, HOC_SIZE):
-    # find the u_c for this c
-    found_u_c = search_u_c(r, s, c, HOC_SIZE)
-    if found_u_c == np.nan:
+    # total re-implementation of the OHR calculation 
+    # line 123 - 174 in https://github.com/dasebe/AdaptSize/blob/master/AdaptSizeLibrary/libadaptsize.h#L88
+    # I don't believe the code matches what it says in paper
+    # Aryan implemented the paper code in a much more elegant and rigious way
+    # but I don't think we can solve the math issue in the paper
+    # the code in github is bullshit
+    # however it can give you some result to compare with
+    sum_val = 0
+    old_T = 0
+    for i in range(len(r)):
+        sum_val += r[i] * (math.exp(-s[i]/ pow(2,c))) * s[i]
+    if sum_val <= 0:
         return 0
-    expected_size = expected_total_size(r, s, c, found_u_c)
-    # if the expected size is not valid or not within 1% of HOC size we have a weird c or u_c, disregard it
-    if expected_size == np.nan or ((expected_size - HOC_SIZE) / HOC_SIZE > 0.01):
-        return 0
+    the_T = HOC_SIZE / sum_val
+    
+    for _ in range(20):
+        the_C = 0
+        if the_T > 1e70:
+            break
+        for i in range(len(r)):
+            admProb = math.exp(-s[i] * pow(2.0, c))
+            tmp01 = oP1(the_T, r[i], admProb)
+            tmp02 = oP2(the_T, r[i], admProb)
+            
+            if(tmp01 != 0 and tmp02 == 0):
+                tmp = 0
+            else:
+                tmp = tmp01 / tmp02
+            
+            if tmp < 0:
+                tmp = 0
+            elif tmp > 1:
+                tmp = 1
+            the_C += tmp * s[i]
+        old_T = the_T
+        the_T = HOC_SIZE * old_T / the_C
+    
 
-    # the hit rate is the sum of (r_i * P_i_in_cache)
-    OHR = np.dot(r, p_i_in_cache(r, s, c, found_u_c))
-
-    return OHR
+    # calculate the OHR
+    
+    weighted_hitratio_sum = 0
+    for i in range(len(r)):
+        admProb = math.exp(-r[i] * pow(2.0, c))
+        tmp01 = oP1(the_T, r[i], admProb)
+        tmp02 = oP2(the_T, r[i], admProb)
+        
+        if(tmp01 != 0 and tmp02 == 0):
+            tmp = 0
+        else:
+            tmp = tmp01 / tmp02
+        
+        if tmp < 0:
+            tmp = 0
+        elif tmp > 1:
+            tmp = 1
+            
+        weighted_hitratio_sum  += s[i] * tmp
+            
+    return weighted_hitratio_sum
 
 
 # given r (request frequency) and s (size) vectors for the objects requested in the last delta requests, find the c value that maximizes predicted OHR
 def pick_best_c(r, s, HOC_SIZE):
     # make a vector of potential c values from 2^-2 to 2^-20 jumping by 0.25 in the exponent
     c_s = np.reciprocal(np.power(2, np.arange(2, 20, 0.25)))
-    # make a vectorized function to measure ohr for a given c
-    vec_func = np.vectorize(measure_ohr_c, excluded=set([0, 1, 3]))
-    # calculate the hit rate for each c value
-    hit_rates = vec_func(r, s, c_s, HOC_SIZE)
-    # if we could not calculate the hit rate, replace with zero
-    np.nan_to_num(hit_rates, copy=False)
-    # return the c with the best hit rate
-    return c_s[np.argmax(hit_rates)]
+    best_ohr = 0
+    for potential_c in c_s:
+        curr_ohr = measure_ohr_c(r, s, potential_c, HOC_SIZE)
+        if curr_ohr > best_ohr:
+            best_ohr = curr_ohr
+            best_c = potential_c
+    return best_c
+    
 
 
 class Cache:
-    def __init__(self, hoc_s, dc_s, c, delta):
+    def __init__(self, hoc_s, dc_s, c):
         self.dc = LRU(dc_s, {})
         self.hoc = LRU(hoc_s, {})
         self.hoc_size = hoc_s
@@ -125,7 +151,8 @@ class Cache:
         self.sizeTab = dict()  # store the size of objects we have seen {id: size}
         self.bloom = BloomFilter(max_elements=1000000, error_rate=0.1)
 
-        self.delta = delta
+        self.delta = 40000+ 3*pow(self.hoc_size,8.0/15.0);
+        print("Markov interval length: ", self.delta)
 
         # record period of stats for this cache
         self.obj_hit = 0
@@ -240,11 +267,9 @@ class Cache:
 
 
 def run():
-    global currentT, disk_write, collection_length
+    global currentT, disk_write
 
-    real_cache = Cache(
-        hoc_s, dc_s, 64, collection_length
-    )  # TODO: find default c value, arbitrary value right now
+    real_cache = Cache(hoc_s, dc_s, 1)
     real_cache.debug = False
     global tot_num
     tot_num = (
