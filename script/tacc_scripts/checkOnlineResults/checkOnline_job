@@ -6,3 +6,6 @@ python3 ./script/checkresults.py /scratch2/09498/janechen/tragen-output-hillclim
 python3 ./script/checkresults.py /scratch2/09498/janechen/tragen-output-hillclimbing-c20-5x/
 python3 ./script/checkresults.py /scratch2/09498/janechen/tragen-output-percentile-1x/
 python3 ./script/checkresults.py /scratch2/09498/janechen/tragen-output-percentile-5x/
+python3 ./script/checkresults.py /scratch2/09498/janechen/tragen-output-direct-1x/
+python3 ./script/checkresults.py /scratch2/09498/janechen/tragen-output-direct-5x/
+python3 ./script/checkresults.py /scratch2/09498/janechen/tragen-output-adaptsize-1x
