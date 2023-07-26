@@ -9,6 +9,6 @@ module load launcher
 
 export OMP_NUM_THREADS=56
 export LAUNCHER_WORKDIR=/home1/09498/janechen/MultiExpertHOCAdmission
-export LAUNCHER_JOB_FILE=$LAUNCHER_WORKDIR/script/tacc_scripts/genAdapt/genjob
+export LAUNCHER_JOB_FILE=$LAUNCHER_WORKDIR/script/tacc_scripts/genAdaptJob/genjob
 
 $LAUNCHER_DIR/paramrun
