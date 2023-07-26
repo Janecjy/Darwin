@@ -51,6 +51,8 @@ baseline_list.append("tragen-output-percentile-"+str(rate)+"x")
 # baseline_list.append("hillclimbing")
 baseline_list.append("tragen-output-hillclimbing-c10-"+str(rate)+"x")
 baseline_list.append("tragen-output-hillclimbing-c20-"+str(rate)+"x")
+baseline_list.append("tragen-output-direct-"+str(rate)+"x")
+baseline_list.append("tragen-output-adaptsize-"+str(rate)+"x")
 # baseline_list.append("hillclimbing-continuous-c20")
 # baseline_list.append("hillclimbing-continuous-c50")
 # baseline_list.append("hillclimbing-continuous-c100")
@@ -97,8 +99,10 @@ for i, baseline in enumerate(baseline_list):
         baseline = "HC-s10"
     if baseline == "tragen-output-hillclimbing-c20-"+str(rate)+"x":
         baseline = "HC-s20"
-    diff_data_dict[baseline] = diff_data[i]
-    diff_percentage_data_dict[baseline] = diff_percentage_data[i]
+    if baseline == "tragen-output-direct-"+str(rate)+"x":
+        baseline = "Direct"
+    if baseline == "tragen-output-adaptsize-"+str(rate)+"x":
+        baseline = "AS"
 # print(len(diff_percentage_data_dict["P"]))
 # diff_percentage_data_dict["AS"] = [-4, -1.3, -.1, 3, 12.4, 68.2, .7, 5, -.7]
 # print("for baseline {}, the avg improvement is {}, the avg improvement rate is {}".format("adaptsize", sum(diff)/len(diff), sum(diff_percentage_data_dict["AS"])/len(diff_percentage_data_dict["AS"])))
