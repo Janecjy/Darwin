@@ -15,11 +15,10 @@ output_dir = sys.argv[2]
 model_dir = sys.argv[3]
 ratio = sys.argv[4]
 
-def feature_cluster(thres):
+def feature_cluster():
     
     feature_set = ['iat_avg', 'sd_avg', 'size_avg']
-    # best_result = pickle.load(open("../cache/output/best_result.pkl", "rb"))
-    best_result = pickle.load(open(output_dir+"coarse_best_result_"+thres+".pkl", "rb"))
+    best_result = pickle.load(open(output_dir+"best_result.pkl", "rb"))
     feature_files = [path for path in os.listdir(feature_dir)]
     
     expert_list = []
@@ -64,7 +63,7 @@ def feature_cluster(thres):
     # build 
         
     # pickle.dump(X, open("/mydata/results/x.pkl", "wb"))
-    pickle.dump(kmeans_model, open(model_dir+"kmeans_"+thres+".pkl", "wb"))
+    pickle.dump(kmeans_model, open(model_dir+"kmeans_best.pkl", "wb"))
     
     # calculate Calinski-Harabasz score
     score = metrics.calinski_harabasz_score(X, labels)
@@ -82,8 +81,7 @@ def feature_cluster(thres):
     for i, lab in enumerate(labels):
         cluster_result[lab].append(name_list[i])
         cluster_count[lab] += 1
-        for e in best_result[name_list[i]]:
-            best_expert_dist[lab][e] += 1
+        best_expert_dist[lab][best_result[name_list[i]]] += 1
     # pickle.dump(cluster_result, open("/mydata/results/cluster_result_names.pkl", "wb"))
     
     # best_result = pickle.load(open("../cache/output/best_result.pkl", "rb"))
@@ -91,12 +89,10 @@ def feature_cluster(thres):
     bestSetDict = {} # cluster num: potential best expert list
 
     for i in cluster_result.keys():
-        best_set = set()
-        for trace in cluster_result[i]:
-            for exp in best_result[trace]:
-                best_set.add(exp)
-        bestSetDict[i] = list(best_set)
-    pickle.dump(bestSetDict, open(model_dir+"cluster_experts_"+thres+".pkl", "wb"))
+        max_count = max(best_expert_dist[i].values())
+        for exp in best_expert_dist[i].keys():
+            if best_expert_dist[i][exp] == max_count:
+                bestSetDict[i] = exp
+    pickle.dump(bestSetDict, open(model_dir+"cluster_experts_best.pkl", "wb"))
     
-for thres in ["1", "2", "3", "4", "5"]:
-    feature_cluster(thres)
+feature_cluster()
