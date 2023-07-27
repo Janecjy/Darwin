@@ -45,8 +45,8 @@ if rate == 5:
 baseline_list = []
 for f in [2, 3, 4, 5, 6, 7]:
 # # for f in [2, 3, 4]:
-    # for s in [20, 500]:
-    for s in [10, 20, 50, 100, 500, 1000]:
+    for s in [20, 500]:
+    # for s in [10, 20, 50, 100, 500, 1000]:
         baseline_list.append('f'+str(f)+'s'+str(s*rate))
 baseline_list.append("tragen-output-percentile-"+str(rate)+"x")
 # baseline_list.append("hillclimbing")
@@ -98,9 +98,9 @@ for i, baseline in enumerate(baseline_list):
     if baseline == "tragen-output-percentile-"+str(rate)+"x":
         baseline = "P"
     if baseline == "tragen-output-hillclimbing-c10-"+str(rate)+"x":
-        baseline = "HC-s10"
+        baseline = "HC-s"+str(10*rate)
     if baseline == "tragen-output-hillclimbing-c20-"+str(rate)+"x":
-        baseline = "HC-s20"
+        baseline = "HC-s"+str(20*rate)
     if baseline == "tragen-output-direct-"+str(rate)+"x":
         baseline = "Direct"
     if baseline == "tragen-output-adaptsize-"+str(rate)+"x":
