@@ -5,7 +5,7 @@ l=500000
 for r in 1 5
 do
     FILES="/scratch1/09498/janechen/mydata/tragen-traces-"$r"x/*"
-    for c in 10 20
+    for c in 50 100
     do
         OUTPUT_DIR=$BASE_DIR"tragen-output-hillclimbing-c"$c"-"$r"x/"
         mkdir -p $OUTPUT_DIR

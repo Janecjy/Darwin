@@ -151,14 +151,15 @@ class Cache:
         self.sizeTab = dict()  # store the size of objects we have seen {id: size}
         self.bloom = BloomFilter(max_elements=1000000, error_rate=0.1)
 
-        self.delta = 40000+ 3*pow(self.hoc_size,8.0/15.0);
-        print("Markov interval length: ", self.delta)
+        self.delta = 100000
 
         # record period of stats for this cache
         self.obj_hit = 0
         # self.byte_miss = 0
         self.disk_write = 0
         self.debug = False
+        
+        self.finishAdapt = False
 
     def copy_state(self, cache):
         # fix this by using iteration to do deepcopy
@@ -275,6 +276,7 @@ def run():
     tot_num = (
         tot_req
     ) = tot_bytes = tot_obj_hit = tot_byte_miss = tot_hoc_hit = tot_disk_write = 0
+    collection_length = 40000+ 3*pow(hoc_s,8.0/15.0);
 
     global isWarmup
     isWarmup = True
@@ -318,7 +320,12 @@ def run():
                 )
                 sys.stdout.flush()
                 # solve for new c value and replace it as the new parameter
-                real_cache.reset(real_cache.recalculate_c())
+                if not real_cache.finishAdapt:
+                    new_c = real_cache.recalculate_c()
+                    real_cache.reset(new_c)
+                    if real_cache.c == new_c:
+                        real_cache.finishAdapt = True
+                        print("Finish Adaptation")
 
                 sys.stdout.flush()
             tot_num += 1
