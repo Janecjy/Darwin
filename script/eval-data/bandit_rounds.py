@@ -1,12 +1,13 @@
 import os
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 sns.set(font_scale=1.5, style='white')
 
-dir_path = "/mydata/output-online/"
-converge_times = 10
+dir_path = sys.argv[1]
+converge_times = 5
 round_length = []
 for f in os.listdir(dir_path):
     start = False
@@ -26,9 +27,10 @@ for f in os.listdir(dir_path):
             # print(values)
             history.append(np.argmax(values))
         if len(history) > converge_times:
+            converge = True
             for j in range(converge_times):
                 if history[-j-1] != history[-j-2]:
-                    converge = True
+                    converge = False
         if converge:
             print(len(history))
             round_length.append(len(history))
