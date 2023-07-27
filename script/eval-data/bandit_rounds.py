@@ -35,7 +35,7 @@ for f in os.listdir(dir_path):
                     converge = False
         if converge:
             print(len(history))
-            round_length.append(len(history))
+            round_length.append(len(history)-converge_times)
             break
         if line.startswith("selected times:"):
             finish = True
