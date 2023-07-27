@@ -84,7 +84,7 @@ for baseline in baseline_list:
         # baseline_data.append(result[trace]['6exp-online']-result[trace][baseline])
     diff_data.append(diff)
     diff_percentage_data.append(diff_percentage)
-    print("for baseline {}, the avg improvement is {}, the avg improvement rate is {}".format(baseline, sum(diff)/len(diff), sum(diff_percentage)/len(diff_percentage)))
+    print("for baseline {}, the avg improvement is {}, the avg improvement rate is {}, the worst improvement rate is {}".format(baseline, sum(diff)/len(diff), sum(diff_percentage)/len(diff_percentage), min(diff_percentage)))
 
 # pickle.dump(diff_data, open("./diff_data.pkl", "wb"))    
 # pickle.dump(diff_percentage_data, open("./diff_percentage_data.pkl", "wb"))   
