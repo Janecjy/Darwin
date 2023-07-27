@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -J adaptsize_1x
 #SBATCH -o adaptsize_1x.o%j
-#SBATCH -N 5
+#SBATCH -N 6
 #SBATCH --ntasks-per-node 56
 #SBATCH -t 12:00:00
 #SBATCH -p normal
