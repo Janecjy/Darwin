@@ -1,5 +1,6 @@
 import os
 import sys
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -44,6 +45,8 @@ plt.figure(figsize=(10, 10))
 sorted_len = np.sort(round_length)
 p = 1. * np.arange(len(sorted_len)) / (len(sorted_len) - 1)
 plt.plot(sorted_len, p, linewidth=4)
+new_list = range(math.floor(min(sorted_len)), math.ceil(max(sorted_len))+1)
+plt.xticks(new_list)
 plt.ylabel("CDF", fontsize=25)
 plt.xlabel("Number of Rounds", fontsize=25)
 # plt.legend(bbox_to_anchor=(1.02, 1))
