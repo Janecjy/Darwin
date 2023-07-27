@@ -8,7 +8,7 @@ import seaborn as sns
 sns.set(font_scale=1.5, style='white')
 
 dir_path = sys.argv[1]
-converge_times = 5
+converge_times = 3
 round_length = []
 for f in os.listdir(dir_path):
     if not f.endswith(".txt"):
@@ -37,11 +37,14 @@ for f in os.listdir(dir_path):
             for j in range(converge_times):
                 if history[-j-1] != history[-j-2]:
                     converge = False
-        if converge:
+        if converge or finish:
             print(len(history))
-            round_length.append(int(len(history)-converge_times))
+            if converge:
+                round_length.append(int(len(history)-converge_times))
+            if finish:
+                round_length.append(int(len(history)))
             break
-        if line.startswith("selected times:"):
+        if line.startswith("Bandit finishes"):
             finish = True
 
 plt.figure(figsize=(10, 10))
