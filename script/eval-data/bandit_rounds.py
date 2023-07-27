@@ -8,7 +8,7 @@ import seaborn as sns
 sns.set(font_scale=1.5, style='white')
 
 dir_path = sys.argv[1]
-converge_times = 3
+converge_times = 5
 round_length = []
 for f in os.listdir(dir_path):
     if not f.endswith(".txt"):
