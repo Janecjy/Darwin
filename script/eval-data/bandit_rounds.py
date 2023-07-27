@@ -21,8 +21,8 @@ for f in os.listdir(dir_path):
     for line in open(dir_path+f):
         if line.startswith("cluster predicted best expert:"):
             start = True
-        if start and line.startswith("['f"):
-            potential_length = len(line.split(','))
+        # if start and line.startswith("['f"):
+        #     potential_length = len(line.split(','))
         if start and not finish and line.startswith("Round"):
             exp = line.split(',')[1].split("is")[1].replace(" ", "")
             history.append(exp)
@@ -38,7 +38,7 @@ for f in os.listdir(dir_path):
                 if history[-j-1] != history[-j-2]:
                     converge = False
         if converge or finish:
-            print(len(history))
+            print(f, len(history))
             round_length.append(int(len(history)))
             break
         if line.startswith("Bandit finishes"):
