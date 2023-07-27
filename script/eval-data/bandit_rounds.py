@@ -10,6 +10,8 @@ dir_path = sys.argv[1]
 converge_times = 5
 round_length = []
 for f in os.listdir(dir_path):
+    if not f.endswith(".txt"):
+        continue
     start = False
     finish = False
     potential_length = 0
