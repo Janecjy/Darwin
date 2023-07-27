@@ -39,10 +39,7 @@ for f in os.listdir(dir_path):
                     converge = False
         if converge or finish:
             print(len(history))
-            if converge:
-                round_length.append(int(len(history)-converge_times))
-            if finish:
-                round_length.append(int(len(history)))
+            round_length.append(int(len(history)))
             break
         if line.startswith("Bandit finishes"):
             finish = True
