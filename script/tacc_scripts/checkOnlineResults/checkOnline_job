@@ -8,4 +8,4 @@ python3 ./script/checkresults.py /scratch2/09498/janechen/tragen-output-percenti
 python3 ./script/checkresults.py /scratch2/09498/janechen/tragen-output-percentile-5x/
 python3 ./script/checkresults.py /scratch2/09498/janechen/tragen-output-direct-1x/
 python3 ./script/checkresults.py /scratch2/09498/janechen/tragen-output-direct-5x/
-python3 ./script/checkresults.py /scratch2/09498/janechen/tragen-output-adaptsize-1x
+python3 ./script/checkresults.py /scratch2/09498/janechen/tragen-output-adaptsize-1x/

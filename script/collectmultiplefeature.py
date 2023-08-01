@@ -23,7 +23,7 @@ def connect_rhost(rhost, username):
 
 def setup(host_id):
     rssh_object = ssh_hosts[host_id]
-    clone_cmd = "mkdir -p /mydata/features-req" # "mkdir -p /mydata/traces-more; cd /mydata/traces; mv *.zip /mydata/"
+    # clone_cmd = "rm -rf /mydata/feature*" # "mkdir -p /mydata/traces-more; cd /mydata/traces; mv *.zip /mydata/"
     # stdin, stdout, stderr = rssh_object.exec_command(clone_cmd, get_pty=True)
     # for line in iter(stdout.readline, ""):
     #     print(line)
@@ -42,12 +42,14 @@ def setup(host_id):
     #         for line in iter(stdout.readline, ""):
     #             print(line)
 
-    # # setup node
+    # setup node
     # if host_id >= 9:
-    #     clone_cmd = "sudo apt-get update; sudo apt-get install -y python3.6 libjpeg-dev zlib1g-dev; sudo apt-get install -y python3-pip; ssh-keyscan github.com >> ~/.ssh/known_hosts; sudo apt-get install -y python3-venv unzip; rm -rf "+parent_dir+"features; mkdir -p "+parent_dir+"features; git clone git@github.com:Janecjy/MultiExpertHOCAdmission.git; cd ~/MultiExpertHOCAdmission; git pull; chmod +x script/collectfeature.sh; chmod +x script/collectfeaturesub.sh; python3 -m venv venv; source venv/bin/activate; pip install wheel numpy matplotlib bloom-filter2;"
-    #     stdin, stdout, stderr = rssh_object.exec_command(clone_cmd, get_pty=True)
-    #     for line in iter(stdout.readline, ""):
-    #         print(line)
+    clone_cmd = "sudo apt-get update; sudo apt-get install -y python3.6 libjpeg-dev zlib1g-dev; sudo apt-get install -y python3-pip; ssh-keyscan github.com >> ~/.ssh/known_hosts; sudo apt-get install -y python3-venv unzip; rm -rf "+parent_dir+"features; mkdir -p "+parent_dir+"features; cd ~/MultiExpertHOCAdmission; git pull; chmod +x script/collectfeature.sh; chmod +x script/collectfeaturesub.sh; python3 -m venv venv; source venv/bin/activate; pip install wheel numpy matplotlib bloom-filter2;"
+    # clone_cmd = "sudo apt update; python3 -m pip install --upgrade pip; sudo apt install -y numpy"
+
+    stdin, stdout, stderr = rssh_object.exec_command(clone_cmd, get_pty=True)
+    for line in iter(stdout.readline, ""):
+        print(line)
         
     # if host_id >= 14:
     #     clone_cmd = "cd /mydata/traces; tmux new-session -d unzip trace"+str(host_id)+".zip"
@@ -57,9 +59,9 @@ def setup(host_id):
     
 
 def run(host_id):
-    # if host_id >= 10 and host_id <= 14:
+    # if host_id in [6, 13]:
     rssh_object = ssh_hosts[host_id]
-    run_cmd = "cd ~/MultiExpertHOCAdmission; git pull; tmux new-session -d ./script/collectfeature.sh "+trace_path+" "+output_path
+    run_cmd = "cd ~/MultiExpertHOCAdmission; git checkout feature-collection; git pull; tmux new-session -d ./script/collectfeature.sh "+trace_path+" "+output_path+" 50000 150000"
     print(run_cmd)
     stdin, stdout, stderr = rssh_object.exec_command(run_cmd, get_pty=True)
     for line in iter(stdout.readline, ""):
@@ -67,15 +69,31 @@ def run(host_id):
         
 def download(host_id):
     rssh_object = ssh_hosts[host_id]
-    # run_cmd = "cd ~/MultiExpertHOCAdmission; git reset --hard; git pull; chmod +x ./script/calfeaturediff.sh; tmux new-session -d ./script/calfeaturediff.sh "+output_path
+    # run_cmd = "cd ~/MultiExpertHOCAdmission; git reset --hard; git pull; git checkout windowbased-features; git pull; chmod +x ./script/outputfeature.sh; tmux new-session -d ./script/outputfeature.sh "+output_path
+    # run_cmd = "cd ~/MultiExpertHOCAdmission; tmux new-session -d ./script/outputfeature.sh "+output_path
     # print(run_cmd)
+    # # print(run_cmd)
     # stdin, stdout, stderr = rssh_object.exec_command(run_cmd, get_pty=True)
     # for line in iter(stdout.readline, ""):
     #     print(line)
     
-    scp_cmd = 'scp -r '+username+'@'+hosts[i]+':/mydata/featurediff-req/* /Users/janechen/Documents/wisr/learned-cache/scripts/feature-results-req/'
+    print(output_path+'-output/*')
+    scp_cmd = 'scp -r '+username+'@'+hosts[i]+':'+output_path+'-output/* /Users/janechen/Documents/wisr/learned-cache/scripts/'+par+'/'
     print(scp_cmd)
     os.system(scp_cmd)
+    
+def transfer(host_id):
+    rssh_object = ssh_hosts[host_id]
+    # if host_id in [6, 13]:
+    run_cmd = "cd ~/MultiExpertHOCAdmission; git reset --hard; git pull; chmod +x ./script/renamefeature.sh; tmux new-session -d ./script/renamefeature.sh /mydata/features-ood/ /mydata/final-features-ood/"
+    print(run_cmd)
+    stdin, stdout, stderr = rssh_object.exec_command(run_cmd, get_pty=True)
+    for line in iter(stdout.readline, ""):
+        print(line)
+        
+    # if host_id < 9:
+    # scp_command = "scp -3 "+username+'@'+hosts[host_id]+":/mydata/final-features/* janechen@c240g1-031313.wisc.cloudlab.us:/mydata/features/"
+    # os.system(scp_command)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -88,16 +106,71 @@ if __name__ == "__main__":
     hosts = yaml_obj['hosts']
     username = yaml_obj['username']
     parent_dir = yaml_obj['trace_parent_dir']
+    # trace_path = parent_dir+"traces/"
+    # output_path = parent_dir+"features/"
     trace_path = parent_dir+"traces/"
-    output_path = parent_dir+"features-req/"
-    
-    print('total_hosts:', len(hosts))
+    output_path = parent_dir+"features/"
 
+    
     for i in range(0, len(hosts)):
         host = hosts[i]
         print(host)
         ssh_object = connect_rhost(host, username)
         ssh_hosts.append(ssh_object)
+        # transfer(i)
         # setup(i)
-        # run(i)
-        download(i)
+        run(i)
+            
+    # for par in ["features-req-window--110000-100000", \
+    #             "features-req-window--110000-110000", \
+    #             "features-req-window--110000-120000", \
+    #             "features-req-window--110000-150000", \
+    #             "features-req-window--110000-50000", \
+    #             "features-req-window--110000-80000", \
+    #             "features-req-window--110000-90000", \
+    #             "features-req-window--120000-100000", \
+    #             "features-req-window--120000-110000", \
+    #             "features-req-window--120000-120000", \
+    #             "features-req-window--120000-150000", \
+    #             "features-req-window--120000-50000", \
+    #             "features-req-window--120000-80000", \
+    #             "features-req-window--120000-90000", \
+    #             "features-req-window--150000-100000", \
+    #             "features-req-window--150000-110000", \
+    #             "features-req-window--150000-120000", \
+    #             "features-req-window--150000-150000", \
+    #             "features-req-window--150000-50000", \
+    #             "features-req-window--150000-80000", \
+    #             "features-req-window--150000-90000", \
+    #             "features-req-window--50000-100000", \
+    #             "features-req-window--50000-110000", \
+    #             "features-req-window--50000-120000", \
+    #             "features-req-window--50000-150000", \
+    #             "features-req-window--50000-50000", \
+    #             "features-req-window--50000-80000", \
+    #             "features-req-window--50000-90000", \
+    #             "features-req-window--80000-100000", \
+    #             "features-req-window--80000-110000", \
+    #             "features-req-window--80000-120000", \
+    #             "features-req-window--80000-150000", \
+    #             "features-req-window--80000-50000", \
+    #             "features-req-window--80000-80000", \
+    #             "features-req-window--80000-90000", \
+    #             "features-req-window--90000-100000", \
+    #             "features-req-window--90000-110000", \
+    #             "features-req-window--90000-120000", \
+    #             "features-req-window--90000-150000", \
+    #             "features-req-window--90000-50000", \
+    #             "features-req-window--90000-80000", \
+    #             "features-req-window--90000-90000"]:
+    #     output_path = parent_dir+par
+    
+    #     # print('total_hosts:', len(hosts))
+    #     # scp_cmd = 'mkdir -p /Users/janechen/Documents/wisr/learned-cache/scripts/'+par+'/'
+    #     # print(scp_cmd)
+    #     # os.system(scp_cmd)
+
+    #     for i in range(0, len(hosts)):
+            # setup(i)
+            # run(i)
+            # download(i)

@@ -1,0 +1,24 @@
+hosts: [
+'amd131.utah.cloudlab.us', 
+'amd232.utah.cloudlab.us',
+'amd203.utah.cloudlab.us',
+'amd219.utah.cloudlab.us',
+'amd145.utah.cloudlab.us',
+'amd193.utah.cloudlab.us',
+'amd146.utah.cloudlab.us',
+'amd127.utah.cloudlab.us',
+'amd138.utah.cloudlab.us',
+'amd162.utah.cloudlab.us',
+'amd157.utah.cloudlab.us',
+'amd150.utah.cloudlab.us',
+'amd192.utah.cloudlab.us',
+'amd144.utah.cloudlab.us',
+'amd181.utah.cloudlab.us',
+'amd211.utah.cloudlab.us',
+'amd213.utah.cloudlab.us',
+'amd141.utah.cloudlab.us',
+'amd184.utah.cloudlab.us',
+'amd231.utah.cloudlab.us'
+]
+username: 'janechen'
+trace_parent_dir: '/mydata/'

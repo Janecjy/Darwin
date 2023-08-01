@@ -17,19 +17,14 @@ ROUND_LEN = 500000
 MB = 1000000
 MAX_LIST = [0] * 15
 MIN_LIST = [0] * 15
-BASE_DIR = sys.argv[4]
-OFFLINE_DIR = sys.argv[5]
-OUTPUT_DIR = sys.argv[6]
-RATIO = sya.argv[7]
 
-def gen_data(expert_0, expert_1, trace_name):
+def gen_data(expert_0, expert_1, trace, trace_name):
 
     feature_set = ['iat_avg', 'sd_avg', 'size_avg']
     
     feature = []
         
-    features = pickle.load(open(os.path.join(BASE_DIR, "tragen-features"+OUTPUT_DIR[-4:], trace_name, "3M.pkl"), "rb"))
-    print(os.path.join(BASE_DIR, "tragen-features"+OUTPUT_DIR[-4:], trace_name, "3M.pkl"))
+    features = pickle.load(open(os.path.join("/mydata/features/", trace_name, "3M.pkl"), "rb"))
     for f in feature_set:
         v = features[f]
         if type(v) is dict or type(v) is defaultdict:
@@ -43,7 +38,6 @@ def gen_data(expert_0, expert_1, trace_name):
     inputs = []
     labels = []
     bucket_list = [10, 20, 50, 100, 500, 1000, 5000]
-    bucket_list = [x * RATIO for x in bucket_list]
     
     hit_hit_prob = 0 # pi(e1_hit | e0_hit)
     e0_hit_count = 0
@@ -51,13 +45,16 @@ def gen_data(expert_0, expert_1, trace_name):
     hit_miss_prob = 0 # pi(e1_hit | e0_miss)
     bucket_count = [0]*(len(bucket_list)+1)
     
-    with open(os.path.join(OFFLINE_DIR, trace_name, expert_0+"-hits.txt"), 'r') as e0_file, open(os.path.join(OFFLINE_DIR, trace_name, expert_1+"-hits.txt"), 'r') as e1_file:
+    with open(os.path.join("/mydata/output-offline/", trace_name, expert_0+"-hits.txt"), 'r') as e0_file, open(os.path.join("/mydata/output-offline/", trace_name, expert_1+"-hits.txt"), 'r') as e1_file, open(trace, 'r') as trace_file:
         count = 0
         
-        for e0_line, e1_line in zip(e0_file, e1_file):
-            e0 = int(e0_line.strip().split()[0])  # Remove any leading or trailing whitespace from line1
-            e1 = int(e1_line.strip().split()[0])  # Remove any leading or trailing whitespace from line2
-            s = int(e0_line.strip().split()[1])
+        for _ in range(WARMUP_LENGTH):
+            next(trace_file)
+        
+        for e0, e1, s in zip(e0_file, e1_file, trace_file):
+            e0 = int(e0.strip())  # Remove any leading or trailing whitespace from line1
+            e1 = int(e1.strip())  # Remove any leading or trailing whitespace from line2
+            s = int(s.strip().split(',')[2])
             if count > 0 and count % ROUND_LEN == 0:
                 hit_hit_prob = hit_hit_prob/e0_hit_count
                 hit_miss_prob = hit_miss_prob/e0_miss_count
@@ -93,20 +90,21 @@ def gen_data(expert_0, expert_1, trace_name):
             inputs.append([input, e0_hit_count, e0_miss_count])
             labels.append([hit_hit_prob, hit_miss_prob])
     
-    pickle.dump(inputs, open(os.path.join(OUTPUT_DIR, expert_0+"-"+expert_1, trace_name+"-input.pkl"), "wb"))
-    pickle.dump(labels, open(os.path.join(OUTPUT_DIR, expert_0+"-"+expert_1, trace_name+"-labels.pkl"), "wb"))
+    pickle.dump(inputs, open(os.path.join("/mydata/correlations/", expert_0+"-"+expert_1, trace_name+"-input.pkl"), "wb"))
+    pickle.dump(labels, open(os.path.join("/mydata/correlations/", expert_0+"-"+expert_1, trace_name+"-labels.pkl"), "wb"))
 
 
 
 def main():
     expert_0 = sys.argv[1]
     expert_1 = sys.argv[2]
-    trace_name = sys.argv[3]
+    trace = sys.argv[3]
+    trace_name = trace.split('/')[-1].split('.')[0]
         
-    if os.path.exists(os.path.join(OFFLINE_DIR, trace_name, expert_0+"-hits.txt")) and os.path.exists(os.path.join(OFFLINE_DIR, trace_name, expert_1+"-hits.txt")):
-        gen_data(expert_0, expert_1, trace_name)
+    if os.path.exists(os.path.join("/mydata/output-offline/", trace_name, expert_0+"-hits.txt")) and os.path.exists(os.path.join("/mydata/output-offline/", trace_name, expert_1+"-hits.txt")):
+        gen_data(expert_0, expert_1, trace, trace_name)
     else:
-        print("{} or {} not exist".format(os.path.join(OFFLINE_DIR, trace_name, expert_0+"-hits.txt"), os.path.join(os.path.join(OFFLINE_DIR, trace_name, expert_1+"-hits.txt"))))
+        print("{} or {} not exist".format(os.path.join("/mydata/output-offline/", trace_name, expert_0+"-hits.txt"), os.path.join("/mydata/output-offline/", trace_name, expert_1+"-hits.txt")))
         return
 
 if __name__ == '__main__':
