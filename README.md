@@ -15,7 +15,7 @@ Darwin simulator is built on top of Cacheus simulator and Tragen traffic_modeler
 
 ## Quick Start
 
-1. Download the models and the test traces.
+1. Download the models and the test traces (used to generate figure 4a in the paper).
 
 ```
 mkdir -p $WORK_DIR/data
