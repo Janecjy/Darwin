@@ -1,6 +1,5 @@
 from cProfile import label
 import sys
-from parser import *
 from collections import defaultdict
 
 from numpy.core import numeric
