@@ -56,11 +56,9 @@ python3 $WORK_DIR/Darwin/algs/hierarchy-static-results.py -t $TRACE -o $OUTPUT_D
 python3 $WORK_DIR/Darwin/algs/percentile.py -t $TRACE -o $OUTPUT_DIR -f 60 -s 90 -h 100000 -d 10000000 -l 100000
 
 # hillclimbing:
-
 python3 $WORK_DIR/Darwin/algs/hillclimbing-continuous.py -t $TRACE -o $OUTPUT_DIR -h 100000 -d 10000000 -l 500000 -c $SIZE_THRES_CLIMB_SIZE
 
 # directmapping:
-
 python3 $WORK_DIR/Darwin/algs/directmapping.py -t $TRACE -m $WORK_DIR/data/models -h 100000 -d 10000000
 
 # adaptsize:
