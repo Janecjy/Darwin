@@ -227,7 +227,7 @@ class OnlineHierarchy:
             for exp1 in self.potential_experts:
                 if exp0 != exp1:
                     model = NeuralNet(INPUT_SIZE, HIDDEN_SIZE, OUTPUT_SIZE).to(DEVICE)
-                    model.load_state_dict(torch.load(os.path.join(model_path, exp0+"-"+exp1, "model-h"+str(HIDDEN_SIZE)+".ckpt"), map_location=torch.device('cpu')))
+                    model.load_state_dict(torch.load(os.path.join(model_path, exp0+"-"+exp1+"-h"+str(HIDDEN_SIZE)+".ckpt"), map_location=torch.device('cpu')))
                     model.eval()
                     self.raw_models[(exp0, exp1)] = model
                     # d = torch.tensor(self.feature).to(DEVICE)
