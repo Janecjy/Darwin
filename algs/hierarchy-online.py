@@ -722,7 +722,7 @@ def main():
     global CLUSTER_MODEL_PATH, CLUSTER_RESULT_PATH, FEATURE_MAX_LIST, FEATURE_MIN_LIST
     CLUSTER_MODEL_PATH = os.path.join(model_path, "kmeans_"+str(BEST_THRES)+".pkl")
     CLUSTER_RESULT_PATH = os.path.join(model_path, "cluster_experts_"+str(BEST_THRES)+".pkl")
-    rate = int(model_path.split('-')[-1].split('x')[0])
+    rate = 1
     print("rate: {}".format(rate))
     # trained feature parameters
     # FEATURE_MAX_LIST = pickle.load(open(model_path+"max_list.pkl", "rb"))
