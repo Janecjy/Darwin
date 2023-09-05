@@ -178,7 +178,7 @@ def run():
 
     global currentT, disk_write, collection_length, freq_thres, size_thres
     
-    rate = int(output_dir.split('-')[-1].split('x')[0])
+    rate = 1
     for i, s in enumerate(size_list):
         size_list[i] = s*rate
 
