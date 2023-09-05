@@ -9,7 +9,7 @@ features that can be collected, different objectives that combine
 cache performance with costs, and different knob choices that are
 viable in a given deployment.
 
-More detailed information about Darwin can be found in the paper.
+More detailed information about Darwin can be found in the [paper](https://dl.acm.org/doi/10.1145/3603269.3604863).
 
 Darwin simulator is built on top of Cacheus simulator and Tragen traffic_modeler.
 
